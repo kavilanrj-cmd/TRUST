@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                   <option value="REJECTED" selected={statusFilter === "REJECTED"}>REJECTED</option>
                   <option value="WAITLISTED" selected={statusFilter === "WAITLISTED"}>WAITLISTED</option>
                   <option value="CORRECTION_REQUESTED" selected={statusFilter === "CORRECTION_REQUESTED"}>CORRECTION_REQUESTED</option>
-                ]
+                </select>
               </div>
               <div className="flex-1">
                 <label className="text-sm font-medium mb-1 block">Payment Filter</label>
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
                   <option value="">All Payments</option>
                   <option value="SUCCESS" selected={paymentFilter === "SUCCESS"}>Success</option>
                   <option value="FAILED" selected={paymentFilter === "FAILED"}>Failed</option>
-                ]
+                </select>
               </div>
               <div className="flex-1">
                 <label className="text-sm font-medium mb-1 block">Search</label>
