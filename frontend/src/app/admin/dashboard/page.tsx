@@ -22,10 +22,6 @@ interface DashboardData {
   auditActivity: any[];
 }
 
-export const metadata = {
-  title: "Admin Dashboard - Neelakannu Educational Trust",
-};
-
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
