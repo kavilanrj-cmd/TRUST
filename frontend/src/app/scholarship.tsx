@@ -39,7 +39,7 @@ export default function ScholarshipPage() {
           <div>
             <h2 className="text-2xl font-semibold mb-4">Application Fee</h2>
             <p className="text-3xl font-bold text-primary mb-2">
-              ₹[CONFIGURABLE]
+              To be announced
             </p>
             <p className="text-muted-foreground leading-relaxed">
               The application fee is configurable from the Trust&rsquo;s scholarship
@@ -91,7 +91,7 @@ export default function ScholarshipPage() {
         <section className="mb-16">
           <h2 className="text-2xl font-semibold mb-4">Application Deadline</h2>
           <p className="text-2xl font-bold text-primary">
-            [CONFIGURABLE &ndash; Application Deadline]
+            To be announced
           </p>
           <p className="text-muted-foreground mt-2">
             Application deadline is configurable from the Trust&rsquo;s scholarship
