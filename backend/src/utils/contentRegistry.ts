@@ -50,7 +50,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("nav.applyLabel", "home", "nav", "text", "Nav · Apply Button", "Apply Now", { maxLength: 40 }),
 
   // ---- Hero ----
-  · Eyebrow", "Scholarships for Deserving Students", { maxLength: 80 }),
+  def("home.hero.eyebrow", "home", "hero", "text", "Hero · Eyebrow", "Scholarships for Deserving Students", { maxLength: 80 }),
   def("home.hero.title", "home", "hero", "text", "Hero · Title", "Neelakannu Educational Trust", { maxLength: 120 }),
   def("home.hero.description", "home", "hero", "textarea", "Hero · Description", "Supporting deserving students with educational opportunities, scholarships and financial assistance.", { maxLength: 400 }),
   def("home.hero.primaryButton", "home", "hero", "text", "Hero · Primary Button", "Apply for Scholarship", { maxLength: 60 }),
