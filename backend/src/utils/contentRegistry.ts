@@ -1,4 +1,4 @@
-// Central CMS content registry for the Neelakannu Educational Trust website.
+﻿// Central CMS content registry for the Neelakannu Educational Trust website.
 // Each editable item has a stable, namespaced key. The registry controls:
 //   - which fields are editable
 //   - default values (fallback for the public site)
@@ -50,11 +50,11 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("nav.applyLabel", "home", "nav", "text", "Nav · Apply Button", "Apply Now", { maxLength: 40 }),
 
   // ---- Hero ----
-  def("home.hero.badge", "home", "hero", "text", "Hero · Eyebrow", "Neelakannu Educational Trust", { maxLength: 80 }),
-  def("home.hero.title", "home", "hero", "text", "Hero · Title", "Empowering Dreams Through Education", { maxLength: 120 }),
+  · Eyebrow", "Scholarships for Deserving Students", { maxLength: 80 }),
+  def("home.hero.title", "home", "hero", "text", "Hero · Title", "Neelakannu Educational Trust", { maxLength: 120 }),
   def("home.hero.description", "home", "hero", "textarea", "Hero · Description", "Supporting deserving students with educational opportunities, scholarships and financial assistance.", { maxLength: 400 }),
   def("home.hero.primaryButton", "home", "hero", "text", "Hero · Primary Button", "Apply for Scholarship", { maxLength: 60 }),
-  def("home.hero.secondaryButton", "home", "hero", "text", "Hero · Secondary Button", "Check Eligibility", { maxLength: 60 }),
+  def("home.hero.secondaryButton", "home", "hero", "text", "Hero · Secondary Button", "Learn More", { maxLength: 60 }),
   def("home.hero.stat1", "home", "hero", "text", "Hero · Stat 1 (value)", "2018", { maxLength: 20 }),
   def("home.hero.stat1Label", "home", "hero", "text", "Hero · Stat 1 (label)", "Established", { maxLength: 60 }),
   def("home.hero.stat2", "home", "hero", "text", "Hero · Stat 2 (value)", "100+", { maxLength: 20 }),
@@ -64,20 +64,25 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("home.hero.quote", "home", "hero", "text", "Hero · Quote", "Empowering education, enabling dreams", { maxLength: 160 }),
   def("home.hero.quoteSub", "home", "hero", "text", "Hero · Quote Subtitle", "Scholarships for deserving students since 2018", { maxLength: 160 }),
 
+  // ---- Impact / Trust statistics ----
+  def("home.impact.scholarship", "home", "impact", "text", "Impact · Scholarship Amount", "₹50L+", { maxLength: 20 }),
+  def("home.impact.scholarshipLabel", "home", "impact", "text", "Impact · Scholarship Label", "Scholarship Assistance", { maxLength: 60 }),
+  def("home.impact.note", "home", "impact", "textarea", "Impact · Footnote", "Figures are configurable by the Trust and updated as verified reporting data is published.", { maxLength: 300 }),
+
   // ---- About ----
   def("home.about.eyebrow", "home", "about", "text", "About · Eyebrow", "Who We Are", { maxLength: 80 }),
   def("home.about.title", "home", "about", "text", "About · Title", "A Trust Built on Education and Compassion", { maxLength: 120 }),
   def("home.about.description", "home", "about", "rich", "About · Description", "Neelakannu Educational Trust was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed.", { maxLength: 1200 }),
   def("home.about.visionTitle", "home", "about", "text", "About · Vision Title", "Our Vision", { maxLength: 60 }),
-  def("home.about.vision", "home", "about", "textarea", "About · Vision", "To create a society where no deserving student is denied education due to financial constraints.", { maxLength: 500 }),
+  def("home.about.vision", "home", "about", "textarea", "About · Vision", "A society where every deserving student, regardless of economic background, has access to quality education and the opportunity to reach their full potential.", { maxLength: 500 }),
   def("home.about.missionTitle", "home", "about", "text", "About · Mission Title", "Our Mission", { maxLength: 60 }),
   def("home.about.mission", "home", "about", "textarea", "About · Mission", "To identify promising students, provide financial assistance and mentorship, and empower them to build brighter futures.", { maxLength: 500 }),
   def("home.about.quote", "home", "about", "text", "About · Quote", "Education is the most powerful weapon which you can use to change the world.", { maxLength: 300 }),
 
   // ---- Scholarships ----
   def("home.scholarships.eyebrow", "home", "scholarships", "text", "Scholarships · Eyebrow", "Scholarships", { maxLength: 80 }),
-  def("home.scholarships.title", "home", "scholarships", "text", "Scholarships · Title", "Scholarship Programs", { maxLength: 120 }),
-  def("home.scholarships.description", "home", "scholarships", "textarea", "Scholarships · Description", "Explore our current scholarship opportunities and find the support you need to continue your education.", { maxLength: 400 }),
+  def("home.scholarships.title", "home", "scholarships", "text", "Scholarships · Title", "Scholarship Program", { maxLength: 120 }),
+  def("home.scholarships.description", "home", "scholarships", "textarea", "Scholarships · Description", "Our Scholarship Program supports deserving students with financial assistance and guidance so they can continue their education with confidence.", { maxLength: 400 }),
   def("home.scholarships.applyCta", "home", "scholarships", "text", "Scholarships · Apply CTA", "Apply Now", { maxLength: 60 }),
   def("home.scholarships.eligibilityCta", "home", "scholarships", "text", "Scholarships · Eligibility CTA", "Check Eligibility", { maxLength: 60 }),
 
@@ -134,9 +139,9 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("home.news.description", "home", "news", "textarea", "News · Description", "Stay up to date with our latest announcements, events and scholarship opportunities.", { maxLength: 400 }),
 
   // ---- Final CTA ----
-  def("home.finalCta.title", "home", "finalCta", "text", "Final CTA · Title", "Your Education. Your Future. Your Opportunity.", { maxLength: 120 }),
+  def("home.finalCta.title", "home", "finalCta", "text", "Final CTA · Title", "Your Education. Your Future. Our Support.", { maxLength: 120 }),
   def("home.finalCta.description", "home", "finalCta", "textarea", "Final CTA · Description", "Take the first step today and apply for a scholarship with Neelakannu Educational Trust.", { maxLength: 300 }),
-  def("home.finalCta.primaryButton", "home", "finalCta", "text", "Final CTA · Primary", "Apply Now", { maxLength: 60 }),
+  def("home.finalCta.primaryButton", "home", "finalCta", "text", "Final CTA · Primary", "Apply for Scholarship", { maxLength: 60 }),
   def("home.finalCta.secondaryButton", "home", "finalCta", "text", "Final CTA · Secondary", "Contact Us", { maxLength: 60 }),
 
   // ---- Footer ----

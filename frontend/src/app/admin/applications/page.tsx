@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -14,7 +14,15 @@ const VALID_STATUSES = [
 
 const EDUCATION_LEVELS = ["HIGH_SCHOOL", "DIPLOMA", "UNDERGRADUATE", "POSTGRADUATE"];
 
-export default function ApplicationsPage() {
+export default function ApplicationsPageWrapper() {
+  return (
+    <Suspense>
+      <ApplicationsPage />
+    </Suspense>
+  );
+}
+
+function ApplicationsPage() {
   const searchParams = useSearchParams();
 
   const [applications, setApplications] = useState<any[]>([]);

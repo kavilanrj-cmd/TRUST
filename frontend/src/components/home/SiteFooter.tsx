@@ -1,22 +1,28 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useHomeContent } from "@/lib/home-content";
 
 const QUICK_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "About", href: "#about" },
-  { label: "Scholarships", href: "#scholarships" },
-  { label: "How to Apply", href: "#how-to-apply" },
-  { label: "Success Stories", href: "#success-stories" },
-  { label: "News & Events", href: "#news" },
+  { label: "Home", href: "/#home" },
+  { label: "About Us", href: "/about" },
+  { label: "Scholarship", href: "/scholarship" },
+  { label: "How to Apply", href: "/#how-to-apply" },
+  { label: "Success Stories", href: "/#success-stories" },
+  { label: "News & Events", href: "/announcements" },
 ];
 
-const SUPPORT_LINKS = [
-  { label: "Contact", href: "#contact" },
-  { label: "FAQs", href: "#contact" },
-  { label: "Privacy Policy", href: "#contact" },
-  { label: "Terms & Conditions", href: "#contact" },
+const DISCOVER_LINKS = [
+  { label: "Our Vision & Mission", href: "/vision-mission" },
+  { label: "Check Eligibility", href: "/#eligibility" },
+  { label: "Contact", href: "/contact" },
+  { label: "Privacy Policy", href: "/contact" },
+  { label: "Terms & Conditions", href: "/contact" },
 ];
 
 export function SiteFooter() {
+  const { t } = useHomeContent();
   const year = new Date().getFullYear();
 
   return (
@@ -25,56 +31,52 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <a href="#home" className="flex items-center gap-3">
+            <Link href="/#home" className="flex items-center gap-3">
               <Image
                 src="/neelakannu-logo.svg"
                 alt="Neelakannu Educational Trust logo"
-                width={48}
-                height={48}
-                className="h-12 w-12"
+                width={54}
+                height={54}
+                className="h-14 w-14"
               />
               <span className="leading-tight">
-                <span className="block font-serif text-lg font-bold tracking-tight text-white">
-                  Neelakannu
-                </span>
-                <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+                <span className="block font-serif text-lg font-bold tracking-tight text-white">Neelakannu</span>
+                <span className="block text-xs font-bold uppercase tracking-[0.18em] text-gold">
                   Educational Trust
                 </span>
               </span>
-            </a>
+            </Link>
             <p className="mt-5 text-sm leading-relaxed text-white/70">
-              Empowering deserving students through educational scholarships and
-              trust management since 2018.
+              {t(
+                "home.footer.description",
+                "Neelakannu Educational Trust empowers deserving students through scholarships and financial assistance."
+              )}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-gold">
-              Quick Links
-            </h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-gold">Quick Links</h3>
             <ul className="mt-5 space-y-3">
               {QUICK_LINKS.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm text-white/75 transition hover:text-gold">
+                  <Link href={link.href} className="text-sm text-white/80 transition hover:text-gold">
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Discover */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-gold">
-              Support
-            </h3>
+            <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-gold">Discover</h3>
             <ul className="mt-5 space-y-3">
-              {SUPPORT_LINKS.map((link) => (
+              {DISCOVER_LINKS.map((link) => (
                 <li key={link.label}>
-                  <a href={link.href} className="text-sm text-white/75 transition hover:text-gold">
+                  <Link href={link.href} className="text-sm text-white/80 transition hover:text-gold">
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -82,18 +84,15 @@ export function SiteFooter() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-gold">
-              Contact
-            </h3>
-            <ul className="mt-5 space-y-3 text-sm text-white/75">
+            <h3 className="text-sm font-bold uppercase tracking-[0.15em] text-gold">Contact</h3>
+            <ul className="mt-5 space-y-4 text-sm text-white/80">
               <li className="flex gap-3">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="h-5 w-5 shrink-0 text-gold">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                 </svg>
                 <span>
-                  No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery,
-                  Chennai - 600 126, Tamil Nadu, India
+                  No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India
                 </span>
               </li>
               <li className="flex gap-3">
@@ -117,12 +116,8 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="container-trust flex flex-col items-center justify-between gap-3 py-6 text-center sm:flex-row sm:text-left">
-          <p className="text-sm text-white/60">
-            © {year} Neelakannu Educational Trust. All rights reserved.
-          </p>
-          <p className="text-xs text-white/50">
-            Founded by Prof. Dr. K. Chidambaram
-          </p>
+          <p className="text-sm text-white/60">© {year} Neelakannu Educational Trust. All rights reserved.</p>
+          <p className="text-xs text-white/50">Founded by Prof. Dr. K. Chidambaram</p>
         </div>
       </div>
     </footer>

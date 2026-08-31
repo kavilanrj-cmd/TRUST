@@ -35,11 +35,12 @@
   /* Neutrals */
   --secondary: #f3f5f9;
   --secondary-foreground: #1c2b4d;
-  --muted: #f3f5f9;
-  --muted-foreground: #5c6b85;
+  --muted: #f2f4f8;
+  --muted-foreground: #48566f;
   --accent: #eef2f7;
   --accent-foreground: #16294a;
   --cream: #fafaf7;
+  --surface-muted: #f7f9fc;
 
   /* Status */
   --success: #1f9d55;
@@ -87,6 +88,7 @@
   --color-gold-foreground: var(--gold-foreground);
   --color-gold-soft: var(--gold-soft);
   --color-cream: var(--cream);
+  --color-surface-muted: var(--surface-muted);
 
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
@@ -173,7 +175,7 @@ body {
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -209,6 +211,39 @@ body {
   animation-delay: 300ms;
 }
 
+/* Scroll-reveal ---------------------------------------------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s ease-out,
+    transform 0.7s ease-out;
+  will-change: opacity, transform;
+}
+
+[data-reveal].reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Respect users who prefer reduced motion ---------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Accessible focus fallback for browsers without ring support */
 a:focus-visible,
 button:focus-visible,
@@ -222,4 +257,9 @@ textarea:focus-visible {
 /* Smooth in-page anchor scrolling */
 html {
   scroll-behavior: smooth;
+}
+
+/* Offset anchored sections so the sticky header never covers content */
+section[id] {
+  scroll-margin-top: 96px;
 }

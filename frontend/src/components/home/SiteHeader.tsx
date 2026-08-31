@@ -3,23 +3,24 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useHomeContent } from "@/lib/home-content";
 
 const NAV_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "About Us", href: "#about" },
-  { label: "Scholarships", href: "#scholarships" },
-  { label: "How to Apply", href: "#how-to-apply" },
-  { label: "Success Stories", href: "#success-stories" },
-  { label: "News & Events", href: "#news" },
-  { label: "Contact", href: "#contact" },
+  { key: "nav.home", href: "#home" },
+  { key: "nav.about", href: "#about" },
+  { key: "nav.scholarships", href: "#scholarships" },
+  { key: "nav.howToApply", href: "#how-to-apply" },
+  { key: "nav.successStories", href: "#success-stories" },
+  { key: "nav.contact", href: "#contact" },
 ];
 
 export function SiteHeader() {
+  const { t } = useHomeContent();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -34,39 +35,41 @@ export function SiteHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full border-b transition-colors ${
-        scrolled ? "border-border bg-white/95 backdrop-blur" : "border-transparent bg-white"
+      className={`sticky top-0 z-50 w-full border-b bg-white transition-all ${
+        scrolled
+          ? "border-border shadow-[0_2px_20px_-6px_rgba(22,41,74,0.18)]"
+          : "border-transparent"
       }`}
     >
-      <div className="container-trust flex h-20 items-center justify-between gap-4">
-        <a href="#home" className="flex items-center gap-3">
+      <div className="container-trust flex h-[76px] items-center justify-between gap-4">
+        <a href="#home" className="flex items-center gap-3" aria-label="Neelakannu Educational Trust">
           <Image
             src="/neelakannu-logo.svg"
             alt="Neelakannu Educational Trust logo"
-            width={48}
-            height={48}
-            className="h-12 w-12"
+            width={52}
+            height={52}
+            className="h-12 w-12 shrink-0"
             priority
           />
           <span className="leading-tight">
             <span className="block font-serif text-lg font-bold tracking-tight text-navy">
               Neelakannu
             </span>
-            <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-gold-600">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-gold-600">
               Educational Trust
             </span>
           </span>
         </a>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-navy/80 transition hover:text-gold-600"
+              className="text-[15px] font-medium text-navy/80 transition hover:text-gold-600"
             >
-              {link.label}
+              {t(link.key, link.href.slice(1).replace(/-/g, " "))}
             </a>
           ))}
         </nav>
@@ -74,15 +77,15 @@ export function SiteHeader() {
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/login"
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-navy transition hover:bg-muted"
+            className="rounded-lg px-4 py-2.5 text-sm font-semibold text-navy-700 transition hover:text-navy"
           >
             Login
           </Link>
           <a
             href="#apply"
-            className="btn-gold rounded-lg px-5 py-2.5 text-sm font-semibold"
+            className="btn-gold rounded-lg px-6 py-2.5 text-sm shadow-sm"
           >
-            Apply Now
+            {t("nav.applyLabel", "Apply Now")}
           </a>
         </div>
 
@@ -108,7 +111,7 @@ export function SiteHeader() {
 
       {/* Mobile drawer */}
       {open && (
-        <div className="fixed inset-0 top-20 z-40 overflow-y-auto bg-white lg:hidden">
+        <div className="fixed inset-0 top-[76px] z-40 overflow-y-auto bg-white lg:hidden">
           <nav className="container-trust flex flex-col gap-1 py-6" aria-label="Mobile">
             {NAV_LINKS.map((link) => (
               <a
@@ -117,7 +120,7 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-3 text-base font-medium text-navy transition hover:bg-muted"
               >
-                {link.label}
+                {t(link.key, link.href.slice(1).replace(/-/g, " "))}
               </a>
             ))}
             <div className="mt-4 flex flex-col gap-3 border-t border-border pt-5">
@@ -133,7 +136,7 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 className="btn-gold"
               >
-                Apply Now
+                {t("nav.applyLabel", "Apply Now")}
               </a>
             </div>
           </nav>

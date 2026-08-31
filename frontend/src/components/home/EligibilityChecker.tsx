@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { useHomeContent } from "@/lib/home-content";
+import { Reveal } from "./Reveal";
 
 interface ScholarOption {
   id: string;
@@ -30,6 +32,7 @@ const inputClass = "field-input";
 const errClass = "mt-1 text-sm text-destructive";
 
 export function EligibilityChecker() {
+  const { t } = useHomeContent();
   const [scholarships, setScholarships] = useState<ScholarOption[]>([]);
   const [scholarshipId, setScholarshipId] = useState("");
   const [educationLevel, setEducationLevel] = useState("");
@@ -170,16 +173,18 @@ export function EligibilityChecker() {
     <section id="eligibility" className="bg-white">
       <div className="container-trust section-pad">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="eyebrow">Quick Check</span>
-          <h2 className="h2-section mt-4">Eligibility Checker</h2>
+          <span className="eyebrow">{t("home.eligibility.eyebrow", "Eligibility Checker")}</span>
+          <h2 className="h2-section mt-4">{t("home.eligibility.title", "Check Your Eligibility")}</h2>
           <p className="mt-4 text-muted-foreground">
-            Answer a few questions to see if you qualify for our scholarship
-            program.
+            {t(
+              "home.eligibility.description",
+              "Answer a few questions to see if you qualify for our scholarship program."
+            )}
           </p>
         </div>
 
-        <div className="mx-auto mt-12 max-w-2xl">
-          <div className="card-trust p-7 sm:p-9">
+        <Reveal className="mx-auto mt-12 max-w-2xl">
+          <div className="card-trust p-7 sm:p-10">
             <form onSubmit={handleSubmit} noValidate>
               <div className="grid gap-5">
                 {scholarships.length > 1 && (
@@ -228,68 +233,74 @@ export function EligibilityChecker() {
                   {errors.educationLevel && <p className={errClass}>{errors.educationLevel}</p>}
                 </div>
 
-                <div>
-                  <label htmlFor="el-marks" className="field-label">
-                    Marks / CGPA
-                  </label>
-                  <input
-                    id="el-marks"
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    placeholder="e.g. 75 or 8.5"
-                    className={inputClass}
-                    value={marks}
-                    onChange={(e) => {
-                      setMarks(e.target.value);
-                      setErrors((p) => ({ ...p, marks: undefined }));
-                    }}
-                  />
-                  {errors.marks && <p className={errClass}>{errors.marks}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="el-income" className="field-label">
-                    Family Income (₹ / year)
-                  </label>
-                  <input
-                    id="el-income"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    placeholder="e.g. 250000"
-                    className={inputClass}
-                    value={familyIncome}
-                    onChange={(e) => {
-                      setFamilyIncome(e.target.value);
-                      setErrors((p) => ({ ...p, familyIncome: undefined }));
-                    }}
-                  />
-                  {errors.familyIncome && <p className={errClass}>{errors.familyIncome}</p>}
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="el-marks" className="field-label">
+                      Marks / CGPA
+                    </label>
+                    <input
+                      id="el-marks"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      placeholder="e.g. 75 or 8.5"
+                      className={inputClass}
+                      value={marks}
+                      onChange={(e) => {
+                        setMarks(e.target.value);
+                        setErrors((p) => ({ ...p, marks: undefined }));
+                      }}
+                    />
+                    {errors.marks && <p className={errClass}>{errors.marks}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="el-income" className="field-label">
+                      Family Income (₹ / year)
+                    </label>
+                    <input
+                      id="el-income"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      placeholder="e.g. 250000"
+                      className={inputClass}
+                      value={familyIncome}
+                      onChange={(e) => {
+                        setFamilyIncome(e.target.value);
+                        setErrors((p) => ({ ...p, familyIncome: undefined }));
+                      }}
+                    />
+                    {errors.familyIncome && <p className={errClass}>{errors.familyIncome}</p>}
+                  </div>
                 </div>
               </div>
 
               <button type="submit" disabled={checking} className="btn-primary mt-7 w-full">
-                {checking ? "Checking…" : "Check Eligibility"}
+                {checking ? "Checking…" : t("home.eligibility.submitLabel", "Check Eligibility")}
               </button>
+
+              <p className="mt-4 text-center text-sm text-muted-foreground">
+                {t(
+                  "home.eligibility.helpText",
+                  "This quick check gives you an indicative result. Final eligibility is determined during the formal review."
+                )}
+              </p>
             </form>
 
             {apiError && (
-              <p className="mt-4 rounded-lg bg-gold-soft px-4 py-3 text-sm text-navy-800">
-                {apiError}
-              </p>
+              <p className="mt-5 rounded-lg bg-gold-soft px-4 py-3 text-sm text-navy-800">{apiError}</p>
             )}
 
             {result && (
               <div
-                className={`mt-7 rounded-2xl border p-6 ${
+                className={`mt-7 overflow-hidden rounded-2xl border ${
                   result.eligible
                     ? "border-success/30 bg-success/5"
                     : "border-destructive/30 bg-destructive/5"
                 }`}
                 role="status"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 border-b border-black/5 px-6 py-4">
                   <span
                     className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${
                       result.eligible ? "bg-success text-white" : "bg-destructive text-white"
@@ -300,47 +311,49 @@ export function EligibilityChecker() {
                       {result.eligible ? (
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       ) : (
-                        <>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       )}
                     </svg>
                   </span>
-                  <p className="text-lg font-bold text-navy">
-                    {result.eligible ? "You are eligible!" : "Not eligible at this time"}
-                  </p>
+                  <div>
+                    <p className="text-lg font-bold text-navy">
+                      {result.eligible ? "You are eligible!" : "Not eligible at this time"}
+                    </p>
+                    {result.scholarshipName && (
+                      <p className="text-sm text-muted-foreground">{result.scholarshipName}</p>
+                    )}
+                  </div>
                 </div>
 
-                {result.reason && (
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    {result.reason}
-                  </p>
-                )}
+                <div className="px-6 py-5">
+                  {result.reason && (
+                    <p className="text-sm leading-relaxed text-muted-foreground">{result.reason}</p>
+                  )}
 
-                {result.eligible ? (
-                  <div className="mt-5">
-                    <p className="text-sm font-medium text-navy">Next steps:</p>
-                    <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-                      <li>Create an account on the trust portal.</li>
-                      <li>Complete the online application form.</li>
-                      <li>Upload the required documents.</li>
-                      <li>Pay the application fee and submit.</li>
-                    </ol>
-                    <a href="#apply" className="btn-gold mt-5">
-                      Apply Now
-                    </a>
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    You may still be eligible under other criteria or future
-                    programs. Contact the Trust for guidance, or review the
-                    requirements again.
-                  </p>
-                )}
+                  {result.eligible ? (
+                    <div>
+                      <p className="text-sm font-medium text-navy">Next steps:</p>
+                      <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+                        <li>Create an account on the trust portal.</li>
+                        <li>Complete the online application form.</li>
+                        <li>Upload the required documents.</li>
+                        <li>Pay the application fee and submit.</li>
+                      </ol>
+                      <a href="#apply" className="btn-gold mt-5">
+                        Apply Now
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      You may still be eligible under other criteria or future programs. Contact the Trust for
+                      guidance, or review the requirements again.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

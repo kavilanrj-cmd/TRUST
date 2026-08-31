@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { useHomeContent } from "@/lib/home-content";
+import { Reveal } from "./Reveal";
 
 interface NewsItem {
   id: string;
@@ -46,6 +48,7 @@ function formatDate(iso?: string): string {
 }
 
 export function NewsEvents() {
+  const { t } = useHomeContent();
   const [items, setItems] = useState<NewsItem[]>(FALLBACK);
 
   useEffect(() => {
@@ -71,15 +74,17 @@ export function NewsEvents() {
   }, []);
 
   return (
-    <section id="news" className="bg-white">
+    <section id="news" className="bg-cream">
       <div className="container-trust section-pad">
         <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
           <div className="max-w-2xl">
-            <span className="eyebrow">Stay Informed</span>
-            <h2 className="h2-section mt-4">News &amp; Events</h2>
+            <span className="eyebrow">{t("home.news.eyebrow", "News & Updates")}</span>
+            <h2 className="h2-section mt-4">{t("home.news.title", "Latest News & Events")}</h2>
             <p className="mt-4 text-muted-foreground">
-              Updates, announcements and opportunities from the Neelakannu
-              Educational Trust.
+              {t(
+                "home.news.description",
+                "Updates, announcements and opportunities from the Neelakannu Educational Trust."
+              )}
             </p>
           </div>
           <a
@@ -91,30 +96,28 @@ export function NewsEvents() {
         </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <article key={item.id} className="card-trust flex flex-col p-7 transition hover:-translate-y-1">
-              <div className="flex items-center gap-3 text-sm">
-                <span className="inline-flex items-center rounded-full bg-gold-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy-800">
-                  {item.category ?? "Update"}
-                </span>
-                {item.createdAt && (
-                  <time className="text-muted-foreground">{formatDate(item.createdAt)}</time>
-                )}
-              </div>
-              <h3 className="mt-4 font-semibold text-navy">{item.title}</h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {item.content}
-              </p>
-              <a
-                href="#news"
-                className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-gold-600 hover:text-gold-600/80"
-              >
-                Read More
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M21 12H3" />
-                </svg>
-              </a>
-            </article>
+          {items.map((item, i) => (
+            <Reveal key={item.id} delay={(i % 3) * 90}>
+              <article className="card-trust flex h-full flex-col p-7 transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(22,41,74,0.3)]">
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="inline-flex items-center rounded-full bg-gold-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy-800">
+                    {item.category ?? "Update"}
+                  </span>
+                  {item.createdAt && <time className="text-muted-foreground">{formatDate(item.createdAt)}</time>}
+                </div>
+                <h3 className="mt-4 font-semibold text-navy">{item.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{item.content}</p>
+                <a
+                  href="#news"
+                  className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-gold-600 hover:text-gold-600/80"
+                >
+                  Read More
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M21 12H3" />
+                  </svg>
+                </a>
+              </article>
+            </Reveal>
           ))}
         </div>
       </div>

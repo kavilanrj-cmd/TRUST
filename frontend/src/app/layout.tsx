@@ -23,6 +23,7 @@ export default function RootLayout({
     <html
       lang="en"
       className="bg-background text-foreground"
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-screen flex flex-col">
         {children}
