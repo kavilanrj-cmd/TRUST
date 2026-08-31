@@ -9,6 +9,14 @@
 -- migrate reset` (destructive).
 
 -- 1. Extend enum values (additive; never remove existing values)
+-- Ensure the UserRole enum type exists before adding values (additive; safe if already present)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'UserRole') THEN
+    CREATE TYPE "UserRole" AS ENUM ('STUDENT', 'ADMIN');
+  END IF;
+END$$;
+
 ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'REVIEWER';
 ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'FOUNDER';
 ALTER TYPE "ApplicationStatus" ADD VALUE IF NOT EXISTS 'DOCUMENT_VERIFICATION';
