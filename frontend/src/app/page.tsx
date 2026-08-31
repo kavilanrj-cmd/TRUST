@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ScholarshipDetails } from "./ScholarshipDetails";
 
 export const metadata = {
   title: "Neelakannu Educational Trust - Digital Scholarship Platform",
@@ -47,17 +48,10 @@ export default function HomePage() {
           <section className="mb-16">
             <h2 className="text-2xl font-semibold mb-6">Scholarship Program</h2>
             <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
-              <div className="p-4 border rounded bg-card">
-                <h4 className="font-medium mb-2">Application Fee</h4>
-                <p className="text-3xl font-bold text-primary">[CONFIGURABLE]</p>
-              </div>
+              <ScholarshipDetails />
               <div className="p-4 border rounded bg-card">
                 <h4 className="font-medium mb-2">Eligibility</h4>
                 <p className="text-muted-foreground">Minimum qualifications apply</p>
-              </div>
-              <div className="p-4 border rounded bg-card">
-                <h4 className="font-medium mb-2">Deadline</h4>
-                <p className="text-muted-foreground">[CONFIGURABLE]</p>
               </div>
             </div>
           </section>
@@ -143,12 +137,12 @@ export default function HomePage() {
           <section>
             <h2 className="text-2xl font-semibold mb-6">Announcements</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg border border-border bg-card hover:hover:bg-primary/5 transition-colors">
+              <div className="p-4 rounded-lg border border-border bg-card hover:bg-primary/5 transition-colors">
                 <p className="text-sm text-muted-foreground">
                   Application portal now open for 2026 intake
                 </p>
               </div>
-              <div className="p-4 rounded-lg border border-border bg-card hover:hover:bg-primary/5 transition-colors">
+              <div className="p-4 rounded-lg border border-border bg-card hover:bg-primary/5 transition-colors">
                 <p className="text-sm text-muted-foreground">
                   Scholarship eligibility rules updated
                 </p>

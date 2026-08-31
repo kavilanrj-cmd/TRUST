@@ -41,6 +41,8 @@ router.get("/", async (req: Request, res: Response) => {
         ),
       })
     );
+
+    return res.json(formattedScholarships);
   } catch (error) {
     console.error("Get scholarships error:", error);
     return res.status(500).json({ error: "Internal server error" });

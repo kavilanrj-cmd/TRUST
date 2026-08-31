@@ -31,7 +31,7 @@ export default function ScholarshipPage() {
             <p className="text-3xl font-bold text-primary mb-2">
               Neelakannu Educational Trust Scholarship 2026
             </p>
-            <p className="text-muted-foreground line-height-relaxed">
+            <p className="text-muted-foreground leading-relaxed">
               A merit-cum-means based scholarship program designed to support
               deserving students pursuing their academic goals.
             </p>
@@ -41,7 +41,7 @@ export default function ScholarshipPage() {
             <p className="text-3xl font-bold text-primary mb-2">
               ₹[CONFIGURABLE]
             </p>
-            <p className="text-muted-foreground line-height-relaxed">
+            <p className="text-muted-foreground leading-relaxed">
               The application fee is configurable from the Trust&rsquo;s scholarship
               settings and must be paid via Razorpay to complete the application.
             </p>

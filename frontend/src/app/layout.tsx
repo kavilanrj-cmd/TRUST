@@ -7,6 +7,7 @@ Built with Next.js, TypeScript, Tailwind CSS
 */
 
 import Image from "next/image";
+import "./globals.css";
 
 export const metadata = {
   title: "Neelakannu Educational Trust - Digital Scholarship Platform",

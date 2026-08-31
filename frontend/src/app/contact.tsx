@@ -28,19 +28,19 @@ export default function ContactPage() {
           <div>
             <h2 className="text-2xl font-semibold mb-6">Trust Office</h2>
             <div className="space-y-4">
-              <p className="text-muted-foreground line-height-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 No. 1/82, Ayyanar Street,
                 Shakthi Ayyanar Nagar,
                 Thiruvanchery,
                 Chennai - 600 126,
                 Tamil Nadu, India
               </p>
-              <p className="text-muted-foreground line-height-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 Email: <a href="mailto:neelakannueducationaltrust@gmail.com" className="underline hover:text-primary">
                   neelakannueducationaltrust@gmail.com
                 </a>
               </p>
-              <p className="text-muted-foreground line-height-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 Phone: 94443 27336
               </p>
             </div>
@@ -53,7 +53,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   placeholder="Your full name"
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus-primary focus-border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               <div>
@@ -61,7 +61,7 @@ export default function ContactPage() {
                 <input
                   type="email"
                   placeholder="your.email@example.com"
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus-primary focus:border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               <div>
@@ -69,7 +69,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   placeholder="Subject"
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus-primary focus:border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               <div>
@@ -77,7 +77,7 @@ export default function ContactPage() {
                 <textarea
                   rows={4}
                   placeholder="Your message here..."
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus-primary focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                 />
               </div>
               <button

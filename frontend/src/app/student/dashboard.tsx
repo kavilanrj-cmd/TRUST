@@ -273,7 +273,7 @@ export default function StudentDashboard() {
             {status === "DRAFT" && (
               <Link
                 href="/student/application"
-                className="inline-block py-2 px-4 rounded-bg primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+                className="inline-block py-2 px-4 rounded bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
                 Continue Application
               </Link>
             )}

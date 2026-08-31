@@ -20,7 +20,7 @@ export default function StudentApplicationPage() {
               <span>4</span>
               <span>5</span>
             </div>
-            <div className="flex-1 h-1 rounded-bg primary" aria-hidden="true" />
+            <div className="flex-1 h-1 rounded bg-primary" aria-hidden="true" />
           </nav>
 
           {/* Form steps */}
@@ -35,7 +35,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter your full name"
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -43,7 +43,7 @@ export default function StudentApplicationPage() {
                   <label className="block text-sm font-medium mb-2">Date of Birth</label>
                   <input
                     type="date"
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -53,7 +53,7 @@ export default function StudentApplicationPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">Gender</label>
                   <select
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   >
                     <option value="">Select gender</option>
@@ -67,7 +67,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="tel"
                     placeholder="Enter your phone number"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -84,7 +84,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter your street address"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -93,7 +93,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter your city"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -105,14 +105,14 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter your district"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">State</label>
                   <select
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   >
                     <option value="">Select state</option>
@@ -126,7 +126,7 @@ export default function StudentApplicationPage() {
                 <input
                   type="text"
                   placeholder="Enter PIN code (6 digits)"
-                  className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                   pattern="[0-9]{6}"
                   maxLength={6}
@@ -144,14 +144,14 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter parent/guardian name"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Relationship</label>
                   <select
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   >
                     <option value="">Select relationship</option>
@@ -168,7 +168,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter occupation"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -177,7 +177,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="tel"
                     placeholder="Enter contact number"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -194,7 +194,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter your school/college name"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -203,7 +203,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter your course"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function StudentApplicationPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">Education Level</label>
                   <select
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   >
                     <option value="">Select education level</option>
@@ -226,7 +226,7 @@ export default function StudentApplicationPage() {
                   <input
                     type="text"
                     placeholder="Enter academic year"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
@@ -237,7 +237,7 @@ export default function StudentApplicationPage() {
                 <input
                   type="number"
                   placeholder="Enter year of study"
-                  className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                   min={1}
                   max={6}
@@ -255,14 +255,14 @@ export default function StudentApplicationPage() {
                   <input
                     type="number"
                     placeholder="Enter family income"
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Income Source</label>
                   <select
-                    className="w-full px-4 py-3 border rounded-lg focus-ring-2 focus-primary focus-border-transparent"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   >
                     <option value="">Select income source</option>
