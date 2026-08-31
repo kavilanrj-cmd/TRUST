@@ -1,27 +1,56 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Neelakannu Educational Trust — Design System
+   Light, premium educational-trust aesthetic.
+   Deep navy primary + warm gold accent on a clean white base.
+   ============================================================ */
+
 :root {
+  /* Core surfaces & text */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1c2b4d;
+
+  /* Cards & surfaces */
   --card: #ffffff;
-  --card-foreground: #171717;
+  --card-foreground: #1c2b4d;
   --popover: #ffffff;
-  --popover-foreground: #171717;
-  --primary: #4f46e5;
+  --popover-foreground: #1c2b4d;
+
+  /* Brand navy */
+  --primary: #16294a;
   --primary-foreground: #ffffff;
-  --secondary: #eef2ff;
-  --secondary-foreground: #1e1b4b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #eef2ff;
-  --accent-foreground: #1e1b4b;
-  --success: #16a34a;
+  --navy: #16294a;
+  --navy-800: #1e365e;
+  --navy-700: #2a4470;
+  --navy-600: #3b5789;
+  --navy-50: #f2f5fa;
+
+  /* Warm gold accent */
+  --gold: #c8a24a;
+  --gold-600: #b8932f;
+  --gold-foreground: #1c2b4d;
+  --gold-soft: #fbf6ea;
+
+  /* Neutrals */
+  --secondary: #f3f5f9;
+  --secondary-foreground: #1c2b4d;
+  --muted: #f3f5f9;
+  --muted-foreground: #5c6b85;
+  --accent: #eef2f7;
+  --accent-foreground: #16294a;
+  --cream: #fafaf7;
+
+  /* Status */
+  --success: #1f9d55;
   --success-foreground: #ffffff;
-  --destructive: #dc2626;
+  --destructive: #d64545;
   --destructive-foreground: #ffffff;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #4f46e5;
+
+  /* Lines */
+  --border: #e4e8ef;
+  --input: #d5dbe7;
+  --ring: #16294a;
 }
 
 @theme inline {
@@ -39,45 +68,158 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Brand tokens (usable as bg-gold, text-navy, bg-navy-700, etc.) */
+  --color-navy: var(--navy);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+  --color-navy-600: var(--navy-600);
+  --color-navy-50: var(--navy-50);
+  --color-gold: var(--gold);
+  --color-gold-600: var(--gold-600);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-gold-soft: var(--gold-soft);
+  --color-cream: var(--cream);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-serif: Georgia, "Times New Roman", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #111111;
-    --card-foreground: #ededed;
-    --popover: #111111;
-    --popover-foreground: #ededed;
-    --primary: #818cf8;
-    --primary-foreground: #1e1b4b;
-    --secondary: #1e1b4b;
-    --secondary-foreground: #eef2ff;
-    --muted: #1a1a1a;
-    --muted-foreground: #a1a1aa;
-    --accent: #1e1b4b;
-    --accent-foreground: #eef2ff;
-    --success: #22c55e;
-    --success-foreground: #052e16;
-    --destructive: #f87171;
-    --destructive-foreground: #450a0a;
-    --border: #27272a;
-    --input: #27272a;
-    --ring: #818cf8;
-  }
+/* Explicit light theme: do NOT auto-switch on OS dark preference.
+   Keeps text legible and prevents washed-out/low-contrast rendering. */
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Reusable component classes --------------------------------- */
+@layer components {
+  .container-trust {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-pad {
+    @apply py-16 sm:py-20 lg:py-24;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-4 py-1.5
+      text-xs font-semibold uppercase tracking-[0.16em] text-navy-800;
+  }
+
+  .h2-section {
+    @apply text-3xl font-bold tracking-tight text-navy sm:text-4xl;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3
+      text-sm font-semibold text-white shadow-sm transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy
+      focus-visible:ring-offset-2 hover:bg-navy-800;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-gold px-6 py-3
+      text-sm font-semibold text-navy shadow-sm transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-600
+      focus-visible:ring-offset-2 hover:bg-gold-600;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-navy/20
+      bg-white px-6 py-3 text-sm font-semibold text-navy transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy
+      focus-visible:ring-offset-2 hover:border-navy/40 hover:bg-muted;
+  }
+
+  .btn-white {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3
+      text-sm font-semibold text-navy shadow-sm transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60
+      focus-visible:ring-offset-2 hover:bg-navy-50;
+  }
+
+  .card-trust {
+    @apply rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(22,41,74,0.04),0_8px_24px_-12px_rgba(22,41,74,0.12)];
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-navy;
+  }
+
+  .field-input {
+    @apply w-full rounded-lg border border-input bg-white px-4 py-2.5 text-sm text-foreground
+      placeholder:text-muted-foreground transition
+      focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15;
+  }
+}
+
+/* Entrance animations (subtle, tasteful) ---------------------- */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s ease-out both;
+}
+
+.animate-float {
+  animation: floaty 6s ease-in-out infinite;
+}
+
+.delay-75 {
+  animation-delay: 75ms;
+}
+.delay-150 {
+  animation-delay: 150ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Accessible focus fallback for browsers without ring support */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* Smooth in-page anchor scrolling */
+html {
+  scroll-behavior: smooth;
 }

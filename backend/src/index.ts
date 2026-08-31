@@ -2,39 +2,66 @@ import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import applicationRoutes from "./applications/index";
 import authRoutes from "./auth/index";
 import scholarshipRoutes from "./scholarships/index";
 import documentRoutes from "./documents/index";
 import paymentRoutes from "./payments/index";
-import adminRoutes from "./admin/index";
+import adminRoutes, { routerPublic, bootstrapFounder } from "./admin/index";
 import db from "./utils/db";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const clientOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 // Security headers
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration (allow credentialed requests for HttpOnly cookies)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (same-origin / non-browser tools)
+    if (!origin) return callback(null, true);
+    if (clientOrigins.includes(origin)) return callback(null, true);
+    // In production, restrict to configured origins; in dev permit localhost.
+    if (process.env.NODE_ENV !== "production" && /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  exposedHeaders: ["Content-Disposition"],
 }));
 
-// Rate limiting
+// Global rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many requests, please try again later."
+  max: 1000,
+  message: "Too many requests, please try again later.",
 });
 app.use(limiter);
 
-// Body parsing
+// Stricter rate limiting for authentication endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: "Too many login attempts, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Body parsing + cookies
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser(process.env.COOKIE_SECRET || "neelakannu-cookie-secret"));
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
@@ -46,12 +73,16 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 // API routes
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/scholarships", scholarshipRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/content", routerPublic);
+
+// Serve uploaded media files through an authenticated route (see admin router).
+// Never serve the raw uploads directory publicly.
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
@@ -61,12 +92,20 @@ app.use((_req: Request, res: Response) => {
 // Error handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error("Error:", err);
-  res.status(500).json({ error: "Internal server error" });
+  const status = err?.status || err?.statusCode || 500;
+  const message =
+    status === 500 || !err?.message
+      ? "Internal server error"
+      : err.message;
+  res.status(status).json({ error: message });
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Backend running at http://localhost:${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
 });
+
+// Bootstrap a founder account if no staff exists yet (from env).
+bootstrapFounder();
 
 export { app };

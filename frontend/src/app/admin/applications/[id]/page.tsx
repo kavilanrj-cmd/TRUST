@@ -1,0 +1,448 @@
+"use client";
+
+import React, { useEffect, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import { Card, Badge, Button, Spinner, ErrorState, Field } from "@/components/admin/ui";
+import { adminApi, statusColor, fmtDate, fmtDateTime } from "@/lib/admin-api";
+
+const VALID_STATUSES = [
+  "DRAFT", "SUBMITTED", "UNDER_REVIEW", "DOCUMENT_VERIFICATION",
+  "APPROVED", "REJECTED", "WAITLISTED", "WITHDRAWN", "CORRECTION_REQUESTED",
+];
+
+const TRANSITIONS: Record<string, string[]> = {
+  DRAFT: ["SUBMITTED", "WITHDRAWN"],
+  SUBMITTED: ["UNDER_REVIEW", "REJECTED", "WITHDRAWN", "CORRECTION_REQUESTED"],
+  UNDER_REVIEW: ["DOCUMENT_VERIFICATION", "APPROVED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "WITHDRAWN"],
+  DOCUMENT_VERIFICATION: ["APPROVED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "UNDER_REVIEW", "WITHDRAWN"],
+  APPROVED: ["REJECTED", "WITHDRAWN"],
+  REJECTED: ["UNDER_REVIEW", "APPROVED", "WITHDRAWN"],
+  WAITLISTED: ["APPROVED", "REJECTED", "WITHDRAWN"],
+  WITHDRAWN: [],
+  CORRECTION_REQUESTED: ["SUBMITTED", "UNDER_REVIEW", "DRAFT", "WITHDRAWN"],
+};
+
+const DOC_STATUSES = ["VERIFIED", "REJECTED", "RE_UPLOAD_REQUESTED", "PENDING"];
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-6">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-navy">{title}</h3>
+      <div className="rounded-lg border border-border bg-gray-50 p-4">{children}</div>
+    </div>
+  );
+}
+
+function FieldRow({ label, value }: { label: string; value?: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5 py-1.5 sm:flex-row sm:items-center sm:gap-4">
+      <span className="min-w-[160px] text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm text-navy">{value || "—"}</span>
+    </div>
+  );
+}
+
+export default function ApplicationDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+
+  const [app, setApp] = useState<any>(null);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [newStatus, setNewStatus] = useState("");
+  const [statusNote, setStatusNote] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const [noteContent, setNoteContent] = useState("");
+  const [noteLoading, setNoteLoading] = useState(false);
+
+  const [docVerify, setDocVerify] = useState<Record<string, string>>({});
+  const [docNote, setDocNote] = useState<Record<string, string>>({});
+  const [verifyLoading, setVerifyLoading] = useState<Record<string, boolean>>({});
+
+  const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await adminApi.applications.detail(id);
+      setApp(data.application);
+      setActivities(data.activities || []);
+    } catch (e: any) {
+      setError(e.message || "Failed to load application");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]);
+
+  const handleStatusChange = async () => {
+    if (!newStatus) return;
+    const requiresNote = ["REJECTED", "CORRECTION_REQUESTED", "WITHDRAWN"].includes(newStatus);
+    if (requiresNote && !statusNote.trim()) {
+      setStatusMsg("A note is required for this status change.");
+      return;
+    }
+    setStatusLoading(true);
+    setStatusMsg("");
+    try {
+      await adminApi.applications.changeStatus(id, {
+        status: newStatus,
+        note: requiresNote ? statusNote.trim() : undefined,
+      });
+      setStatusMsg("Status updated successfully.");
+      setNewStatus("");
+      setStatusNote("");
+      fetchDetail();
+    } catch (e: any) {
+      setStatusMsg(e.message || "Failed to update status");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noteContent.trim()) return;
+    setNoteLoading(true);
+    try {
+      await adminApi.applications.addNote(id, { content: noteContent.trim() });
+      setNoteContent("");
+      fetchDetail();
+    } catch (e: any) {
+      alert(e.message || "Failed to add note");
+    } finally {
+      setNoteLoading(false);
+    }
+  };
+
+  const handleVerifyDocument = async (docId: string) => {
+    const statusVal = docVerify[docId];
+    if (!statusVal) return;
+    const requiresNote = ["REJECTED", "RE_UPLOAD_REQUESTED"].includes(statusVal);
+    if (requiresNote && !docNote[docId]?.trim()) {
+      alert("A reason is required for this action.");
+      return;
+    }
+    setVerifyLoading((prev) => ({ ...prev, [docId]: true }));
+    try {
+      await adminApi.applications.verifyDocument(docId, {
+        verificationStatus: statusVal,
+        reason: requiresNote ? docNote[docId]?.trim() : undefined,
+      });
+      setDocVerify((prev) => ({ ...prev, [docId]: "" }));
+      setDocNote((prev) => ({ ...prev, [docId]: "" }));
+      fetchDetail();
+    } catch (e: any) {
+      alert(e.message || "Failed to verify document");
+    } finally {
+      setVerifyLoading((prev) => ({ ...prev, [docId]: false }));
+    }
+  };
+
+  const handleDownload = async (docId: string) => {
+    const url = adminApi.applications.documentAccess(docId);
+    try {
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank");
+    } catch (e: any) {
+      alert(e.message || "Failed to download document");
+    }
+  };
+
+  const allowedTransitions = app ? (TRANSITIONS[app.status] || []) : [];
+
+  if (error) return <AdminLayout><ErrorState message={error} /></AdminLayout>;
+  if (loading || !app) return <AdminLayout><Spinner label="Loading application..." /></AdminLayout>;
+
+  const pd = app.personalDetails;
+  const addr = app.address;
+  const pg = app.parentGuardian;
+  const acad = app.academicDetails;
+  const fin = app.financialDetails;
+  const docs = app.applicationDocuments || [];
+  const notes = app.notes || [];
+  const payments = app.payments || [];
+
+  return (
+    <AdminLayout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-navy">
+          Application {app.applicationId}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Submitted {fmtDate(app.submittedAt || app.createdAt)}
+        </p>
+      </div>
+
+      <div className="mb-4 flex items-center gap-3">
+        <Badge className={statusColor(app.status)}>{app.status.replace(/_/g, " ")}</Badge>
+        <span className="text-sm text-muted-foreground">
+          {app.scholarshipProgram?.name || "—"}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2 space-y-6">
+          <Section title="Personal Details">
+            <FieldRow label="Full Name" value={pd?.fullName} />
+            <FieldRow label="Email" value={app.student?.email || pd?.email} />
+            <FieldRow label="Phone" value={pd?.phone} />
+            <FieldRow label="Date of Birth" value={fmtDate(pd?.dateOfBirth)} />
+            <FieldRow label="Gender" value={pd?.gender} />
+            <FieldRow label="Aadhaar Number" value={pd?.aadhaarNumber} />
+            <FieldRow label="Religion" value={pd?.religion} />
+            <FieldRow label="Caste" value={pd?.caste} />
+            <FieldRow label="Category" value={pd?.category} />
+          </Section>
+
+          <Section title="Address">
+            <FieldRow label="Street" value={addr?.street} />
+            <FieldRow label="City" value={addr?.city} />
+            <FieldRow label="District" value={addr?.district} />
+            <FieldRow label="State" value={addr?.state} />
+            <FieldRow label="Pincode" value={addr?.pincode} />
+          </Section>
+
+          <Section title="Parent / Guardian">
+            <FieldRow label="Name" value={pg?.name} />
+            <FieldRow label="Relation" value={pg?.relation} />
+            <FieldRow label="Phone" value={pg?.phone} />
+            <FieldRow label="Occupation" value={pg?.occupation} />
+            <FieldRow label="Annual Income" value={pg?.annualIncome != null ? `₹${pg.annualIncome.toLocaleString()}` : undefined} />
+          </Section>
+
+          <Section title="Academic Details">
+            <FieldRow label="Education Level" value={acad?.educationLevel?.replace(/_/g, " ")} />
+            <FieldRow label="Course" value={acad?.course} />
+            <FieldRow label="School / College" value={acad?.schoolCollege} />
+            <FieldRow label="Year of Study" value={acad?.yearOfStudy} />
+            <FieldRow label="Percentage" value={acad?.percentage != null ? `${acad.percentage}%` : undefined} />
+            <FieldRow label="CGPA" value={acad?.cgpa} />
+            <FieldRow label="Institution Type" value={acad?.institutionType} />
+          </Section>
+
+          <Section title="Financial Details">
+            <FieldRow label="Annual Family Income" value={fin?.annualFamilyIncome != null ? `₹${fin.annualFamilyIncome.toLocaleString()}` : undefined} />
+            <FieldRow label="Family Assets" value={fin?.familyAssets} />
+            <FieldRow label="Other Scholarships" value={fin?.otherScholarships} />
+            <FieldRow label="Bank Name" value={fin?.bankName} />
+            <FieldRow label="Account Number" value={fin?.accountNumber} />
+            <FieldRow label="IFSC Code" value={fin?.ifscCode} />
+          </Section>
+
+          <Section title="Application Metrics">
+            <FieldRow label="Application ID" value={app.applicationId} />
+            <FieldRow label="Created" value={fmtDateTime(app.createdAt)} />
+            <FieldRow label="Submitted" value={fmtDateTime(app.submittedAt)} />
+            <FieldRow label="Updated" value={fmtDateTime(app.updatedAt)} />
+            <FieldRow label="Documents Count" value={app._count?.applicationDocuments} />
+          </Section>
+
+          {payments.length > 0 && (
+            <Section title="Payments">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                      <th className="pb-2 pr-4 font-semibold">Amount</th>
+                      <th className="pb-2 pr-4 font-semibold">Status</th>
+                      <th className="pb-2 font-semibold">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payments.map((p: any) => (
+                      <tr key={p.id} className="border-b border-border last:border-0">
+                        <td className="py-2 pr-4">₹{p.amount?.toLocaleString()}</td>
+                        <td className="py-2 pr-4"><Badge className={statusColor(p.status)}>{p.status}</Badge></td>
+                        <td className="py-2">{fmtDate(p.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Section>
+          )}
+
+          {docs.length > 0 && (
+            <Section title="Documents">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                      <th className="pb-2 pr-4 font-semibold">Name</th>
+                      <th className="pb-2 pr-4 font-semibold">Type</th>
+                      <th className="pb-2 pr-4 font-semibold">Verification</th>
+                      <th className="pb-2 pr-4 font-semibold">Download</th>
+                      <th className="pb-2 font-semibold">Verify</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {docs.map((doc: any) => (
+                      <tr key={doc.id} className="border-b border-border last:border-0">
+                        <td className="py-2.5 pr-4 font-medium text-navy">{doc.originalFilename || doc.name}</td>
+                        <td className="py-2.5 pr-4 text-muted-foreground">{doc.fileType || "—"}</td>
+                        <td className="py-2.5 pr-4">
+                          <Badge className={statusColor(doc.verificationStatus || "PENDING")}>
+                            {(doc.verificationStatus || "PENDING").replace(/_/g, " ")}
+                          </Badge>
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <button
+                            className="text-xs font-semibold text-navy hover:underline"
+                            onClick={() => handleDownload(doc.id)}
+                          >
+                            Download
+                          </button>
+                        </td>
+                        <td className="py-2.5">
+                          <div className="flex items-center gap-1">
+                            <select
+                              className="field-input text-xs"
+                              value={docVerify[doc.id] || ""}
+                              onChange={(e) => setDocVerify((prev) => ({ ...prev, [doc.id]: e.target.value }))}
+                            >
+                              <option value="">Select...</option>
+                              {DOC_STATUSES.map((s) => (
+                                <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                              ))}
+                            </select>
+                            {["REJECTED", "RE_UPLOAD_REQUESTED"].includes(docVerify[doc.id] || "") && (
+                              <input
+                                type="text"
+                                className="field-input text-xs"
+                                placeholder="Reason..."
+                                value={docNote[doc.id] || ""}
+                                onChange={(e) => setDocNote((prev) => ({ ...prev, [doc.id]: e.target.value }))}
+                              />
+                            )}
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              disabled={!docVerify[doc.id] || verifyLoading[doc.id]}
+                              onClick={() => handleVerifyDocument(doc.id)}
+                            >
+                              {verifyLoading[doc.id] ? "..." : "Go"}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Section>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <Card title="Change Status">
+            {allowedTransitions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No status transitions available from {app.status}.</p>
+            ) : (
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="field-label">New Status</span>
+                  <select
+                    className="field-input"
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                  >
+                    <option value="">Select status...</option>
+                    {allowedTransitions.map((s) => (
+                      <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                    ))}
+                  </select>
+                </label>
+
+                {["REJECTED", "CORRECTION_REQUESTED", "WITHDRAWN"].includes(newStatus) && (
+                  <Field label="Note (required)" hint="Provide a reason for this status change">
+                    <textarea
+                      className="field-input"
+                      rows={3}
+                      value={statusNote}
+                      onChange={(e) => setStatusNote(e.target.value)}
+                    />
+                  </Field>
+                )}
+
+                {statusMsg && (
+                  <p className={`text-xs ${statusMsg.includes("success") ? "text-green-600" : "text-red-600"}`}>
+                    {statusMsg}
+                  </p>
+                )}
+
+                <Button
+                  variant="gold"
+                  disabled={!newStatus || statusLoading}
+                  onClick={handleStatusChange}
+                >
+                  {statusLoading ? "Updating..." : "Update Status"}
+                </Button>
+              </div>
+            )}
+          </Card>
+
+          <Card title={`Notes (${notes.length})`}>
+            <form onSubmit={handleAddNote} className="mb-4 space-y-2">
+              <textarea
+                className="field-input"
+                rows={3}
+                placeholder="Add a note..."
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+              />
+              <Button type="submit" size="sm" disabled={!noteContent.trim() || noteLoading}>
+                {noteLoading ? "Adding..." : "Add Note"}
+              </Button>
+            </form>
+
+            {notes.length === 0 && (
+              <p className="text-sm text-muted-foreground">No notes yet.</p>
+            )}
+
+            <div className="space-y-3">
+              {notes.map((n: any) => (
+                <div key={n.id} className="rounded-lg border border-border p-3">
+                  <p className="text-sm text-navy whitespace-pre-wrap">{n.content}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {n.author?.name || "Staff"} &middot; {fmtDateTime(n.createdAt)}
+                    {n.isInternal && <span className="ml-2 rounded bg-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-navy">Internal</span>}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {activities.length > 0 && (
+            <Card title="Activity Timeline">
+              <div className="space-y-3">
+                {activities.map((act: any) => (
+                  <div key={act.id} className="flex items-start gap-3">
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />
+                    <div>
+                      <p className="text-sm text-navy">
+                        <span className="font-medium">{act.actorName || "Staff"}</span>{" "}
+                        <span className="text-muted-foreground">{act.action?.replace(/_/g, " ")}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{fmtDateTime(act.createdAt)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}

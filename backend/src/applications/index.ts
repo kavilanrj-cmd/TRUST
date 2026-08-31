@@ -3,6 +3,7 @@
 
 import express, { Request, Response } from "express";
 import prisma from "../utils/db";
+import { notifyNewApplication } from "../admin/applications";
 
 const router = express.Router();
 
@@ -401,6 +402,18 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
         submittedAt: new Date(),
       },
     });
+
+    // Notify admin staff about the new submission (non-fatal).
+    try {
+      const pd = await prisma.personalDetails.findUnique({ where: { applicationId: id } });
+      await notifyNewApplication({
+        applicationId: application.applicationId,
+        applicationUrlId: application.id,
+        applicantName: pd?.fullName || "An applicant",
+      });
+    } catch (e) {
+      console.error("New-application notify failed (non-fatal):", e);
+    }
 
     return res.json({
       message: "Application submitted successfully",

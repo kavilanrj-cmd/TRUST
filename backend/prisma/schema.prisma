@@ -9,6 +9,8 @@ datasource postgres {
 enum UserRole {
   STUDENT
   ADMIN
+  REVIEWER
+  FOUNDER
 }
 
 model User {
@@ -20,10 +22,25 @@ model User {
   emailVerified Boolean?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  isFounderProtected Boolean @default(false)
+  permissions Json?
+  lastLoginAt DateTime?
+  lastLoginIp String?
+  createdById String?
 
   applications Application[]
   emailVerifications EmailVerification[]
   passwordResetTokens PasswordResetToken[]
+  applicationNotes ApplicationNote[]
+  applicationActivities ApplicationActivity[]
+  siteContents SiteContent[]
+  contentVersions ContentVersion[]
+  mediaAssets MediaAsset[]
+  auditLogs AuditLog[]
+  adminNotifications AdminNotification[]
+  websiteSettings WebsiteSetting[]
+  emailTemplates EmailTemplate[]
 }
 
 model ScholarshipProgram {
@@ -77,6 +94,8 @@ model Application {
   studentId        String
   scholarshipProgram ScholarshipProgram @relation(fields: [scholarshipProgramId], references: [id])
   scholarshipProgramId String
+  submittedAt      DateTime?
+  correctionNote   String?
   personalDetails  PersonalDetails?
   personalDetailsId String?
   address          Address?
@@ -90,6 +109,8 @@ model Application {
   applicationDocuments ApplicationDocument[]
   payments         Payment[]
   receipts         Receipt[]
+  notes            ApplicationNote[]
+  activities       ApplicationActivity[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -98,9 +119,11 @@ enum ApplicationStatus {
   DRAFT
   SUBMITTED
   UNDER_REVIEW
+  DOCUMENT_VERIFICATION
   APPROVED
   REJECTED
   WAITLISTED
+  WITHDRAWN
   CORRECTION_REQUESTED
 }
 
@@ -168,6 +191,10 @@ model ApplicationDocument {
   fileSize        Int
   uploadedAt      DateTime @default(now())
   uploadedBy      String
+  verificationStatus String @default("PENDING")
+  verificationNote String?
+  verifiedById    String?
+  verifiedAt      DateTime?
 }
 
 model Payment {
@@ -211,7 +238,10 @@ model Announcement {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
+  category    String?
+  imageUrl    String?
+  scheduledFor DateTime?
+  publishedAt DateTime?
   createdBy   String?
 }
 
@@ -242,4 +272,126 @@ model WebhookLog {
   applicationId    String?
   processedAt      DateTime @default(now())
   status           String   @default("PROCESSED")
+}
+
+model ApplicationNote {
+  id            String   @default(uuid()) @id
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  author        User     @relation(fields: [authorId], references: [id])
+  authorId      String
+  content       String
+  isInternal    Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+model ApplicationActivity {
+  id            String   @default(uuid()) @id
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  actor         User?    @relation(fields: [actorId], references: [id])
+  actorId       String?
+  actorName     String?
+  action        String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+}
+
+model SiteContent {
+  id            String   @default(uuid()) @id
+  key           String   @unique
+  type          String   @default("text")
+  page          String
+  section       String?
+  label         String?
+  value         String?
+  draftValue    String?
+  maxLength     Int?
+  editable      Boolean  @default(true)
+  updatedBy     User?    @relation(fields: [updatedById], references: [id])
+  updatedById   String?
+  lastPublishedAt DateTime?
+  publishedBy   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  versions      ContentVersion[]
+}
+
+model ContentVersion {
+  id            String   @default(uuid()) @id
+  siteContent   SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+  siteContentId String
+  versionNumber Int
+  value         String?
+  changedBy     User?   @relation(fields: [changedById], references: [id])
+  changedById   String?
+  editedByName  String?
+  summary       String?
+  createdAt     DateTime @default(now())
+
+  @@unique([siteContentId, versionNumber])
+}
+
+model MediaAsset {
+  id            String   @default(uuid()) @id
+  filename      String
+  originalName  String?
+  storageKey    String   @unique
+  mimeType      String
+  size          Int
+  width         Int?
+  height        Int?
+  altText       String?
+  uploadedBy    User?    @relation(fields: [uploadedById], references: [id])
+  uploadedById  String?
+  createdAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id            String   @default(uuid()) @id
+  actor         User?    @relation(fields: [actorId], references: [id])
+  actorId       String?
+  actorName     String?
+  action        String
+  targetType    String?
+  targetId      String?
+  metadata      Json?
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+}
+
+model AdminNotification {
+  id            String   @default(uuid()) @id
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  type          String
+  title         String
+  message       String?
+  link          String?
+  read          Boolean  @default(false)
+  createdById   String?
+  createdAt     DateTime @default(now())
+}
+
+model WebsiteSetting {
+  id            String   @default(uuid()) @id
+  key           String   @unique
+  value         String?
+  type          String   @default("text")
+  label         String?
+  isSecret      Boolean  @default(false)
+  updatedBy     User?    @relation(fields: [updatedById], references: [id])
+  updatedById   String?
+  updatedAt     DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id            String   @default(uuid()) @id
+  type          String   @unique
+  subject       String
+  body          String
+  updatedBy     User?    @relation(fields: [updatedById], references: [id])
+  updatedById   String?
+  updatedAt     DateTime @updatedAt
 }
