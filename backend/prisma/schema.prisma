@@ -1,10 +1,8 @@
 generator client {
-  provider = "postgresql"
-  output   = "./../prisma/client"
+  provider = "prisma-client-js"
 }
 
 datasource postgres {
-  url      = env("DATABASE_URL")
   provider = "postgresql"
 }
 
@@ -19,11 +17,13 @@ model User {
   email       String   @unique
   password    String
   role        UserRole @default(STUDENT)
-  emailVerified Boolean? @default(null)
+  emailVerified Boolean?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   applications Application[]
+  emailVerifications EmailVerification[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model ScholarshipProgram {
@@ -37,7 +37,7 @@ model ScholarshipProgram {
   applicationFee Decimal
   applicationDeadline DateTime
   isActive    Boolean  @default(true)
-  requiredDocuments DocumentConfig[]
+  requiredDocuments DocumentConfig[]  @relation(name: "documents")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -45,7 +45,7 @@ model ScholarshipProgram {
 }
 
 model Criteria {
-  educationLevel EducationLevel
+  educationLevel EducationLevel @id
   minimumMarks     Decimal
   minimumCGPA      Decimal
   familyIncomeMax  Decimal
@@ -62,14 +62,16 @@ model DocumentConfig {
   id          String   @default(uuid()) @id
   name        String
   description String?
-  maxFileSize Integer
+  scholarshipProgram ScholarshipProgram @relation(name: "documents", fields: [scholarshipProgramId], references: [id])
+  scholarshipProgramId String
+  maxFileSize Int
   allowedTypes String[]
   isRequired   Boolean  @default(true)
 }
 
 model Application {
   id               String   @default(uuid()) @id
-  applicationId    String   @unique @db.String("NET-2026-#####")
+  applicationId    String   @unique
   status           ApplicationStatus  @default(DRAFT)
   student          User       @relation(fields: [studentId], references: [id])
   studentId        String
@@ -85,6 +87,9 @@ model Application {
   academicDetailsId String?
   financialDetails FinancialDetails?
   financialDetailsId String?
+  applicationDocuments ApplicationDocument[]
+  payments         Payment[]
+  receipts         Receipt[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -102,7 +107,7 @@ enum ApplicationStatus {
 model PersonalDetails {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id])
-  applicationId   String
+  applicationId   String  @unique
   fullName        String
   dateOfBirth     DateTime
   gender          String
@@ -113,7 +118,7 @@ model PersonalDetails {
 model Address {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id])
-  applicationId   String
+  applicationId   String  @unique
   street          String
   city            String
   district        String
@@ -124,7 +129,7 @@ model Address {
 model ParentGuardian {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id])
-  applicationId   String
+  applicationId   String  @unique
   guardianName    String
   relationship    String
   occupation      String
@@ -135,7 +140,7 @@ model ParentGuardian {
 model AcademicDetails {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id])
-  applicationId   String
+  applicationId   String  @unique
   schoolCollege   String
   course          String
   educationLevel  EducationLevel
@@ -147,7 +152,7 @@ model AcademicDetails {
 model FinancialDetails {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id])
-  applicationId   String
+  applicationId   String  @unique
   familyIncome    Decimal
   incomeSource    String
 }
@@ -160,8 +165,8 @@ model ApplicationDocument {
   storageProvider  String
   originalFilename String
   fileType        String
-  fileSize        Integer
-  uploadedAt      DateTime @default(now%)
+  fileSize        Int
+  uploadedAt      DateTime @default(now())
   uploadedBy      String
 }
 
@@ -175,7 +180,7 @@ model Payment {
   currency         String   @default("INR")
   status           PaymentStatus  @default(PENDING)
   paymentDate      DateTime?
-  createdAt        DateTime @default(now%)
+  createdAt        DateTime @default(now())
 }
 
 enum PaymentStatus {
@@ -196,7 +201,7 @@ model Receipt {
   paymentId        String
   paymentDate      DateTime
   status           String
-  generatedAt      DateTime @default(now%)
+  generatedAt      DateTime @default(now())
 }
 
 model Announcement {
@@ -204,7 +209,7 @@ model Announcement {
   title       String
   content     String
   isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now%)
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   createdBy   String?
@@ -217,7 +222,7 @@ model EmailVerification {
   verificationToken String @unique
   expiresAt       DateTime
   used            Boolean  @default(false)
-  createdAt       DateTime @default(now%)
+  createdAt       DateTime @default(now())
 }
 
 model PasswordResetToken {
@@ -227,7 +232,7 @@ model PasswordResetToken {
   resetToken      String @unique
   expiresAt       DateTime
   used            Boolean  @default(false)
-  createdAt       DateTime @default(now%)
+  createdAt       DateTime @default(now())
 }
 
 model WebhookLog {

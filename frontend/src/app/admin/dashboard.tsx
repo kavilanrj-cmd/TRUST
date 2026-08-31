@@ -12,7 +12,31 @@ export const metadata = {
 export default function AdminDashboard() {
   const router = useRouter();
 
-  const [stats, setStats] = React.useState(null);
+  interface Stats {
+  totalApplications: number;
+  draftApplications: number;
+  submittedApplications: number;
+  underReviewApplications: number;
+  approvedApplications: number;
+  rejectedApplications: number;
+  waitlistedApplications: number;
+  correctionRequestedApplications: number;
+  successfulPayments: number;
+  failedPayments: number;
+}
+
+const [stats, setStats] = React.useState<Stats>({
+  totalApplications: 0,
+  draftApplications: 0,
+  submittedApplications: 0,
+  underReviewApplications: 0,
+  approvedApplications: 0,
+  rejectedApplications: 0,
+  waitlistedApplications: 0,
+  correctionRequestedApplications: 0,
+  successfulPayments: 0,
+  failedPayments: 0,
+});
   const [applications, setApplications] = React.useState([]);
   const [statusFilter, setStatusFilter] = React.useState("");
   const [paymentFilter, setPaymentFilter] = React.useState("");

@@ -158,7 +158,7 @@ export default function StudentDashboard() {
                 {
                   label: "Documents Uploaded",
                   passed:
-                    application?.status !== "DRAFT" ||
+                    application?.status !== "DRAFT" &&
                     application?.status !== "SUBMITTED"
                     ? true
                     : false,
