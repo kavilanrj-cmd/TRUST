@@ -292,11 +292,11 @@ module.exports = {
    - `RESEND_API_KEY` (optional)
 3. Deploy
 
-### Backend (Render or Railway)
+### Backend (Node/Express API)
 
-1. Create new service, connect Git repository
+1. Deploy the Node/Express backend to your hosting provider (e.g. Vercel serverless functions or a managed Node host)
 2. Set environment variables:
-   - `DATABASE_URL` (PostgreSQL connection string)
+   - `DATABASE_URL` (Neon PostgreSQL connection string)
    - `JWT_SECRET`
    - `JWT_REFRESH_SECRET`
    - `RAZORPAY_KEY_ID`
@@ -305,14 +305,13 @@ module.exports = {
    - `RESEND_API_KEY`
    - `NODE_ENV=production`
    - `FRONTEND_URL` (production URL)
-3. Set up PostgreSQL database
-4. Run Prisma migrations: `npx prisma migrate deploy`
-5. Set build command: `npm run build`
-6. Set start command: `npm start`
+3. Run Prisma migrations: `npx prisma migrate deploy`
+4. Set build command: `npm run build`
+5. Set start command: `npm start`
 
 ### Database (PostgreSQL)
 
-- Use managed PostgreSQL (Render, Railway, Supabase, etc.)
+- Use managed PostgreSQL (Neon, Supabase, etc.)
 - Enable backups
 - Monitor connection pooling
 - Set up SSL/TLS for production connections

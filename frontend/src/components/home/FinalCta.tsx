@@ -37,7 +37,7 @@ export function FinalCta() {
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-4">
               <a
-                href="#apply"
+                href="/student/application"
                 className="inline-flex items-center gap-2 rounded-lg bg-gold px-7 py-3.5 text-sm font-semibold text-navy shadow-lg transition hover:bg-gold-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-600 focus-visible:ring-offset-2 ring-offset-navy"
               >
                 {t("home.finalCta.primaryButton", "Apply Now")}

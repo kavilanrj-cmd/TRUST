@@ -2,7 +2,10 @@ import { SiteHeader } from "@/components/home/SiteHeader";
 import { Hero } from "@/components/home/Hero";
 import { TrustImpact } from "@/components/home/TrustImpact";
 import { About } from "@/components/home/About";
+import { WhatWeDo } from "@/components/home/WhatWeDo";
 import { Scholarships } from "@/components/home/Scholarships";
+import { Notes } from "@/components/home/Notes";
+import { DocumentsRequired } from "@/components/home/DocumentsRequired";
 import { FeaturedCta } from "@/components/home/FeaturedCta";
 import { EligibilityChecker } from "@/components/home/EligibilityChecker";
 import { HowToApply } from "@/components/home/HowToApply";
@@ -26,7 +29,10 @@ export default function HomePage() {
         <Hero />
         <TrustImpact />
         <About />
+        <WhatWeDo />
         <Scholarships />
+        <Notes />
+        <DocumentsRequired />
         <FeaturedCta />
         <EligibilityChecker />
         <HowToApply />

@@ -11,6 +11,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   // Nav
   "nav.home": "Home",
   "nav.about": "About Us",
+  "nav.whatWeDo": "What We Do",
   "nav.scholarships": "Scholarships",
   "nav.howToApply": "How to Apply",
   "nav.successStories": "Success Stories",

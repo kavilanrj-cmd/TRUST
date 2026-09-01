@@ -41,7 +41,7 @@ export function FeaturedCta() {
                 {t("home.featuredCta.primaryButton", "Check Eligibility")}
               </a>
               <a
-                href="#how-to-apply"
+                href="/student/application"
                 className="inline-flex items-center gap-2 rounded-lg bg-gold px-6 py-3 text-sm font-semibold text-navy shadow-md transition hover:bg-gold-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-600 focus-visible:ring-offset-2 ring-offset-navy"
               >
                 {t("home.featuredCta.secondaryButton", "Apply Now")}

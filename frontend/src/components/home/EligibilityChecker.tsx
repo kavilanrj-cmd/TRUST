@@ -339,7 +339,7 @@ export function EligibilityChecker() {
                         <li>Upload the required documents.</li>
                         <li>Pay the application fee and submit.</li>
                       </ol>
-                      <a href="#apply" className="btn-gold mt-5">
+                      <a href="/student/application" className="btn-gold mt-5">
                         Apply Now
                       </a>
                     </div>

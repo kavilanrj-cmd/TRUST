@@ -83,7 +83,7 @@ export function HowToApply() {
         </div>
 
         <div className="mt-12 text-center">
-          <a href="#apply" className="btn-primary">
+          <a href="/student/application" className="btn-primary">
             Start Application
           </a>
         </div>

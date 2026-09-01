@@ -100,12 +100,17 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ error: message });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running at http://localhost:${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-});
+// Start the HTTP server only when run directly (e.g. `node dist/index.js`).
+// On Vercel serverless the app is imported by api/index.ts instead and should
+// not call listen().
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Backend running at http://localhost:${PORT}`);
+    console.log(`📍 Health check: http://localhost:${PORT}/health`);
+  });
 
-// Bootstrap a founder account if no staff exists yet (from env).
-bootstrapFounder();
+  // Bootstrap a founder account if no staff exists yet (from env).
+  bootstrapFounder();
+}
 
 export { app };

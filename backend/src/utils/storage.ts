@@ -1,8 +1,8 @@
 // Media storage layer.
-// Default storage is local disk (works on Render/Vercel-style ephemeral filesystems
-// for the running instance). R2 object storage can be substituted behind the same
-// interface. Only image/path metadata is stored in the database — binary files
-// live in the storage backend, never in the DB.
+// Default storage is local disk for the running instance. R2 object storage
+// can be substituted behind the same interface. Only image/path metadata is
+// stored in the database — binary files live in the storage backend, never
+// in the DB.
 
 import path from "path";
 import fs from "fs";

@@ -8,6 +8,7 @@ import { useHomeContent } from "@/lib/home-content";
 const NAV_LINKS = [
   { key: "nav.home", href: "#home" },
   { key: "nav.about", href: "#about" },
+  { key: "nav.whatWeDo", href: "#what-we-do" },
   { key: "nav.scholarships", href: "#scholarships" },
   { key: "nav.howToApply", href: "#how-to-apply" },
   { key: "nav.successStories", href: "#success-stories" },
@@ -82,7 +83,7 @@ export function SiteHeader() {
             Login
           </Link>
           <a
-            href="#apply"
+            href="/student/application"
             className="btn-gold rounded-lg px-6 py-2.5 text-sm shadow-sm"
           >
             {t("nav.applyLabel", "Apply Now")}
@@ -132,7 +133,7 @@ export function SiteHeader() {
                 Login
               </Link>
               <a
-                href="#apply"
+                href="/student/application"
                 onClick={() => setOpen(false)}
                 className="btn-gold"
               >

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { DocumentUpload } from "@/components/student/DocumentUpload";
 
 export const metadata = {
   title: "Neelakannu Educational Trust - Student Application",
@@ -275,6 +276,9 @@ export default function StudentApplicationPage() {
                 </div>
               </div>
             </div>
+
+            {/* Section F: Documents */}
+            <DocumentUpload />
 
             {/* Action buttons */}
             <div className="pt-6 border-t flex justify-between">
