@@ -19,6 +19,15 @@ END$$;
 
 ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'REVIEWER';
 ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'FOUNDER';
+
+-- Ensure the ApplicationStatus enum type exists before adding values (additive; safe if already present)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ApplicationStatus') THEN
+    CREATE TYPE "ApplicationStatus" AS ENUM ('DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'DOCUMENT_VERIFICATION', 'APPROVED', 'REJECTED', 'WAITLISTED', 'WITHDRAWN', 'CORRECTION_REQUESTED');
+  END IF;
+END$$;
+
 ALTER TYPE "ApplicationStatus" ADD VALUE IF NOT EXISTS 'DOCUMENT_VERIFICATION';
 ALTER TYPE "ApplicationStatus" ADD VALUE IF NOT EXISTS 'WITHDRAWN';
 
