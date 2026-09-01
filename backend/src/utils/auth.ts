@@ -13,6 +13,7 @@ export const ADMIN_COOKIE = "net_admin_token";
 
 export interface AuthUser {
   id: string;
+  userId?: string;
   name: string | null;
   email: string;
   role: string;
@@ -70,7 +71,8 @@ export async function loadUser(req: Request): Promise<AuthUser | null> {
       },
     });
     if (!user || !user.isActive) return null;
-    return user as AuthUser;
+    const authUser = { ...(user as AuthUser), userId: user.id };
+    return authUser;
   } catch {
     return null;
   }

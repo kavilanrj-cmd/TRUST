@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
           <Image
-            src="/neelakannu-logo.svg"
+            src="/assets/neelakannu-trust-logo.png"
             alt="Neelakannu Educational Trust"
             width={64}
             height={64}

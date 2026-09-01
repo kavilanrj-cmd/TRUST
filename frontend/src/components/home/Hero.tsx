@@ -18,7 +18,7 @@ export function Hero() {
         <div className="animate-fade-up">
           <div className="flex items-center gap-3">
             <Image
-              src="/neelakannu-logo.svg"
+              src="/assets/neelakannu-trust-logo.png"
               alt="Neelakannu Educational Trust"
               width={56}
               height={56}

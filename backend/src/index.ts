@@ -11,6 +11,7 @@ import documentRoutes from "./documents/index";
 import paymentRoutes from "./payments/index";
 import adminRoutes, { routerPublic, bootstrapFounder } from "./admin/index";
 import db from "./utils/db";
+import { authenticate } from "./utils/auth";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -75,9 +76,9 @@ app.get("/health", (_req: Request, res: Response) => {
 // API routes
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/scholarships", scholarshipRoutes);
-app.use("/api/applications", applicationRoutes);
-app.use("/api/documents", documentRoutes);
-app.use("/api/payments", paymentRoutes);
+app.use("/api/applications", authenticate, applicationRoutes);
+app.use("/api/documents", authenticate, documentRoutes);
+app.use("/api/payments", authenticate, paymentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/content", routerPublic);
 

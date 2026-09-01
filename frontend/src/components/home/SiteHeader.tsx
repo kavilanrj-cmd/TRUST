@@ -45,7 +45,7 @@ export function SiteHeader() {
       <div className="container-trust flex h-[76px] items-center justify-between gap-4">
         <a href="#home" className="flex items-center gap-3" aria-label="Neelakannu Educational Trust">
           <Image
-            src="/neelakannu-logo.svg"
+            src="/assets/neelakannu-trust-logo.png"
             alt="Neelakannu Educational Trust logo"
             width={52}
             height={52}

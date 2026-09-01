@@ -33,7 +33,7 @@ export function SiteFooter() {
           <div>
             <Link href="/#home" className="flex items-center gap-3">
               <Image
-                src="/neelakannu-logo.svg"
+                src="/assets/neelakannu-trust-logo.png"
                 alt="Neelakannu Educational Trust logo"
                 width={54}
                 height={54}
