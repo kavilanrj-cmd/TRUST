@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { key: "nav.home", href: "#home" },
   { key: "nav.about", href: "#about" },
   { key: "nav.whatWeDo", href: "#what-we-do" },
-  { key: "nav.scholarships", href: "#scholarships" },
   { key: "nav.howToApply", href: "#how-to-apply" },
   { key: "nav.successStories", href: "#success-stories" },
   { key: "nav.contact", href: "#contact" },

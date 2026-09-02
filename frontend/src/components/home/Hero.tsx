@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useHomeContent } from "@/lib/home-content";
+import { ApplicationFee } from "./ApplicationFee";
 
 export function Hero() {
   const { t } = useHomeContent();
@@ -50,6 +51,8 @@ export function Hero() {
               {t("home.hero.secondaryButton", "Learn More")}
             </a>
           </div>
+
+          <ApplicationFee />
 
           <div className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-5 border-t border-border pt-6">
             <div className="min-w-[120px]">

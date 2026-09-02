@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
     { label: "Under Review", value: data.stats.underReview, href: "/admin/applications?status=UNDER_REVIEW" },
     { label: "Doc Verification", value: data.stats.documentVerification, href: "/admin/applications?status=DOCUMENT_VERIFICATION" },
     { label: "Approved", value: data.stats.approved, href: "/admin/applications?status=APPROVED" },
-    { label: "Active Scholarships", value: data.stats.activeScholarships, href: "/admin/scholarships" },
+    { label: "Total Students", value: data.stats.totalStudents, href: "/admin/students" },
   ];
 
   const maxOverTime = Math.max(1, ...data.charts.applicationsOverTime.map((p) => p.count));

@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 const REQUIRED_DOCUMENTS = [
   { key: "sslc", label: "SSLC", desc: "Upload your SSLC certificate" },
   { key: "hsc", label: "HSC", desc: "Upload your HSC certificate" },
+  { key: "currentSemesterMarksheet", label: "Current Semester Marksheet", desc: "Upload your current semester marksheet" },
   { key: "bonafide", label: "Bonafide Certificate", desc: "Upload a bonafide certificate from your institution" },
   { key: "idCard", label: "ID Card", desc: "Upload a copy of your ID card" },
   { key: "community", label: "Community Certificate", desc: "Upload your community certificate" },
@@ -28,7 +30,7 @@ const ALLOWED_TYPES = [
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024; // 8MB for images
 
-type DocFile = { name: string; size: number; type: string };
+type DocState = { name: string; size: number; type: string; uploading: boolean; uploaded: boolean };
 
 function errorMessageFor(file: File): string | null {
   if (!ALLOWED_TYPES.includes(file.type)) {
@@ -53,6 +55,7 @@ function formatFileSize(bytes: number): string {
 const ICONS: Record<string, string> = {
   sslc: "🎓",
   hsc: "📘",
+  currentSemesterMarksheet: "📋",
   bonafide: "🏫",
   idCard: "🪪",
   community: "🗂️",
@@ -64,10 +67,70 @@ const ICONS: Record<string, string> = {
   sports: "🏆",
 };
 
-export function DocumentUpload({ onCountChange }: { onCountChange?: (count: number) => void }) {
-  const [files, setFiles] = useState<Record<string, DocFile | null>>({});
+export function DocumentUpload({
+  applicationId,
+  onCountChange,
+}: {
+  applicationId: string | null;
+  onCountChange?: (count: number) => void;
+}) {
+  const [files, setFiles] = useState<Record<string, DocState | null>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const updateCount = useCallback(
+    (next: Record<string, DocState | null>) => {
+      onCountChange?.(Object.values(next).filter(Boolean).length);
+    },
+    [onCountChange]
+  );
+
+  const uploadFile = useCallback(
+    async (key: string, file: File) => {
+      if (!applicationId) return;
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("documentType", key);
+        const res = await fetch(
+          `${API_BASE_URL}/api/applications/${applicationId}/upload`,
+          {
+            method: "POST",
+            credentials: "include",
+            body: fd,
+          }
+        );
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Upload failed");
+        }
+        setFiles((prev) => {
+          const cur = prev[key];
+          const next = {
+            ...prev,
+            [key]: cur ? { ...cur, uploading: false, uploaded: true } : cur,
+          };
+          updateCount(next);
+          return next;
+        });
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          [key]: err instanceof Error ? err.message : "Upload failed. Please try again.",
+        }));
+        setFiles((prev) => {
+          const cur = prev[key];
+          const next = {
+            ...prev,
+            [key]: cur ? { ...cur, uploading: false } : cur,
+          };
+          updateCount(next);
+          return next;
+        });
+      }
+    },
+    [applicationId, updateCount]
+  );
 
   const handleChange = useCallback(
     (key: string, file: File | null) => {
@@ -75,7 +138,7 @@ export function DocumentUpload({ onCountChange }: { onCountChange?: (count: numb
       if (!file) {
         setFiles((prev) => {
           const next = { ...prev, [key]: null };
-          onCountChange?.(Object.values(next).filter(Boolean).length);
+          updateCount(next);
           return next;
         });
         return;
@@ -83,7 +146,11 @@ export function DocumentUpload({ onCountChange }: { onCountChange?: (count: numb
       const err = errorMessageFor(file);
       if (err) {
         setErrors((prev) => ({ ...prev, [key]: err }));
-        setFiles((prev) => ({ ...prev, [key]: null }));
+        setFiles((prev) => {
+          const next = { ...prev, [key]: null };
+          updateCount(next);
+          return next;
+        });
         if (inputRefs.current[key]) {
           inputRefs.current[key]!.value = "";
         }
@@ -92,20 +159,21 @@ export function DocumentUpload({ onCountChange }: { onCountChange?: (count: numb
       setFiles((prev) => {
         const next = {
           ...prev,
-          [key]: { name: file.name, size: file.size, type: file.type },
+          [key]: { name: file.name, size: file.size, type: file.type, uploading: true, uploaded: false },
         };
-        onCountChange?.(Object.values(next).filter(Boolean).length);
+        updateCount(next);
         return next;
       });
+      void uploadFile(key, file);
     },
-    [onCountChange]
+    [uploadFile, updateCount]
   );
 
   const removeFile = useCallback(
     (key: string) => {
       setFiles((prev) => {
         const next = { ...prev, [key]: null };
-        onCountChange?.(Object.values(next).filter(Boolean).length);
+        updateCount(next);
         return next;
       });
       setErrors((prev) => ({ ...prev, [key]: "" }));
@@ -113,7 +181,7 @@ export function DocumentUpload({ onCountChange }: { onCountChange?: (count: numb
         inputRefs.current[key]!.value = "";
       }
     },
-    [onCountChange]
+    [updateCount]
   );
 
   const uploadedCount = useMemo(
@@ -167,7 +235,12 @@ export function DocumentUpload({ onCountChange }: { onCountChange?: (count: numb
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-navy">{doc.label}</span>
-                    {file && (
+                    {file && file.uploading && (
+                      <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
+                        Uploading…
+                      </span>
+                    )}
+                    {file && file.uploaded && (
                       <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-success">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -237,7 +310,7 @@ export function DocumentUpload({ onCountChange }: { onCountChange?: (count: numb
 
       {uploadedCount > 0 && (
         <p className="mt-4 text-xs text-muted-foreground">
-          Selected documents will be uploaded with your application before submission.
+          Documents are uploaded securely to your application as you select them.
         </p>
       )}
     </div>

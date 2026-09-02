@@ -12,6 +12,7 @@ import paymentRoutes from "./payments/index";
 import adminRoutes, { routerPublic, bootstrapFounder } from "./admin/index";
 import db from "./utils/db";
 import { authenticate } from "./utils/auth";
+import { getApplicationFeeConfig } from "./utils/applicationFee";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,8 +31,11 @@ app.use(cors({
     // Allow requests with no origin (same-origin / non-browser tools)
     if (!origin) return callback(null, true);
     if (clientOrigins.includes(origin)) return callback(null, true);
-    // In production, restrict to configured origins; in dev permit localhost.
-    if (process.env.NODE_ENV !== "production" && /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+    // In production, restrict to configured origins; in dev permit localhost and local IPs.
+    if (
+      process.env.NODE_ENV !== "production" &&
+      /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/.test(origin)
+    ) {
       return callback(null, true);
     }
     return callback(new Error("Not allowed by CORS"));
@@ -62,7 +66,7 @@ const authLimiter = rateLimit({
 // Body parsing + cookies
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser(process.env.COOKIE_SECRET || "neelakannu-cookie-secret"));
+app.use(cookieParser());
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
@@ -71,6 +75,17 @@ app.get("/health", (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     service: "neelakannu-trust-platform-api"
   });
+});
+
+// Public application fee configuration used by the home page and application form.
+app.get("/api/application-fee", async (_req: Request, res: Response) => {
+  try {
+    const fee = await getApplicationFeeConfig();
+    res.json(fee);
+  } catch (e) {
+    console.error("Get application fee error:", e);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // API routes
@@ -109,9 +124,10 @@ if (require.main === module) {
     console.log(`🚀 Backend running at http://localhost:${PORT}`);
     console.log(`📍 Health check: http://localhost:${PORT}/health`);
   });
-
-  // Bootstrap a founder account if no staff exists yet (from env).
-  bootstrapFounder();
 }
+
+// Bootstrap a founder account if no staff exists yet (from env).
+// Run this after database connection is established.
+bootstrapFounder();
 
 export { app };

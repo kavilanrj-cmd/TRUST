@@ -31,6 +31,12 @@ export default function AdminSettingsPage() {
     setSettings((prev) => prev.map((s) => (s.key === key ? { ...s, value } : s)));
   };
 
+  const handleToggle = (key: string) => {
+    setSettings((prev) =>
+      prev.map((s) => (s.key === key ? { ...s, value: s.value === "true" ? "false" : "true" } : s))
+    );
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setMsg("");
@@ -71,6 +77,27 @@ export default function AdminSettingsPage() {
                   <textarea
                     className={inputCls}
                     rows={3}
+                    value={s.value}
+                    onChange={(e) => handleChange(s.key, e.target.value)}
+                  />
+                ) : s.type === "boolean" ? (
+                  <label className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 rounded border-border text-navy focus:ring-2 focus:ring-navy/30"
+                      checked={s.value === "true"}
+                      onChange={() => handleToggle(s.key)}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {s.value === "true" ? "Enabled" : "Disabled"}
+                    </span>
+                  </label>
+                ) : s.type === "number" ? (
+                  <input
+                    type="number"
+                    className={inputCls}
+                    min={0}
+                    step={1}
                     value={s.value}
                     onChange={(e) => handleChange(s.key, e.target.value)}
                   />

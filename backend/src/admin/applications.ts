@@ -58,6 +58,7 @@ router.get(
       const {
         status, scholarshipId, educationLevel, district, state,
         from, to, search, sort = "desc", page = "1", limit = "10",
+        paymentStatus,
       } = req.query;
 
       const pageNum = parseInt(page as string) || 1;
@@ -66,6 +67,11 @@ router.get(
 
       const where: any = {};
 
+      if (paymentStatus === "paid") {
+        where.payments = { some: { status: "SUCCESS" } };
+      } else if (paymentStatus === "unpaid") {
+        where.payments = { none: { status: "SUCCESS" } };
+      }
       if (status) {
         const list = (status as string).split(",");
         where.status = { in: list };
@@ -369,5 +375,124 @@ export async function notifyNewApplication(submit: {
     link: `/admin/applications/${submit.applicationUrlId}`,
   });
 }
+
+// GET /api/admin/students - list students with application info
+router.get(
+  "/students",
+  authenticate,
+  requirePermission(PERMISSIONS.applications_view),
+  async (req: Request, res: Response) => {
+    try {
+      const {
+        search, status, page = "1", limit = "15", sort = "desc",
+      } = req.query;
+
+      const pageNum = parseInt(page as string) || 1;
+      const limitNum = Math.min(parseInt(limit as string) || 15, 100);
+      const skip = (pageNum - 1) * limitNum;
+
+      // Build where clause for User (students)
+      const userWhere: any = { role: "STUDENT" };
+      if (search) {
+        const s = search as string;
+        userWhere.OR = [
+          { name: { contains: s, mode: "insensitive" } },
+          { email: { contains: s, mode: "insensitive" } },
+        ];
+      }
+
+      // If filtering by application status, we need to join with Application
+      let applicationWhere: any = {};
+      if (status) {
+        applicationWhere.status = status;
+      }
+
+      // Get students with their applications
+      const [students, total] = await prisma.$transaction([
+        prisma.user.findMany({
+          where: userWhere,
+          include: {
+            applications: {
+              where: applicationWhere,
+              include: {
+                scholarshipProgram: { select: { id: true, name: true } },
+                personalDetails: { select: { fullName: true } },
+              },
+              orderBy: { createdAt: "desc" },
+              take: 1, // Get the latest application
+            },
+          },
+          orderBy: { createdAt: sort === "asc" ? "asc" : "desc" },
+          skip,
+          take: limitNum,
+        }),
+        prisma.user.count({ where: userWhere }),
+      ]);
+
+      // Format response
+      const formattedStudents = students.map((student: any) => {
+        const app = student.applications[0];
+        return {
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          emailVerified: student.emailVerified,
+          createdAt: student.createdAt,
+          application: app ? {
+            id: app.id,
+            applicationId: app.applicationId,
+            status: app.status,
+            scholarshipProgram: app.scholarshipProgram,
+            personalDetails: app.personalDetails,
+            submittedAt: app.submittedAt,
+            createdAt: app.createdAt,
+          } : null,
+        };
+      });
+
+      return res.json({ students: formattedStudents, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+    } catch (error) {
+      console.error("Admin students list error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// GET /api/admin/students/:id - get student detail with application
+router.get(
+  "/students/:id",
+  authenticate,
+  requirePermission(PERMISSIONS.applications_view),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const student = await prisma.user.findUnique({
+        where: { id },
+        include: {
+          applications: {
+            include: {
+              scholarshipProgram: true,
+              personalDetails: true,
+              address: true,
+              parentGuardian: true,
+              academicDetails: true,
+              financialDetails: true,
+              applicationDocuments: true,
+              payments: true,
+            },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      });
+      if (!student || student.role !== "STUDENT") {
+        return res.status(404).json({ error: "Student not found" });
+      }
+      return res.json({ student });
+    } catch (error) {
+      console.error("Admin student detail error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
 
 export default router;

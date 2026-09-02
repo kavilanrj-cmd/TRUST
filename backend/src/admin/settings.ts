@@ -19,6 +19,8 @@ export const SAFE_SETTINGS: Record<string, { label: string; type: string }> = {
   "site.instagram": { label: "Instagram URL", type: "url" },
   "site.twitter": { label: "Twitter/X URL", type: "url" },
   "app.applicationFeeNotice": { label: "Application Fee Notice", type: "textarea" },
+  "app.applicationFee": { label: "Application Fee (₹)", type: "number" },
+  "app.applicationFeeEnabled": { label: "Enable Application Fee", type: "boolean" },
   "app.supportEmail": { label: "Support Email", type: "text" },
 };
 

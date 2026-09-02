@@ -27,11 +27,17 @@ const staffRoles = ["FOUNDER", "ADMIN", "REVIEWER"];
 
 // Bootstrap: if no staff accounts exist, create a founder from env (development initial setup).
 export async function bootstrapFounder(): Promise<void> {
+  console.log("🔄 Bootstrap founder: starting...");
   try {
+    // Ensure database is connected
+    await prisma.$connect();
+    console.log("🔄 Bootstrap founder: database connected");
     const staffCount = await prisma.user.count({ where: { role: { in: staffRoles } } });
+    console.log("🔄 Bootstrap founder: staff count =", staffCount);
     if (staffCount === 0) {
       const email = process.env.FOUNDER_EMAIL;
       const password = process.env.FOUNDER_PASSWORD;
+      console.log("🔄 Bootstrap founder: email =", email, "password set =", !!password);
       if (email && password) {
         const hashed = await bcrypt.hash(password, 10);
         await prisma.user.create({
@@ -40,7 +46,7 @@ export async function bootstrapFounder(): Promise<void> {
             email,
             password: hashed,
             role: "FOUNDER",
-            emailVerified: new Date(),
+            emailVerified: true,
             isFounderProtected: true,
           },
         });
@@ -48,6 +54,8 @@ export async function bootstrapFounder(): Promise<void> {
       } else {
         console.warn("⚠️  No staff accounts and no FOUNDER_EMAIL/FOUNDER_PASSWORD set. Admin login unavailable.");
       }
+    } else {
+      console.log("🔄 Bootstrap founder: staff already exists, skipping creation");
     }
   } catch (e) {
     console.error("Bootstrap founder failed (non-fatal):", e);
@@ -58,10 +66,12 @@ export async function bootstrapFounder(): Promise<void> {
 router.post("/login", async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    console.log("🔐 Login attempt:", email);
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
     const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
+    console.log("🔐 User found:", user ? { id: user.id, email: user.email, role: user.role, isActive: user.isActive } : null);
     if (!user) {
       logAudit(auditContextFromRequest(req), "admin.login.failed", "User", undefined, { email });
       return res.status(401).json({ error: "Invalid email or password" });
@@ -75,6 +85,7 @@ router.post("/login", async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Your account is deactivated" });
     }
     const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log("🔐 Password match:", passwordMatch);
     if (!passwordMatch) {
       logAudit(auditContextFromRequest(req), "admin.login.failed", "User", user.id);
       return res.status(401).json({ error: "Invalid email or password" });

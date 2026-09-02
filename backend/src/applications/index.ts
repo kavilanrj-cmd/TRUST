@@ -26,34 +26,31 @@ router.post("/", async (req: Request, res: Response) => {
       financialDetails,
     } = req.body;
 
-    if (!scholarshipProgramId) {
-      return res.status(400).json({ error: "Scholarship program ID is required" });
+    // Scholarship program is optional. If provided, validate it exists and is active.
+    if (scholarshipProgramId) {
+      const scholarshipProgram = await prisma.scholarshipProgram.findUnique({
+        where: { id: scholarshipProgramId },
+      });
+
+      if (!scholarshipProgram) {
+        return res.status(404).json({ error: "Scholarship program not found" });
+      }
+
+      if (!scholarshipProgram.isActive) {
+        return res.status(400).json({ error: "Scholarship program is not currently active" });
+      }
     }
 
-    // Check if scholarship program exists and is active
-    const scholarshipProgram = await prisma.scholarshipProgram.findUnique({
-      where: { id: scholarshipProgramId },
-    });
-
-    if (!scholarshipProgram) {
-      return res.status(404).json({ error: "Scholarship program not found" });
-    }
-
-    if (!scholarshipProgram.isActive) {
-      return res.status(400).json({ error: "Scholarship program is not currently active" });
-    }
-
-    // Check if student already has an application for this scholarship
+    // A student can only have one application.
     const existingApplication = await prisma.application.findFirst({
       where: {
         studentId: userId,
-        scholarshipProgramId,
       },
     });
 
     if (existingApplication) {
-      return res.status(409).json({ 
-        error: "You already have an application for this scholarship",
+      return res.status(409).json({
+        error: "You already have an application",
         applicationId: existingApplication.applicationId,
       });
     }
@@ -61,56 +58,69 @@ router.post("/", async (req: Request, res: Response) => {
     // Generate application ID
     const applicationId = `NET-2026-${String(Math.floor(Math.random() * 900000) + 100000).padStart(6, '0')}`;
 
+    const applicationData: any = {
+      applicationId,
+      status: "DRAFT",
+      student: { connect: { id: userId } },
+      personalDetails: personalDetails ? {
+        create: {
+          fullName: (personalDetails as any).fullName,
+          bankRecordName: (personalDetails as any).nameBankRecord,
+          dateOfBirth: (personalDetails as any).dateOfBirth,
+          gender: (personalDetails as any).gender,
+          phone: (personalDetails as any).phone,
+        }
+      } : undefined,
+      address: address ? {
+        create: {
+          street: (address as any).street,
+          doorNumber: (address as any).doorNumber,
+          city: (address as any).city,
+          district: (address as any).district,
+          state: (address as any).state,
+          pinCode: (address as any).pinCode,
+        }
+      } : undefined,
+      parentGuardian: parentGuardian ? {
+        create: {
+          guardianName: (parentGuardian as any).guardianName,
+          relationship: (parentGuardian as any).relationship,
+          occupation: (parentGuardian as any).occupation,
+          contactNumber: (parentGuardian as any).contactNumber,
+          isSingleParent: (parentGuardian as any).isSingleParent,
+          income: (parentGuardian as any).income,
+        }
+      } : undefined,
+      academicDetails: academicDetails ? {
+        create: {
+          schoolCollege: (academicDetails as any).schoolCollege,
+          academicType: (academicDetails as any).academicType,
+          course: (academicDetails as any).course,
+          educationLevel: (academicDetails as any).educationLevel,
+          academicYear: (academicDetails as any).academicYear,
+          yearOfStudy: (academicDetails as any).yearOfStudy,
+          className: (academicDetails as any).className,
+          section: (academicDetails as any).section,
+          semester: (academicDetails as any).semester,
+          ugPg: (academicDetails as any).ugPg,
+          marksPercentageCGPA: (academicDetails as any).marksPercentageCGPA,
+        }
+      } : undefined,
+      financialDetails: financialDetails ? {
+        create: {
+          familyIncome: (financialDetails as any).familyIncome,
+          incomeSource: (financialDetails as any).incomeSource,
+        }
+      } : undefined,
+    };
+
+    if (scholarshipProgramId) {
+      applicationData.scholarshipProgram = { connect: { id: scholarshipProgramId } };
+    }
+
     // Create application with draft status
     const application = await prisma.application.create({
-      data: {
-        applicationId,
-        status: "DRAFT",
-        student: { connect: { id: userId } },
-        scholarshipProgram: { connect: { id: scholarshipProgramId } },
-        personalDetails: personalDetails ? {
-          create: {
-            fullName: (personalDetails as any).fullName,
-            dateOfBirth: (personalDetails as any).dateOfBirth,
-            gender: (personalDetails as any).gender,
-            phone: (personalDetails as any).phone,
-          }
-        } : undefined,
-        address: address ? {
-          create: {
-            street: (address as any).street,
-            city: (address as any).city,
-            district: (address as any).district,
-            state: (address as any).state,
-            pinCode: (address as any).pinCode,
-          }
-        } : undefined,
-        parentGuardian: parentGuardian ? {
-          create: {
-            guardianName: (parentGuardian as any).guardianName,
-            relationship: (parentGuardian as any).relationship,
-            occupation: (parentGuardian as any).occupation,
-            contactNumber: (parentGuardian as any).contactNumber,
-            income: (parentGuardian as any).income,
-          }
-        } : undefined,
-        academicDetails: academicDetails ? {
-          create: {
-            schoolCollege: (academicDetails as any).schoolCollege,
-            course: (academicDetails as any).course,
-            educationLevel: (academicDetails as any).educationLevel,
-            academicYear: (academicDetails as any).academicYear,
-            yearOfStudy: (academicDetails as any).yearOfStudy,
-            marksPercentageCGPA: (academicDetails as any).marksPercentageCGPA,
-          }
-        } : undefined,
-        financialDetails: financialDetails ? {
-          create: {
-            familyIncome: (financialDetails as any).familyIncome,
-            incomeSource: (financialDetails as any).incomeSource,
-          }
-        } : undefined,
-      },
+      data: applicationData,
       include: {
         personalDetails: true,
         address: true,
@@ -243,6 +253,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
         where: { applicationId: id },
         data: {
           fullName: (personalDetails as any).fullName,
+          bankRecordName: (personalDetails as any).nameBankRecord,
           dateOfBirth: (personalDetails as any).dateOfBirth,
           gender: (personalDetails as any).gender,
           phone: (personalDetails as any).phone,
@@ -256,6 +267,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
         where: { applicationId: id },
         data: {
           street: (address as any).street,
+          doorNumber: (address as any).doorNumber,
           city: (address as any).city,
           district: (address as any).district,
           state: (address as any).state,
@@ -273,6 +285,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
           relationship: (parentGuardian as any).relationship,
           occupation: (parentGuardian as any).occupation,
           contactNumber: (parentGuardian as any).contactNumber,
+          isSingleParent: (parentGuardian as any).isSingleParent,
           income: (parentGuardian as any).income,
         },
       });
@@ -284,10 +297,15 @@ router.patch("/:id", async (req: Request, res: Response) => {
         where: { applicationId: id },
         data: {
           schoolCollege: (academicDetails as any).schoolCollege,
+          academicType: (academicDetails as any).academicType,
           course: (academicDetails as any).course,
           educationLevel: (academicDetails as any).educationLevel,
           academicYear: (academicDetails as any).academicYear,
           yearOfStudy: (academicDetails as any).yearOfStudy,
+          className: (academicDetails as any).className,
+          section: (academicDetails as any).section,
+          semester: (academicDetails as any).semester,
+          ugPg: (academicDetails as any).ugPg,
           marksPercentageCGPA: (academicDetails as any).marksPercentageCGPA,
         },
       });
@@ -357,8 +375,8 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Application has already been submitted or is not in draft status" });
     }
 
-    // Check scholarship is active
-    if (!application.scholarshipProgram.isActive) {
+    // Check scholarship is active (only when a scholarship program is associated)
+    if (application.scholarshipProgram && !application.scholarshipProgram.isActive) {
       return res.status(400).json({ error: "Scholarship program is not currently active" });
     }
 

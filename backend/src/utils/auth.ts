@@ -11,6 +11,11 @@ const JWT_SECRET = process.env.JWT_SECRET || "neelakannu-educational-trust-jwt-s
 
 export const ADMIN_COOKIE = "net_admin_token";
 
+// Student sessions also use the same JWT (userId-scoped) delivered as an
+// HttpOnly cookie so the frontend's cookie-based (credentials: "include")
+// application requests authenticate against the /api/applications routes.
+export const STUDENT_COOKIE = "net_student_token";
+
 export interface AuthUser {
   id: string;
   userId?: string;
@@ -42,7 +47,7 @@ export function cookieOptions(secure: boolean) {
 
 // Extract a raw JWT from cookie or Authorization header.
 function extractToken(req: Request): string | null {
-  const fromCookie = req.cookies?.[ADMIN_COOKIE];
+  const fromCookie = req.cookies?.[ADMIN_COOKIE] || req.cookies?.[STUDENT_COOKIE];
   if (fromCookie) return fromCookie;
   const header = req.headers.authorization;
   if (header && header.startsWith("Bearer ")) {

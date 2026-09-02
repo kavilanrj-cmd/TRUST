@@ -37,6 +37,7 @@ function ApplicationsPage() {
   const [educationLevel, setEducationLevel] = useState(searchParams.get("educationLevel") || "");
   const [district, setDistrict] = useState(searchParams.get("district") || "");
   const [state, setState] = useState(searchParams.get("state") || "");
+  const [paymentStatus, setPaymentStatus] = useState(searchParams.get("paymentStatus") || "");
   const [from, setFrom] = useState(searchParams.get("from") || "");
   const [to, setTo] = useState(searchParams.get("to") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "desc");
@@ -55,6 +56,7 @@ function ApplicationsPage() {
         educationLevel: educationLevel || undefined,
         district: district || undefined,
         state: state || undefined,
+        paymentStatus: paymentStatus || undefined,
         from: from || undefined,
         to: to || undefined,
         sort,
@@ -70,7 +72,7 @@ function ApplicationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, status, scholarshipId, educationLevel, district, state, from, to, sort, page]);
+  }, [search, status, scholarshipId, educationLevel, district, state, paymentStatus, from, to, sort, page]);
 
   useEffect(() => {
     fetchApplications();
@@ -161,6 +163,15 @@ function ApplicationsPage() {
           </label>
 
           <label className="block">
+            <span className="field-label">Payment</span>
+            <select className="field-input" value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
+              <option value="">All Payments</option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+          </label>
+
+          <label className="block">
             <span className="field-label">From</span>
             <input type="date" className="field-input" value={from} onChange={(e) => setFrom(e.target.value)} />
           </label>
@@ -186,6 +197,7 @@ function ApplicationsPage() {
               onClick={() => {
                 setSearch(""); setStatus(""); setScholarshipId("");
                 setEducationLevel(""); setDistrict(""); setState("");
+                setPaymentStatus("");
                 setFrom(""); setTo(""); setSort("desc"); setPage(1);
               }}
             >
@@ -213,6 +225,7 @@ function ApplicationsPage() {
                   <th className="pb-2 pr-4 font-semibold">Email</th>
                   <th className="pb-2 pr-4 font-semibold">Scholarship</th>
                   <th className="pb-2 pr-4 font-semibold">Status</th>
+                  <th className="pb-2 pr-4 font-semibold">Payment</th>
                   <th className="pb-2 pr-4 font-semibold">Submitted</th>
                   <th className="pb-2 font-semibold"></th>
                 </tr>
@@ -228,6 +241,16 @@ function ApplicationsPage() {
                     <td className="py-2.5 pr-4 text-muted-foreground">{a.scholarshipProgram?.name || "—"}</td>
                     <td className="py-2.5 pr-4">
                       <Badge className={statusColor(a.status)}>{a.status.replace(/_/g, " ")}</Badge>
+                    </td>
+                    <td className="py-2.5 pr-4">
+                      {(() => {
+                        const paid = (a.payments || []).some((p: any) => p.status === "SUCCESS");
+                        return paid ? (
+                          <Badge className="bg-green-100 text-green-700">Paid</Badge>
+                        ) : (
+                          <Badge className="bg-gray-100 text-gray-600">Unpaid</Badge>
+                        );
+                      })()}
                     </td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{fmtDate(a.submittedAt || a.createdAt)}</td>
                     <td className="py-2.5">

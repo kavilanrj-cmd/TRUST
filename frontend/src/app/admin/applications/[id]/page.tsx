@@ -195,49 +195,49 @@ export default function ApplicationDetailPage() {
         <div className="xl:col-span-2 space-y-6">
           <Section title="Personal Details">
             <FieldRow label="Full Name" value={pd?.fullName} />
-            <FieldRow label="Email" value={app.student?.email || pd?.email} />
+            <FieldRow label="Email" value={app.student?.email} />
             <FieldRow label="Phone" value={pd?.phone} />
             <FieldRow label="Date of Birth" value={fmtDate(pd?.dateOfBirth)} />
             <FieldRow label="Gender" value={pd?.gender} />
-            <FieldRow label="Aadhaar Number" value={pd?.aadhaarNumber} />
-            <FieldRow label="Religion" value={pd?.religion} />
-            <FieldRow label="Caste" value={pd?.caste} />
-            <FieldRow label="Category" value={pd?.category} />
+            <FieldRow label="Name (Bank Record)" value={pd?.bankRecordName} />
+            <FieldRow label="ID Proof Number" value={pd?.idProofNumber} />
           </Section>
 
           <Section title="Address">
+            <FieldRow label="Door Number" value={addr?.doorNumber} />
             <FieldRow label="Street" value={addr?.street} />
             <FieldRow label="City" value={addr?.city} />
             <FieldRow label="District" value={addr?.district} />
             <FieldRow label="State" value={addr?.state} />
-            <FieldRow label="Pincode" value={addr?.pincode} />
+            <FieldRow label="PIN Code" value={addr?.pinCode} />
           </Section>
 
           <Section title="Parent / Guardian">
-            <FieldRow label="Name" value={pg?.name} />
-            <FieldRow label="Relation" value={pg?.relation} />
-            <FieldRow label="Phone" value={pg?.phone} />
+            <FieldRow label="Name" value={pg?.guardianName} />
+            <FieldRow label="Relationship" value={pg?.relationship} />
+            <FieldRow label="Phone" value={pg?.contactNumber} />
             <FieldRow label="Occupation" value={pg?.occupation} />
-            <FieldRow label="Annual Income" value={pg?.annualIncome != null ? `₹${pg.annualIncome.toLocaleString()}` : undefined} />
+            <FieldRow label="Single Parent" value={pg?.isSingleParent ? "Yes" : "No"} />
+            <FieldRow label="Income" value={pg?.income != null ? `₹${pg.income.toLocaleString()}` : undefined} />
           </Section>
 
           <Section title="Academic Details">
-            <FieldRow label="Education Level" value={acad?.educationLevel?.replace(/_/g, " ")} />
-            <FieldRow label="Course" value={acad?.course} />
+            <FieldRow label="Academic Type" value={acad?.academicType} />
             <FieldRow label="School / College" value={acad?.schoolCollege} />
+            <FieldRow label="Course" value={acad?.course} />
+            <FieldRow label="Education Level" value={acad?.educationLevel?.replace(/_/g, " ")} />
+            <FieldRow label="Academic Year" value={acad?.academicYear} />
+            <FieldRow label="Class" value={acad?.className} />
+            <FieldRow label="Section" value={acad?.section} />
+            <FieldRow label="Semester" value={acad?.semester} />
+            <FieldRow label="UG / PG" value={acad?.ugPg} />
             <FieldRow label="Year of Study" value={acad?.yearOfStudy} />
-            <FieldRow label="Percentage" value={acad?.percentage != null ? `${acad.percentage}%` : undefined} />
-            <FieldRow label="CGPA" value={acad?.cgpa} />
-            <FieldRow label="Institution Type" value={acad?.institutionType} />
+            <FieldRow label="Marks / CGPA" value={acad?.marksPercentageCGPA} />
           </Section>
 
           <Section title="Financial Details">
-            <FieldRow label="Annual Family Income" value={fin?.annualFamilyIncome != null ? `₹${fin.annualFamilyIncome.toLocaleString()}` : undefined} />
-            <FieldRow label="Family Assets" value={fin?.familyAssets} />
-            <FieldRow label="Other Scholarships" value={fin?.otherScholarships} />
-            <FieldRow label="Bank Name" value={fin?.bankName} />
-            <FieldRow label="Account Number" value={fin?.accountNumber} />
-            <FieldRow label="IFSC Code" value={fin?.ifscCode} />
+            <FieldRow label="Family Annual Income" value={fin?.familyIncome != null ? `₹${fin.familyIncome.toLocaleString()}` : undefined} />
+            <FieldRow label="Income Source" value={fin?.incomeSource} />
           </Section>
 
           <Section title="Application Metrics">
@@ -256,6 +256,8 @@ export default function ApplicationDetailPage() {
                     <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                       <th className="pb-2 pr-4 font-semibold">Amount</th>
                       <th className="pb-2 pr-4 font-semibold">Status</th>
+                      <th className="pb-2 pr-4 font-semibold">Payment ID</th>
+                      <th className="pb-2 pr-4 font-semibold">Order ID</th>
                       <th className="pb-2 font-semibold">Date</th>
                     </tr>
                   </thead>
@@ -264,7 +266,9 @@ export default function ApplicationDetailPage() {
                       <tr key={p.id} className="border-b border-border last:border-0">
                         <td className="py-2 pr-4">₹{p.amount?.toLocaleString()}</td>
                         <td className="py-2 pr-4"><Badge className={statusColor(p.status)}>{p.status}</Badge></td>
-                        <td className="py-2">{fmtDate(p.createdAt)}</td>
+                        <td className="py-2 pr-4 font-mono text-xs">{p.razorpayPaymentId || "—"}</td>
+                        <td className="py-2 pr-4 font-mono text-xs">{p.razorpayOrderId || "—"}</td>
+                        <td className="py-2">{fmtDate(p.paymentDate || p.createdAt)}</td>
                       </tr>
                     ))}
                   </tbody>

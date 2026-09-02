@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@/lib/api";
 
-const ADMIN_BASE = `${API_BASE_URL}/api/admin`;
+const ADMIN_BASE = "/api/admin";
 
 export class AdminApiError extends Error {
   status: number;
@@ -96,6 +96,19 @@ export const adminApi = {
     documentAccess: (id: string) => `${ADMIN_BASE}/applications/documents/${id}/access`,
     verifyDocument: (id: string, data: { verificationStatus: string; reason?: string }) =>
       adminJSON<any>(`${ADMIN_BASE}/applications/documents/${id}/verify`, "PATCH", data),
+  },
+
+  // --- Students ---
+  students: {
+    list: (params: Record<string, string | undefined>) => {
+      const qs = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== "") qs.set(k, v);
+      });
+      const s = qs.toString();
+      return adminJSON<any>(`${ADMIN_BASE}/students${s ? `?${s}` : ""}`);
+    },
+    detail: (id: string) => adminJSON<any>(`${ADMIN_BASE}/students/${id}`),
   },
 
   // --- Scholarships ---

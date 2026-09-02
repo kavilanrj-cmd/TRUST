@@ -16,12 +16,13 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "grid" },
   { href: "/admin/applications", label: "Applications", icon: "document" },
+  { href: "/admin/students", label: "Students", icon: "users" },
   { href: "/admin/scholarships", label: "Scholarships", icon: "award" },
   { href: "/admin/announcements", label: "Announcements", icon: "megaphone" },
   { href: "/admin/website", label: "Website Editor", icon: "layout" },
   { href: "/admin/media", label: "Media", icon: "image" },
   { href: "/admin/notifications", label: "Notifications", icon: "bell" },
-  { href: "/admin/users", label: "Users", icon: "users", founderOnly: true },
+  { href: "/admin/users", label: "Staff", icon: "users", founderOnly: true },
   { href: "/admin/audit", label: "Audit Logs", icon: "list" },
   { href: "/admin/settings", label: "Settings", icon: "settings", founderOnly: true },
 ];

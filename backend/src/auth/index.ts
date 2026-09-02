@@ -6,6 +6,7 @@ import prisma from "../utils/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Resend } from "resend";
+import { STUDENT_COOKIE, cookieOptions } from "../utils/auth";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -86,6 +87,8 @@ router.post("/register", async (req: Request, res: Response) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    res.cookie(STUDENT_COOKIE, token, cookieOptions(process.env.NODE_ENV === "production"));
+
     return res.status(201).json({
       message: "User registered successfully. Please check your email to verify your account.",
       token,
@@ -146,6 +149,8 @@ router.post("/login", async (req: Request, res: Response) => {
       { expiresIn: REFRESH_EXPIRES_IN }
     );
 
+    res.cookie(STUDENT_COOKIE, token, cookieOptions(process.env.NODE_ENV === "production"));
+
     return res.json({
       message: "Login successful",
       token,
@@ -166,8 +171,7 @@ router.post("/login", async (req: Request, res: Response) => {
 // Logout user
 router.post("/logout", async (req: Request, res: Response) => {
   try {
-    // In a real app, you would invalidate the token on the server
-    // For now, just send success response
+    res.clearCookie(STUDENT_COOKIE, { path: "/" });
     res.json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);

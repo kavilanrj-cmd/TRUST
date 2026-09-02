@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { DocumentUpload } from "./DocumentUpload";
 
@@ -11,20 +11,22 @@ type StepStatus = "complete" | "current" | "todo";
 const STEPS = [
   { id: 0, label: "Personal" },
   { id: 1, label: "Contact" },
-  { id: 2, label: "Education" },
+  { id: 2, label: "Academic" },
   { id: 3, label: "Family" },
   { id: 4, label: "Documents" },
   { id: 5, label: "Review" },
+  { id: 6, label: "Payment" },
 ] as const;
 
-type Scholarship = { id: string; name: string };
+type AcademicType = "" | "school" | "college";
 
 type FormData = {
-  scholarshipId: string;
-  fullName: string;
+  certificateName: string;
+  bankRecordName: string;
   dateOfBirth: string;
   gender: string;
   phone: string;
+  doorNumber: string;
   street: string;
   city: string;
   district: string;
@@ -34,21 +36,27 @@ type FormData = {
   relationship: string;
   occupation: string;
   contactNumber: string;
-  schoolCollege: string;
+  isSingleParent: boolean;
+  academicType: AcademicType;
+  schoolName: string;
+  className: string;
+  section: string;
+  collegeName: string;
   course: string;
-  educationLevel: string;
+  semester: string;
+  ugPg: string;
   academicYear: string;
-  yearOfStudy: string;
   familyIncome: string;
   incomeSource: string;
 };
 
 const EMPTY_FORM: FormData = {
-  scholarshipId: "",
-  fullName: "",
+  certificateName: "",
+  bankRecordName: "",
   dateOfBirth: "",
   gender: "",
   phone: "",
+  doorNumber: "",
   street: "",
   city: "",
   district: "",
@@ -58,11 +66,16 @@ const EMPTY_FORM: FormData = {
   relationship: "",
   occupation: "",
   contactNumber: "",
-  schoolCollege: "",
+  isSingleParent: false,
+  academicType: "",
+  schoolName: "",
+  className: "",
+  section: "",
+  collegeName: "",
   course: "",
-  educationLevel: "",
+  semester: "",
+  ugPg: "",
   academicYear: "",
-  yearOfStudy: "",
   familyIncome: "",
   incomeSource: "",
 };
@@ -73,15 +86,17 @@ type LoadedApplication = {
   id: string;
   status: string;
   applicationId: string;
-  scholarshipProgramId: string;
   personalDetails?: {
     fullName?: string | null;
+    bankRecordName?: string | null;
     dateOfBirth?: string | Date | null;
     gender?: string | null;
     phone?: string | null;
+    idProofNumber?: string | null;
   } | null;
   address?: {
     street?: string | null;
+    doorNumber?: string | null;
     city?: string | null;
     district?: string | null;
     state?: string | null;
@@ -92,13 +107,21 @@ type LoadedApplication = {
     relationship?: string | null;
     occupation?: string | null;
     contactNumber?: string | null;
+    isSingleParent?: boolean | null;
+    income?: number | null;
   } | null;
   academicDetails?: {
     schoolCollege?: string | null;
+    academicType?: string | null;
     course?: string | null;
     educationLevel?: string | null;
     academicYear?: string | null;
-    yearOfStudy?: number | null;
+    yearOfStudy?: string | null;
+    className?: string | null;
+    section?: string | null;
+    semester?: string | null;
+    ugPg?: string | null;
+    marksPercentageCGPA?: string | null;
   } | null;
   financialDetails?: {
     familyIncome?: number | null;
@@ -119,8 +142,6 @@ export function ApplicationForm() {
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [errors, setErrors] = useState<Errors>({});
   const [currentStep, setCurrentStep] = useState(0);
-  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
-  const [loadingScholarships, setLoadingScholarships] = useState(true);
 
   // API wiring state
   const [applicationId, setApplicationId] = useState<string | null>(null);
@@ -138,20 +159,16 @@ export function ApplicationForm() {
   // Uploaded document count (from DocumentUpload)
   const [docCount, setDocCount] = useState(0);
 
-  // Load scholarships
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/scholarships`)
-      .then((r) => r.json())
-      .then((data: Scholarship[]) => {
-        setScholarships(Array.isArray(data) ? data : []);
-        if (Array.isArray(data) && data.length === 1) {
-          setForm((f) => ({ ...f, scholarshipId: data[0].id }));
-        }
-      })
-      .catch(() => setScholarships([]))
-      .finally(() => setLoadingScholarships(false));
+  // Payment state
+  const [fee, setFee] = useState<{ amount: number; enabled: boolean; currency: string } | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<"NO_PAYMENT" | "PENDING" | "SUCCESS" | "FAILED">("NO_PAYMENT");
+  const [paying, setPaying] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState<{ type: "error" | "success" | "info"; text: string } | null>(null);
+  const [paymentRef, setPaymentRef] = useState<{ paymentId?: string | null; amount?: number | null } | null>(null);
 
-    // Try to resume an existing draft
+  // Try to resume an existing draft
+  useEffect(() => {
     fetch(`${API_BASE_URL}/api/applications/me`, { credentials: "include" })
       .then((r) => r.json())
       .then((data: { application?: LoadedApplication | null }) => {
@@ -167,11 +184,12 @@ export function ApplicationForm() {
           const fin = app.financialDetails || {};
           setForm((f) => ({
             ...f,
-            scholarshipId: app.scholarshipProgramId || f.scholarshipId,
-            fullName: pd.fullName || "",
+            certificateName: pd.fullName || "",
+            bankRecordName: pd.bankRecordName || "",
             dateOfBirth: pd.dateOfBirth ? String(pd.dateOfBirth).slice(0, 10) : "",
             gender: pd.gender || "",
             phone: pd.phone || "",
+            doorNumber: ad.doorNumber || "",
             street: ad.street || "",
             city: ad.city || "",
             district: ad.district || "",
@@ -181,11 +199,15 @@ export function ApplicationForm() {
             relationship: pg.relationship || "",
             occupation: pg.occupation || "",
             contactNumber: pg.contactNumber || "",
-            schoolCollege: ac.schoolCollege || "",
+            isSingleParent: pg.isSingleParent || false,
+            collegeName: ac.schoolCollege || "",
+            schoolName: ac.schoolCollege || "",
+            className: ac.className || "",
+            section: ac.section || "",
             course: ac.course || "",
-            educationLevel: ac.educationLevel || "",
+            semester: ac.semester || "",
+            ugPg: ac.ugPg || "",
             academicYear: ac.academicYear || "",
-            yearOfStudy: ac.yearOfStudy != null ? String(ac.yearOfStudy) : "",
             familyIncome: fin.familyIncome != null ? String(fin.familyIncome) : "",
             incomeSource: fin.incomeSource || "",
           }));
@@ -197,8 +219,34 @@ export function ApplicationForm() {
       .finally(() => setInitialLoading(false));
   }, []);
 
+  // Load current application fee config and existing payment status.
+  useEffect(() => {
+    if (!applicationId || !appEditingId) return;
+    let alive = true;
+    fetch(`${API_BASE_URL}/api/application-fee`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d) setFee(d);
+      })
+      .catch(() => {});
+    fetch(`${API_BASE_URL}/api/payments/application/${encodeURIComponent(applicationId)}`, {
+      credentials: "include",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d && d.status !== "NO_PAYMENT") {
+          setPaymentStatus(d.status);
+          setPaymentRef({ paymentId: d.razorpayPaymentId, amount: d.amount });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [applicationId, appEditingId]);
+
   const set = useCallback(
-    (key: keyof FormData, value: string) => {
+    (key: keyof FormData, value: string | boolean) => {
       setForm((f) => ({ ...f, [key]: value }));
       if (errors[key]) {
         setErrors((e) => ({ ...e, [key]: undefined }));
@@ -210,8 +258,7 @@ export function ApplicationForm() {
   const validateStep = useCallback((step: number, data: FormData): Errors => {
     const e: Errors = {};
     if (step === 0) {
-      if (!data.scholarshipId) e.scholarshipId = "Please select a scholarship program.";
-      if (!data.fullName.trim()) e.fullName = "Please enter your full name.";
+      if (!data.certificateName.trim()) e.certificateName = "Please enter your name (as per the certificate).";
       if (!data.dateOfBirth) e.dateOfBirth = "Please enter your date of birth.";
       if (!data.gender) e.gender = "Please select your gender.";
       if (!data.phone.trim()) e.phone = "Please enter your phone number.";
@@ -226,23 +273,22 @@ export function ApplicationForm() {
       else if (!PIN_RX.test(data.pinCode.trim())) e.pinCode = "Please enter a valid 6-digit PIN code.";
     }
     if (step === 2) {
-      if (!data.schoolCollege.trim()) e.schoolCollege = "Please enter your school/college name.";
-      if (!data.educationLevel) e.educationLevel = "Please select your education level.";
-      if (!data.academicYear.trim()) e.academicYear = "Please enter your academic year.";
-      if (!data.yearOfStudy.trim()) e.yearOfStudy = "Please enter your year of study.";
-      else {
-        const y = Number(data.yearOfStudy);
-        if (Number.isNaN(y) || y < 1 || y > 6) e.yearOfStudy = "Year of study must be between 1 and 6.";
+      if (data.academicType === "school") {
+        if (!data.schoolName.trim()) e.schoolName = "Please enter your school name.";
+        if (!data.academicYear.trim()) e.academicYear = "Please enter your academic year.";
+      } else if (data.academicType === "college") {
+        if (!data.collegeName.trim()) e.collegeName = "Please enter your college name.";
+        if (!data.course.trim()) e.course = "Please enter your course.";
+        if (!data.academicYear.trim()) e.academicYear = "Please enter your academic year.";
+      } else {
+        e.academicType = "Please select whether you are a School or College student.";
       }
     }
     if (step === 3) {
       if (!data.guardianName.trim()) e.guardianName = "Please enter your parent/guardian name.";
       if (!data.relationship) e.relationship = "Please select the relationship.";
-      if (!data.occupation.trim()) e.occupation = "Please enter the occupation.";
-      if (!data.contactNumber.trim()) e.contactNumber = "Please enter the contact number.";
-      else if (!PHONE_RX.test(data.contactNumber.trim())) e.contactNumber = "Please enter a valid mobile number.";
-      if (!data.familyIncome.trim()) e.familyIncome = "Please enter the family income.";
-      else if (Number(data.familyIncome) < 0) e.familyIncome = "Family income cannot be negative.";
+      if (!data.familyIncome.trim()) e.familyIncome = "Please enter the family annual income.";
+      else if (Number(data.familyIncome) < 0) e.familyIncome = "Family annual income cannot be negative.";
       if (!data.incomeSource) e.incomeSource = "Please select the income source.";
     }
     return e;
@@ -253,6 +299,24 @@ export function ApplicationForm() {
     setErrors({});
     setCurrentStep((s) => Math.max(s - 1, 0));
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const buildAcademicPayload = useCallback((data: FormData) => {
+    const isSchool = data.academicType === "school";
+    const schoolCollege = isSchool ? data.schoolName : data.collegeName;
+    return {
+      academicType: data.academicType,
+      schoolCollege,
+      course: isSchool ? "" : data.course,
+      educationLevel: isSchool ? "HIGH_SCHOOL" : "UNDERGRADUATE",
+      academicYear: data.academicYear,
+      className: isSchool ? data.className : "",
+      section: isSchool ? data.section : "",
+      semester: isSchool ? "" : data.semester,
+      ugPg: isSchool ? "" : data.ugPg,
+      yearOfStudy: isSchool ? data.className : data.semester,
+      marksPercentageCGPA: "",
+    };
   }, []);
 
   // Save draft (create or update) then move next
@@ -268,14 +332,15 @@ export function ApplicationForm() {
     setSaving(true);
     try {
       const payload = {
-        scholarshipProgramId: form.scholarshipId,
         personalDetails: {
-          fullName: form.fullName,
+          fullName: form.certificateName,
+          bankRecordName: form.bankRecordName,
           dateOfBirth: form.dateOfBirth,
           gender: form.gender,
           phone: form.phone,
         },
         address: {
+          doorNumber: form.doorNumber,
           street: form.street,
           city: form.city,
           district: form.district,
@@ -287,14 +352,9 @@ export function ApplicationForm() {
           relationship: form.relationship,
           occupation: form.occupation,
           contactNumber: form.contactNumber,
+          isSingleParent: form.isSingleParent,
         },
-        academicDetails: {
-          schoolCollege: form.schoolCollege,
-          course: form.course,
-          educationLevel: form.educationLevel,
-          academicYear: form.academicYear,
-          yearOfStudy: form.yearOfStudy ? Number(form.yearOfStudy) : undefined,
-        },
+        academicDetails: buildAcademicPayload(form),
         financialDetails: {
           familyIncome: form.familyIncome ? Number(form.familyIncome) : undefined,
           incomeSource: form.incomeSource,
@@ -355,7 +415,7 @@ export function ApplicationForm() {
     } finally {
       setSaving(false);
     }
-  }, [currentStep, form, validateStep, applicationId, appEditingId]);
+  }, [currentStep, form, validateStep, applicationId, appEditingId, buildAcademicPayload]);
 
   const goToStep = useCallback((step: number) => {
     setFormNotice(null);
@@ -363,6 +423,106 @@ export function ApplicationForm() {
     setCurrentStep(step);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  const loadRazorpayScript = useCallback((): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  }, []);
+
+  const payApplication = useCallback(async () => {
+    if (!applicationId) {
+      setPaymentNotice({ type: "error", text: "Please save your application before paying." });
+      return;
+    }
+    setPaying(true);
+    setPaymentNotice(null);
+    try {
+      const orderRes = await fetch(`${API_BASE_URL}/api/payments/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ applicationId }),
+      });
+      const order = await orderRes.json().catch(() => ({}));
+      if (!orderRes.ok) {
+        throw new Error(order.error || "Could not create payment order.");
+      }
+      if (order.status === "SUCCESS") {
+        setPaymentStatus("SUCCESS");
+        setPaymentRef({ paymentId: order.paymentId, amount: order.amount / 100 });
+        setPaymentNotice({ type: "success", text: "Payment already completed." });
+        return;
+      }
+      const ready = await loadRazorpayScript();
+      if (!ready) {
+        throw new Error("Unable to load the secure payment gateway. Please try again.");
+      }
+      const rz = new (window as any).Razorpay({
+        key: order.key,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Neelakannu Educational Trust",
+        description: "Scholarship Application Fee",
+        order_id: order.id,
+        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+          await verifyPayment(response);
+        },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+            setPaymentNotice({ type: "info", text: "Payment cancelled. You can retry whenever you are ready." });
+          },
+        },
+        theme: { color: "#1b3a5c" },
+      });
+      rz.open();
+    } catch (err) {
+      setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Payment could not be started." });
+      setPaying(false);
+    }
+  }, [applicationId, loadRazorpayScript]);
+
+  const verifyPayment = useCallback(
+    async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+      setVerifying(true);
+      setPaying(false);
+      setPaymentNotice(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/payments/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || "Payment verification failed.");
+        }
+        setPaymentStatus("SUCCESS");
+        setPaymentRef({ paymentId: response.razorpay_payment_id, amount: data.amount });
+        setPaymentNotice({ type: "success", text: "Payment successful! You can now submit your application." });
+      } catch (err) {
+        setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Could not verify payment. Please contact support." });
+        setPaymentStatus("FAILED");
+      } finally {
+        setVerifying(false);
+      }
+    },
+    []
+  );
 
   const submitApplication = useCallback(async () => {
     if (!showDeclaration) {
@@ -391,14 +551,6 @@ export function ApplicationForm() {
       setSubmitting(false);
     }
   }, [showDeclaration, appEditingId, applicationId]);
-
-  const fileTypeLabel = useMemo(() => {
-    if (form.scholarshipId && scholarships.length) {
-      const s = scholarships.find((x) => x.id === form.scholarshipId);
-      return s?.name || "";
-    }
-    return "";
-  }, [form.scholarshipId, scholarships]);
 
   if (initialLoading) {
     return (
@@ -435,6 +587,31 @@ export function ApplicationForm() {
             <p className="mt-2 text-xs text-muted-foreground">Please keep this reference number for future communication.</p>
           </div>
         )}
+        {paymentStatus === "SUCCESS" && (
+          <div className="mx-auto mt-6 max-w-md space-y-3 rounded-xl border border-border bg-white p-5 text-left">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm text-muted-foreground">Payment status</span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Paid
+              </span>
+            </div>
+            {paymentRef?.paymentId && (
+              <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
+                <span className="text-sm text-muted-foreground">Payment ID</span>
+                <span className="font-mono text-sm font-medium text-navy">{paymentRef.paymentId}</span>
+              </div>
+            )}
+            {paymentRef?.amount != null && (
+              <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
+                <span className="text-sm text-muted-foreground">Amount Paid</span>
+                <span className="text-sm font-semibold text-navy">₹{Number(paymentRef.amount).toLocaleString("en-IN")}</span>
+              </div>
+            )}
+          </div>
+        )}
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/student/dashboard" className="btn-outline">View My Applications</Link>
           <Link href="/" className="btn-gold">Back to Home</Link>
@@ -442,6 +619,9 @@ export function ApplicationForm() {
       </div>
     );
   }
+
+  const isSchool = form.academicType === "school";
+  const isCollege = form.academicType === "college";
 
   return (
     <div className="space-y-6">
@@ -523,51 +703,49 @@ export function ApplicationForm() {
           <h2 className="font-serif text-2xl font-bold text-navy">
             {currentStep === 0 && "Personal Information"}
             {currentStep === 1 && "Contact Information"}
-            {currentStep === 2 && "Educational Information"}
+            {currentStep === 2 && "Academic Details"}
             {currentStep === 3 && "Family & Financial Information"}
             {currentStep === 4 && "Document Uploads"}
             {currentStep === 5 && "Review Your Application"}
+            {currentStep === 6 && "Pay Application Fee"}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {currentStep === 4
               ? "Upload clear and readable copies of the required documents."
               : currentStep === 5
                 ? "Please verify all information below before submitting."
-                : `Fields marked with * are required.`}
+                : currentStep === 6
+                  ? "Payment is required to complete and submit your application."
+                  : `Fields marked with * are required.`}
           </p>
         </div>
 
         <div className="px-5 py-6 sm:px-8 sm:py-8">
           {currentStep === 0 && (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label htmlFor="scholarshipId" className="field-label">Scholarship Program *</label>
-                <select
-                  id="scholarshipId"
-                  className="field-input"
-                  value={form.scholarshipId}
-                  onChange={(e) => set("scholarshipId", e.target.value)}
-                  disabled={loadingScholarships}
-                >
-                  <option value="">{loadingScholarships ? "Loading scholarships…" : "Select a scholarship program"}</option>
-                  {scholarships.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-                {errors.scholarshipId && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.scholarshipId}</p>}
-              </div>
               <div>
-                <label htmlFor="fullName" className="field-label">Full Name *</label>
+                <label htmlFor="certificateName" className="field-label">Name (as per the Certificate) *</label>
                 <input
-                  id="fullName"
+                  id="certificateName"
                   type="text"
                   className="field-input"
-                  placeholder="Enter your full name"
-                  value={form.fullName}
-                  onChange={(e) => set("fullName", e.target.value)}
+                  placeholder="Enter your name as per the certificate"
+                  value={form.certificateName}
+                  onChange={(e) => set("certificateName", e.target.value)}
                   autoComplete="name"
                 />
-                {errors.fullName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.fullName}</p>}
+                {errors.certificateName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.certificateName}</p>}
+              </div>
+              <div>
+                <label htmlFor="bankRecordName" className="field-label">Name (as per the Bank Record)</label>
+                <input
+                  id="bankRecordName"
+                  type="text"
+                  className="field-input"
+                  placeholder="Enter your name as per the bank record"
+                  value={form.bankRecordName}
+                  onChange={(e) => set("bankRecordName", e.target.value)}
+                />
               </div>
               <div>
                 <label htmlFor="dateOfBirth" className="field-label">Date of Birth *</label>
@@ -610,7 +788,18 @@ export function ApplicationForm() {
 
           {currentStep === 1 && (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className="md:col-span-2">
+              <div>
+                <label htmlFor="doorNumber" className="field-label">Door Number</label>
+                <input
+                  id="doorNumber"
+                  type="text"
+                  className="field-input"
+                  placeholder="Enter door number"
+                  value={form.doorNumber}
+                  onChange={(e) => set("doorNumber", e.target.value)}
+                />
+              </div>
+              <div>
                 <label htmlFor="street" className="field-label">Street Address *</label>
                 <input
                   id="street"
@@ -678,77 +867,171 @@ export function ApplicationForm() {
           {currentStep === 2 && (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label htmlFor="schoolCollege" className="field-label">School/College Name *</label>
-                <input
-                  id="schoolCollege"
-                  type="text"
-                  className="field-input"
-                  placeholder="Enter your school/college name"
-                  value={form.schoolCollege}
-                  onChange={(e) => set("schoolCollege", e.target.value)}
-                />
-                {errors.schoolCollege && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.schoolCollege}</p>}
+                <span className="field-label">Academic Type *</span>
+                <div className="flex flex-wrap gap-4" role="radiogroup" aria-label="Academic Type">
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isSchool ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                    <input
+                      type="radio"
+                      name="academicType"
+                      className="h-4 w-4 accent-navy"
+                      checked={isSchool}
+                      onChange={() => set("academicType", "school")}
+                    />
+                    School
+                  </label>
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isCollege ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                    <input
+                      type="radio"
+                      name="academicType"
+                      className="h-4 w-4 accent-navy"
+                      checked={isCollege}
+                      onChange={() => set("academicType", "college")}
+                    />
+                    College
+                  </label>
+                </div>
+                {errors.academicType && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.academicType}</p>}
               </div>
-              <div>
-                <label htmlFor="course" className="field-label">Course</label>
-                <input
-                  id="course"
-                  type="text"
-                  className="field-input"
-                  placeholder="Enter your course"
-                  value={form.course}
-                  onChange={(e) => set("course", e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="educationLevel" className="field-label">Education Level *</label>
-                <select
-                  id="educationLevel"
-                  className="field-input"
-                  value={form.educationLevel}
-                  onChange={(e) => set("educationLevel", e.target.value)}
-                >
-                  <option value="">Select education level</option>
-                  <option>High School</option>
-                  <option>Undergraduate</option>
-                  <option>Postgraduate</option>
-                </select>
-                {errors.educationLevel && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.educationLevel}</p>}
-              </div>
-              <div>
-                <label htmlFor="academicYear" className="field-label">Academic Year *</label>
-                <input
-                  id="academicYear"
-                  type="text"
-                  className="field-input"
-                  placeholder="e.g. 2026-2027"
-                  value={form.academicYear}
-                  onChange={(e) => set("academicYear", e.target.value)}
-                />
-                {errors.academicYear && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.academicYear}</p>}
-              </div>
-              <div>
-                <label htmlFor="yearOfStudy" className="field-label">Year of Study *</label>
-                <input
-                  id="yearOfStudy"
-                  type="number"
-                  className="field-input"
-                  placeholder="Enter year of study"
-                  value={form.yearOfStudy}
-                  onChange={(e) => set("yearOfStudy", e.target.value)}
-                  min={1}
-                  max={6}
-                  inputMode="numeric"
-                />
-                {errors.yearOfStudy && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.yearOfStudy}</p>}
-              </div>
+
+              {isSchool && (
+                <>
+                  <div className="md:col-span-2">
+                    <label htmlFor="schoolName" className="field-label">School Name *</label>
+                    <input
+                      id="schoolName"
+                      type="text"
+                      className="field-input"
+                      placeholder="Enter your school name"
+                      value={form.schoolName}
+                      onChange={(e) => set("schoolName", e.target.value)}
+                    />
+                    {errors.schoolName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.schoolName}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="className" className="field-label">Class</label>
+                    <input
+                      id="className"
+                      type="text"
+                      className="field-input"
+                      placeholder="e.g. Class X"
+                      value={form.className}
+                      onChange={(e) => set("className", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="section" className="field-label">Section</label>
+                    <input
+                      id="section"
+                      type="text"
+                      className="field-input"
+                      placeholder="e.g. A"
+                      value={form.section}
+                      onChange={(e) => set("section", e.target.value)}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label htmlFor="academicYear" className="field-label">Academic Year *</label>
+                    <input
+                      id="academicYear"
+                      type="text"
+                      className="field-input"
+                      placeholder="e.g. 2026-2027"
+                      value={form.academicYear}
+                      onChange={(e) => set("academicYear", e.target.value)}
+                    />
+                    {errors.academicYear && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.academicYear}</p>}
+                  </div>
+                </>
+              )}
+
+              {isCollege && (
+                <>
+                  <div className="md:col-span-2">
+                    <label htmlFor="collegeName" className="field-label">College Name *</label>
+                    <input
+                      id="collegeName"
+                      type="text"
+                      className="field-input"
+                      placeholder="Enter your college name"
+                      value={form.collegeName}
+                      onChange={(e) => set("collegeName", e.target.value)}
+                    />
+                    {errors.collegeName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.collegeName}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="course" className="field-label">Course *</label>
+                    <input
+                      id="course"
+                      type="text"
+                      className="field-input"
+                      placeholder="Enter your course"
+                      value={form.course}
+                      onChange={(e) => set("course", e.target.value)}
+                    />
+                    {errors.course && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.course}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="semester" className="field-label">Semester</label>
+                    <input
+                      id="semester"
+                      type="text"
+                      className="field-input"
+                      placeholder="e.g. Semester 3"
+                      value={form.semester}
+                      onChange={(e) => set("semester", e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="ugPg" className="field-label">UG / PG</label>
+                    <select id="ugPg" className="field-input" value={form.ugPg} onChange={(e) => set("ugPg", e.target.value)}>
+                      <option value="">Select UG / PG</option>
+                      <option>UG</option>
+                      <option>PG</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="collegeAcadYear" className="field-label">Academic Year *</label>
+                    <input
+                      id="collegeAcadYear"
+                      type="text"
+                      className="field-input"
+                      placeholder="e.g. 2026-2027"
+                      value={form.academicYear}
+                      onChange={(e) => set("academicYear", e.target.value)}
+                    />
+                    {errors.academicYear && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.academicYear}</p>}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {currentStep === 3 && (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className="md:col-span-2 border-b border-border pb-1 text-sm font-semibold uppercase tracking-wide text-navy-700">
-                Family / Guardian
+              <div className="md:col-span-2">
+                <span className="field-label">Single Parent</span>
+                <div className="flex flex-wrap gap-4" role="radiogroup" aria-label="Single Parent">
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.isSingleParent ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                    <input
+                      type="radio"
+                      name="singleParent"
+                      className="h-4 w-4 accent-navy"
+                      checked={form.isSingleParent === true}
+                      onChange={() => set("isSingleParent", true)}
+                    />
+                    Yes
+                  </label>
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.isSingleParent === false ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                    <input
+                      type="radio"
+                      name="singleParent"
+                      className="h-4 w-4 accent-navy"
+                      checked={form.isSingleParent === false}
+                      onChange={() => set("isSingleParent", false)}
+                    />
+                    No
+                  </label>
+                </div>
               </div>
               <div>
                 <label htmlFor="guardianName" className="field-label">Parent/Guardian Name *</label>
@@ -772,43 +1055,17 @@ export function ApplicationForm() {
                 </select>
                 {errors.relationship && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.relationship}</p>}
               </div>
-              <div>
-                <label htmlFor="occupation" className="field-label">Occupation *</label>
-                <input
-                  id="occupation"
-                  type="text"
-                  className="field-input"
-                  placeholder="Enter occupation"
-                  value={form.occupation}
-                  onChange={(e) => set("occupation", e.target.value)}
-                />
-                {errors.occupation && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.occupation}</p>}
-              </div>
-              <div>
-                <label htmlFor="contactNumber" className="field-label">Contact Number *</label>
-                <input
-                  id="contactNumber"
-                  type="tel"
-                  className="field-input"
-                  placeholder="Enter contact number"
-                  value={form.contactNumber}
-                  onChange={(e) => set("contactNumber", e.target.value.replace(/[^0-9]/g, ""))}
-                  inputMode="numeric"
-                  maxLength={10}
-                />
-                {errors.contactNumber && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.contactNumber}</p>}
-              </div>
 
               <div className="md:col-span-2 border-b border-border pb-1 text-sm font-semibold uppercase tracking-wide text-navy-700">
                 Financial Details
               </div>
               <div>
-                <label htmlFor="familyIncome" className="field-label">Family Income (₹) *</label>
+                <label htmlFor="familyIncome" className="field-label">Family Annual Income (₹) *</label>
                 <input
                   id="familyIncome"
                   type="number"
                   className="field-input"
-                  placeholder="Enter family income"
+                  placeholder="Enter family annual income"
                   value={form.familyIncome}
                   onChange={(e) => set("familyIncome", e.target.value)}
                   min={0}
@@ -832,8 +1089,100 @@ export function ApplicationForm() {
           )}
 
           <div className={currentStep === 4 ? "" : "hidden"}>
-            <DocumentUpload onCountChange={setDocCount} />
+            <DocumentUpload applicationId={applicationId} onCountChange={setDocCount} />
           </div>
+
+          {currentStep === 6 && (
+            <div className="space-y-6">
+              {applicationId && (
+                <div className="rounded-xl border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-navy-800">
+                  <strong>Application ID:</strong> {applicationId}
+                </div>
+              )}
+
+              <div className="rounded-xl border border-border bg-white p-6">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-gold">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="h-6 w-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold text-navy">Application Fee</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {fee && fee.enabled
+                        ? `Please pay the application fee of ₹${Number(fee.amount).toLocaleString("en-IN")} to complete your application.`
+                        : "Checking application fee..."}
+                    </p>
+                  </div>
+                </div>
+
+                {fee && fee.enabled && fee.amount > 0 && (
+                  <div className="mt-5 flex flex-wrap items-end justify-between gap-4 rounded-xl border border-border bg-surface-muted p-5">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Payable</p>
+                      <p className="font-serif text-3xl font-bold text-navy">
+                        ₹{Number(fee.amount).toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                    {paymentStatus === "SUCCESS" ? (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-semibold text-success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Payment Successful
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={payApplication}
+                        disabled={paying || verifying}
+                        className="btn-gold disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {paying ? "Opening payment…" : "Pay Application Fee"}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {!fee?.enabled && (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    Application fee collection is currently disabled. You may proceed to submit.
+                  </p>
+                )}
+
+                {paymentNotice && (
+                  <div
+                    role="alert"
+                    className={`mt-4 rounded-lg border px-4 py-3 text-sm ${
+                      paymentNotice.type === "error"
+                        ? "border-destructive/30 bg-destructive/5 text-destructive"
+                        : paymentNotice.type === "success"
+                          ? "border-success/30 bg-success/5 text-success"
+                          : "border-gold/40 bg-gold-soft text-navy-800"
+                    }`}
+                  >
+                    {paymentNotice.text}
+                  </div>
+                )}
+
+                {paymentStatus === "SUCCESS" && paymentRef?.paymentId && (
+                  <div className="mt-5 grid gap-3 rounded-xl border border-border bg-white p-5 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Payment ID</p>
+                      <p className="mt-1 font-mono text-sm text-navy">{paymentRef.paymentId}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Amount Paid</p>
+                      <p className="mt-1 text-sm font-semibold text-navy">
+                        ₹{paymentRef.amount != null ? Number(paymentRef.amount).toLocaleString("en-IN") : ""}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {currentStep === 5 && (
             <div className="space-y-6">
@@ -844,31 +1193,45 @@ export function ApplicationForm() {
               )}
               <div className="space-y-5">
                 <ReviewBlock title="Personal Information">
-                  <ReviewRow label="Full Name" value={form.fullName} />
+                  <ReviewRow label="Name (as per Certificate)" value={form.certificateName} />
+                  <ReviewRow label="Name (as per Bank Record)" value={form.bankRecordName} />
                   <ReviewRow label="Date of Birth" value={form.dateOfBirth} />
                   <ReviewRow label="Gender" value={form.gender} />
                   <ReviewRow label="Phone" value={form.phone} />
                 </ReviewBlock>
                 <ReviewBlock title="Contact Information">
+                  <ReviewRow label="Door Number" value={form.doorNumber} />
                   <ReviewRow label="Street Address" value={form.street} />
                   <ReviewRow label="City" value={form.city} />
                   <ReviewRow label="District" value={form.district} />
                   <ReviewRow label="State" value={form.state} />
                   <ReviewRow label="PIN Code" value={form.pinCode} />
                 </ReviewBlock>
-                <ReviewBlock title="Educational Information">
-                  <ReviewRow label="School/College" value={form.schoolCollege} />
-                  <ReviewRow label="Course" value={form.course} />
-                  <ReviewRow label="Education Level" value={form.educationLevel} />
+                <ReviewBlock title="Academic Details">
+                  <ReviewRow label="Academic Type" value={isSchool ? "School" : isCollege ? "College" : ""} />
+                  {isSchool ? (
+                    <>
+                      <ReviewRow label="School Name" value={form.schoolName} />
+                      <ReviewRow label="Class" value={form.className} />
+                      <ReviewRow label="Section" value={form.section} />
+                    </>
+                  ) : isCollege ? (
+                    <>
+                      <ReviewRow label="College Name" value={form.collegeName} />
+                      <ReviewRow label="Course" value={form.course} />
+                      <ReviewRow label="Semester" value={form.semester} />
+                      <ReviewRow label="UG / PG" value={form.ugPg} />
+                    </>
+                  ) : (
+                    <ReviewRow label="Education" value="Not provided" />
+                  )}
                   <ReviewRow label="Academic Year" value={form.academicYear} />
-                  <ReviewRow label="Year of Study" value={form.yearOfStudy} />
                 </ReviewBlock>
                 <ReviewBlock title="Family & Financial Information">
+                  <ReviewRow label="Single Parent" value={form.isSingleParent ? "Yes" : "No"} />
                   <ReviewRow label="Parent/Guardian" value={form.guardianName} />
                   <ReviewRow label="Relationship" value={form.relationship} />
-                  <ReviewRow label="Occupation" value={form.occupation} />
-                  <ReviewRow label="Contact Number" value={form.contactNumber} />
-                  <ReviewRow label="Family Income" value={form.familyIncome ? `₹${Number(form.familyIncome).toLocaleString("en-IN")}` : ""} />
+                  <ReviewRow label="Family Annual Income" value={form.familyIncome ? `₹${Number(form.familyIncome).toLocaleString("en-IN")}` : ""} />
                   <ReviewRow label="Income Source" value={form.incomeSource} />
                 </ReviewBlock>
                 <ReviewBlock title="Documents">
@@ -919,22 +1282,41 @@ export function ApplicationForm() {
             </button>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 5 && !showDeclaration && (
+            <button
+              type="button"
+              onClick={() => {
+                setDeclarationError("Please confirm that the information provided is true and complete.");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="btn-gold"
+            >
+              Continue to Payment →
+            </button>
+          )}
+
+          {currentStep === 5 && showDeclaration && (
+            <button
+              type="button"
+              onClick={() => setCurrentStep(6)}
+              className="btn-gold"
+            >
+              Continue to Payment →
+            </button>
+          )}
+
+          {currentStep === 6 && (
             <button
               type="button"
               onClick={submitApplication}
-              disabled={submitting}
-              className="btn-gold disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={submitting || (paymentStatus !== "SUCCESS" && fee?.enabled !== false)}
+              className="btn-gold disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Submitting…" : "Submit Application"}
             </button>
           )}
         </div>
       </div>
-
-      <p className="text-center text-xs text-muted-foreground">
-        {fileTypeLabel ? `Applying for: ${fileTypeLabel}` : ""}
-      </p>
     </div>
   );
 }

@@ -92,8 +92,8 @@ model Application {
   status           ApplicationStatus  @default(DRAFT)
   student          User       @relation(fields: [studentId], references: [id])
   studentId        String
-  scholarshipProgram ScholarshipProgram @relation(fields: [scholarshipProgramId], references: [id])
-  scholarshipProgramId String
+  scholarshipProgram ScholarshipProgram? @relation(fields: [scholarshipProgramId], references: [id])
+  scholarshipProgramId String?
   submittedAt      DateTime?
   correctionNote   String?
   personalDetails  PersonalDetails?
@@ -132,6 +132,7 @@ model PersonalDetails {
   application     Application @relation(fields: [applicationId], references: [id])
   applicationId   String  @unique
   fullName        String
+  bankRecordName  String?
   dateOfBirth     DateTime
   gender          String
   phone           String
@@ -143,6 +144,7 @@ model Address {
   application     Application @relation(fields: [applicationId], references: [id])
   applicationId   String  @unique
   street          String
+  doorNumber      String?
   city            String
   district        String
   state           String
@@ -157,6 +159,7 @@ model ParentGuardian {
   relationship    String
   occupation      String
   contactNumber   String
+  isSingleParent  Boolean?
   income          Decimal?
 }
 
@@ -165,10 +168,15 @@ model AcademicDetails {
   application     Application @relation(fields: [applicationId], references: [id])
   applicationId   String  @unique
   schoolCollege   String
+  academicType    String?
   course          String
   educationLevel  EducationLevel
   academicYear    String
   yearOfStudy     String
+  className       String?
+  section         String?
+  semester        String?
+  ugPg            String?
   marksPercentageCGPA String
 }
 
@@ -184,6 +192,7 @@ model ApplicationDocument {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id])
   applicationId   String
+  documentType    String?
   storageKey      String
   storageProvider  String
   originalFilename String
