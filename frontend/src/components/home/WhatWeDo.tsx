@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Reveal } from "./Reveal";
 
 export function WhatWeDo() {
@@ -45,9 +44,6 @@ export function WhatWeDo() {
               </div>
 
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link href="/student/application" className="btn-gold">
-                  Apply Now
-                </Link>
                 <a href="#scholarships" className="btn-outline">
                   View Scholarships
                 </a>

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Reveal } from "./Reveal";
 
 const DOCUMENTS = [
@@ -57,12 +56,6 @@ export function DocumentsRequired() {
             <p className="text-sm leading-relaxed text-navy-800">
               Please keep soft copies of all required documents ready before accessing the application form.
             </p>
-          </div>
-
-          <div className="mt-8 text-center">
-            <Link href="/student/application" className="btn-gold">
-              Apply Now
-            </Link>
           </div>
         </div>
       </div>

@@ -6,13 +6,10 @@ import { WhatWeDo } from "@/components/home/WhatWeDo";
 import { Scholarships } from "@/components/home/Scholarships";
 import { Notes } from "@/components/home/Notes";
 import { DocumentsRequired } from "@/components/home/DocumentsRequired";
-import { FeaturedCta } from "@/components/home/FeaturedCta";
-import { EligibilityChecker } from "@/components/home/EligibilityChecker";
 import { HowToApply } from "@/components/home/HowToApply";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { SuccessStories } from "@/components/home/SuccessStories";
 import { NewsEvents } from "@/components/home/NewsEvents";
-import { FinalCta } from "@/components/home/FinalCta";
 import { SiteFooter } from "@/components/home/SiteFooter";
 
 export const metadata = {
@@ -33,13 +30,10 @@ export default function HomePage() {
         <Scholarships />
         <Notes />
         <DocumentsRequired />
-        <FeaturedCta />
-        <EligibilityChecker />
         <HowToApply />
         <WhyChooseUs />
         <SuccessStories />
         <NewsEvents />
-        <FinalCta />
       </main>
       <SiteFooter />
     </>

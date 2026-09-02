@@ -112,9 +112,6 @@ export function SuccessStories() {
               Student stories are shared here as the Trust publishes them. If you are a scholarship recipient,
               your journey could inspire the next generation of students.
             </p>
-            <a href="/student/application" className="btn-gold mt-6">
-              Apply Now
-            </a>
           </div>
         )}
       </div>

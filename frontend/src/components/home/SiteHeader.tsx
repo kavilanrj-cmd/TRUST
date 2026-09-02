@@ -131,13 +131,6 @@ export function SiteHeader() {
               >
                 Login
               </Link>
-              <a
-                href="/student/application"
-                onClick={() => setOpen(false)}
-                className="btn-gold"
-              >
-                {t("nav.applyLabel", "Apply Now")}
-              </a>
             </div>
           </nav>
         </div>

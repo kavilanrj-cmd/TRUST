@@ -44,9 +44,6 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <a href="/student/application" className="btn-gold">
-              {t("home.hero.primaryButton", "Apply for Scholarship")}
-            </a>
             <a href="#about" className="btn-outline">
               {t("home.hero.secondaryButton", "Learn More")}
             </a>

@@ -15,7 +15,6 @@ const QUICK_LINKS = [
 
 const DISCOVER_LINKS = [
   { label: "Our Vision & Mission", href: "/vision-mission" },
-  { label: "Check Eligibility", href: "/#eligibility" },
   { label: "Contact", href: "/contact" },
   { label: "Privacy Policy", href: "/contact" },
   { label: "Terms & Conditions", href: "/contact" },

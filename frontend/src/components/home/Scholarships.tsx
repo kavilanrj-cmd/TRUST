@@ -185,24 +185,6 @@ export function Scholarships() {
                           ))}
                         </div>
                       )}
-
-                      <div className="mt-auto flex items-center gap-3 pt-6">
-                        <a href="#eligibility" className="btn-outline flex-1 px-4 py-2.5 text-sm">
-                          {t("home.scholarships.eligibilityCta", "Check Eligibility")}
-                        </a>
-                        {open ? (
-                          <a
-                            href="/student/application"
-                            className="flex-1 px-4 py-2.5 text-center text-sm btn-gold"
-                          >
-                            {t("home.scholarships.applyCta", "Apply Now")}
-                          </a>
-                        ) : (
-                          <span className="flex-1 px-4 py-2.5 text-center text-sm btn-outline cursor-not-allowed opacity-60" aria-disabled="true">
-                            {t("home.scholarships.applyCta", "Apply Now")}
-                          </span>
-                        )}
-                      </div>
                     </article>
                   </Reveal>
                 );

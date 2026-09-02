@@ -81,12 +81,6 @@ export function HowToApply() {
             ))}
           </div>
         </div>
-
-        <div className="mt-12 text-center">
-          <a href="/student/application" className="btn-primary">
-            Start Application
-          </a>
-        </div>
       </div>
     </section>
   );
