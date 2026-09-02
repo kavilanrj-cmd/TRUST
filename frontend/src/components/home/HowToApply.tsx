@@ -39,7 +39,7 @@ export function HowToApply() {
   ];
 
   return (
-    <section id="how-to-apply" className="bg-cream">
+    <section id="how-to-apply" className="bg-cream dark:bg-[#0e1425]">
       <div className="container-trust section-pad">
         <div className="mx-auto max-w-2xl text-center">
           <span className="eyebrow">{t("home.howToApply.eyebrow", "How to Apply")}</span>
@@ -66,12 +66,12 @@ export function HowToApply() {
                     {step.icon}
                   </span>
                   <span
-                    className="pointer-events-none absolute right-5 top-3 font-serif text-6xl font-bold text-navy/5"
+                    className="pointer-events-none absolute right-5 top-3 font-serif text-6xl font-bold text-navy/5 dark:text-white/5"
                     aria-hidden="true"
                   >
                     {step.number}
                   </span>
-                  <h3 className="mt-5 font-semibold text-navy">
+                  <h3 className="mt-5 font-semibold text-navy dark:text-white">
                     <span className="mr-2 text-sm font-bold text-gold-600">{step.number}</span>
                     {step.title}
                   </h3>

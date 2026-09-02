@@ -1,4 +1,3 @@
-import { SiteHeader } from "@/components/home/SiteHeader";
 import { Hero } from "@/components/home/Hero";
 import { TrustImpact } from "@/components/home/TrustImpact";
 import { About } from "@/components/home/About";
@@ -10,7 +9,6 @@ import { HowToApply } from "@/components/home/HowToApply";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { SuccessStories } from "@/components/home/SuccessStories";
 import { NewsEvents } from "@/components/home/NewsEvents";
-import { SiteFooter } from "@/components/home/SiteFooter";
 
 export const metadata = {
   title: "Neelakannu Educational Trust - Empowering Education, Enabling Dreams",
@@ -21,21 +19,17 @@ export const metadata = {
 export default function HomePage() {
   return (
     <>
-      <SiteHeader />
-      <main>
-        <Hero />
-        <TrustImpact />
-        <About />
-        <WhatWeDo />
-        <Scholarships />
-        <Notes />
-        <DocumentsRequired />
-        <HowToApply />
-        <WhyChooseUs />
-        <SuccessStories />
-        <NewsEvents />
-      </main>
-      <SiteFooter />
+      <Hero />
+      <TrustImpact />
+      <About />
+      <WhatWeDo />
+      <Scholarships />
+      <Notes />
+      <DocumentsRequired />
+      <HowToApply />
+      <WhyChooseUs />
+      <SuccessStories />
+      <NewsEvents />
     </>
   );
 }

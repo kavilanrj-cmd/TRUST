@@ -21,6 +21,8 @@ import settingsRouter from "./settings";
 import auditRouter from "./audit";
 import notificationsRouter from "./notifications";
 import searchRouter from "./search";
+import contactRouter from "./contact";
+import paymentsRouter from "./payments";
 
 const router = Router();
 const staffRoles = ["FOUNDER", "ADMIN", "REVIEWER"];
@@ -163,6 +165,8 @@ router.use(settingsRouter);
 router.use(auditRouter);
 router.use(notificationsRouter);
 router.use(searchRouter);
+router.use(contactRouter);
+router.use(paymentsRouter);
 
 export { routerPublic };
 export default router;

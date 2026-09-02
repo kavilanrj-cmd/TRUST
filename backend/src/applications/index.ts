@@ -380,9 +380,9 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Scholarship program is not currently active" });
     }
 
-    // Check payment is successful
+    // Check payment is successful (Payment.applicationId is a FK to Application.id)
     const payment = await prisma.payment.findFirst({
-      where: { applicationId: application.applicationId },
+      where: { applicationId: application.id },
     });
 
     if (!payment || payment.status !== "SUCCESS") {
@@ -400,9 +400,9 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "All required fields must be completed before submitting" });
     }
 
-    // Check required documents exist (max 4, at least some required documents)
+    // Check required documents exist (ApplicationDocument.applicationId is a FK to Application.id)
     const documentCount = await prisma.applicationDocument.count({
-      where: { applicationId: application.applicationId },
+      where: { applicationId: application.id },
     });
 
     if (documentCount === 0) {

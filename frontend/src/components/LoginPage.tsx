@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -14,6 +15,8 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react";
+import DarkModeToggle from "./DarkModeToggle";
+import { useAuth } from "@/lib/auth";
 
 interface FormState {
   identifier: string;
@@ -38,6 +41,8 @@ const particles = [
 ];
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [form, setForm] = useState<FormState>({
     identifier: "",
     password: "",
@@ -45,6 +50,7 @@ export default function LoginPage() {
     errors: {},
     isLoading: false,
   });
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleChange = (field: keyof Pick<FormState, "identifier" | "password">, value: string) => {    setForm((prev) => ({
       ...prev,
@@ -71,8 +77,9 @@ export default function LoginPage() {
     return errors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setForm((prev) => ({ ...prev, errors }));
@@ -80,29 +87,31 @@ export default function LoginPage() {
     }
     setForm((prev) => ({ ...prev, isLoading: true, errors: {} }));
 
-    // Simulate a short auth request (no real authentication).
-    console.log("Login submitted:", {
-      identifier: form.identifier.trim(),
-      password: form.password,
-      rememberMe: form.rememberMe,
-    });
-
-    setTimeout(() => {
+    try {
+      await login(form.identifier.trim(), form.password);
+      router.push("/student/application");
+    } catch (err: any) {
+      setFormError(err?.message || "Login failed. Please try again.");
       setForm((prev) => ({ ...prev, isLoading: false }));
-    }, 1400);
+    }
   };
 
   return (
     <motion.div
-      className="min-h-screen w-full bg-[#F7F7F5] lg:grid lg:grid-cols-[50%_50%]"
+      className="relative min-h-screen w-full bg-[#F7F7F5] dark:bg-[#0b1020] lg:grid lg:grid-cols-[50%_50%]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
+      {/* Dark mode toggle — top-right corner, never covers logo/form */}
+      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <DarkModeToggle />
+      </div>
+
       {/* ===== Branding panel ===== */}
       <motion.aside
-        className="relative flex flex-col justify-center overflow-hidden bg-[#0A1F44] px-6 py-10 sm:px-10 lg:min-h-screen lg:py-16"
+        className="relative flex flex-col justify-center overflow-hidden bg-[#0A1F44] px-6 py-10 sm:px-10 lg:min-h-screen lg:py-16 dark:bg-[#060a14]"
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -168,13 +177,13 @@ export default function LoginPage() {
           {/* quote / info card */}
           <motion.div
             variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}
-            className="mt-8 rounded-2xl border border-white/10 bg-white/[0.06] p-6 backdrop-blur-sm"
+            className="mt-8 rounded-2xl border border-white/10 bg-white/[0.06] p-6 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]"
           >
             <div className="flex items-start gap-3">
               <Sparkles className="mt-1 h-5 w-5 shrink-0 text-[#D4AF37]" />
               <div>
                 <p className="font-semibold text-white">Scholarships for deserving students</p>
-                <p className="mt-1 text-sm text-white/70">Supporting education since 2018</p>
+                <p className="mt-1 text-sm text-white/70 dark:text-white/70">Supporting education since 2018</p>
               </div>
             </div>
           </motion.div>
@@ -190,7 +199,7 @@ export default function LoginPage() {
             ].map((s) => (
               <div
                 key={s.sub}
-                className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-2.5"
+                className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-2.5 dark:border-white/10 dark:bg-white/[0.05]"
               >
                 <s.icon className="h-5 w-5 text-[#D4AF37]" />
                 <div className="leading-tight">
@@ -232,8 +241,8 @@ export default function LoginPage() {
               className="h-12 w-12 rounded-xl"
             />
             <div>
-              <p className="font-serif text-lg font-bold text-[#0A1F44]">Neelakannu</p>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#B8902F]">
+              <p className="font-serif text-lg font-bold text-[#0A1F44] dark:text-white">Neelakannu</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#B8902F] dark:text-[#D4AF37]">
                 Educational Trust
               </p>
             </div>
@@ -242,10 +251,10 @@ export default function LoginPage() {
           <motion.header
             variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
           >
-            <h1 className="text-3xl font-bold tracking-tight text-[#0A1F44] sm:text-4xl">
+            <h1 className="text-3xl font-bold tracking-tight text-[#0A1F44] sm:text-4xl dark:text-white">
               Welcome Back
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-muted-foreground dark:text-white/70">
               Sign in to continue to Neelakannu Educational Trust
             </p>
           </motion.header>
@@ -278,18 +287,18 @@ export default function LoginPage() {
               variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
               className="flex items-center justify-between"
             >
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground dark:text-white/70">
                 <input
                   type="checkbox"
                   checked={form.rememberMe}
                   onChange={(e) => setForm((prev) => ({ ...prev, rememberMe: e.target.checked }))}
-                  className="h-4 w-4 rounded border-muted-foreground/40 accent-[#D4AF37]"
+                  className="h-4 w-4 rounded border-muted-foreground/40 accent-[#D4AF37] dark:border-white/30 dark:bg-[#111827]"
                 />
                 Remember me
               </label>
               <Link
                 href="/forgot-password"
-                className="text-sm font-medium text-[#0A1F44] underline-offset-2 hover:underline"
+                className="text-sm font-medium text-[#0A1F44] underline-offset-2 hover:underline dark:text-[#D4AF37]"
               >
                 Forgot password?
               </Link>
@@ -297,6 +306,16 @@ export default function LoginPage() {
 
             {/* Submit */}
             <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}>
+              {formError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  role="alert"
+                  className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+                >
+                  {formError}
+                </motion.p>
+              )}
               <motion.button
                 type="submit"
                 disabled={form.isLoading}
@@ -317,10 +336,10 @@ export default function LoginPage() {
             {/* Sign up link */}
             <motion.p
               variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
-              className="text-center text-sm text-muted-foreground"
+              className="text-center text-sm text-muted-foreground dark:text-white/70"
             >
               Don&rsquo;t have an account?{" "}
-              <Link href="/signup" className="font-semibold text-[#0A1F44] underline-offset-2 hover:underline">
+              <Link href="/register" className="font-semibold text-[#0A1F44] underline-offset-2 hover:underline dark:text-[#D4AF37]">
                 Sign up
               </Link>
             </motion.p>
@@ -359,7 +378,7 @@ function FloatingField({
         transition={{ duration: 0.35 }}
       >
         <div
-          className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${showIcon ? "text-[#D4AF37]" : "text-muted-foreground/50"}`}
+          className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${showIcon ? "text-[#D4AF37]" : "text-muted-foreground/50 dark:text-white/40"}`}
         >
           {icon}
         </div>
@@ -373,12 +392,12 @@ function FloatingField({
           onBlur={() => setFocused(false)}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`w-full rounded-2xl border bg-white py-4 pl-12 pr-4 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-transparent ${
+          className={`w-full rounded-2xl border bg-white py-4 pl-12 pr-4 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-transparent dark:bg-[#111827] dark:text-white ${
             error
               ? "border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100"
               : focused
                 ? "border-[#D4AF37] ring-4 ring-[#D4AF37]/15"
-                : "border-muted-foreground/20 focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15"
+                : "border-muted-foreground/20 focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15 dark:border-white/15"
           }`}
           placeholder={label}
         />
@@ -387,9 +406,9 @@ function FloatingField({
           htmlFor={id}
           className={`pointer-events-none absolute left-4 origin-left rounded-md px-1 transition-all duration-200 ${
             focused || value
-              ? "top-0 -translate-y-1/2 bg-[#F7F7F5] text-xs font-semibold"
+              ? "top-0 -translate-y-1/2 bg-[#F7F7F5] text-xs font-semibold dark:bg-[#0b1020]"
               : "top-1/2 -translate-y-1/2 pl-8 text-sm"
-          } ${focused || value ? (error ? "text-red-500" : "text-[#0A1F44]") : "text-muted-foreground/60"}`}
+          } ${focused || value ? (error ? "text-red-500" : "text-[#0A1F44] dark:text-white") : "text-muted-foreground/60 dark:text-white/50"}`}
         >
           {label}
         </label>
@@ -433,7 +452,7 @@ function PasswordField({
         transition={{ duration: 0.35 }}
       >
         <div
-          className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${showIcon ? "text-[#D4AF37]" : "text-muted-foreground/50"}`}
+          className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${showIcon ? "text-[#D4AF37]" : "text-muted-foreground/50 dark:text-white/40"}`}
         >
           <Lock className="h-5 w-5" />
         </div>
@@ -447,12 +466,12 @@ function PasswordField({
           onBlur={() => setFocused(false)}
           aria-invalid={!!error}
           aria-describedby={error ? "password-error" : undefined}
-          className={`w-full rounded-2xl border bg-white py-4 pl-12 pr-12 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-transparent ${
+          className={`w-full rounded-2xl border bg-white py-4 pl-12 pr-12 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-transparent dark:bg-[#111827] dark:text-white ${
             error
               ? "border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100"
               : focused
                 ? "border-[#D4AF37] ring-4 ring-[#D4AF37]/15"
-                : "border-muted-foreground/20 focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15"
+                : "border-muted-foreground/20 focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15 dark:border-white/15"
           }`}
           placeholder="Password"
         />
@@ -461,9 +480,9 @@ function PasswordField({
           htmlFor="password"
           className={`pointer-events-none absolute left-4 origin-left rounded-md px-1 transition-all duration-200 ${
             focused || value
-              ? "top-0 -translate-y-1/2 bg-[#F7F7F5] text-xs font-semibold"
+              ? "top-0 -translate-y-1/2 bg-[#F7F7F5] text-xs font-semibold dark:bg-[#0b1020]"
               : "top-1/2 -translate-y-1/2 pl-8 text-sm"
-          } ${focused || value ? (error ? "text-red-500" : "text-[#0A1F44]") : "text-muted-foreground/60"}`}
+          } ${focused || value ? (error ? "text-red-500" : "text-[#0A1F44] dark:text-white") : "text-muted-foreground/60 dark:text-white/50"}`}
         >
           Password
         </label>
@@ -473,7 +492,7 @@ function PasswordField({
             type="button"
             onClick={() => setShow((s) => !s)}
             aria-label={show ? "Hide password" : "Show password"}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-[#0A1F44]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-[#0A1F44] dark:hover:text-white"
           >
             {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>

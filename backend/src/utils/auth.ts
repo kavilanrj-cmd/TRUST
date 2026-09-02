@@ -23,6 +23,7 @@ export interface AuthUser {
   email: string;
   role: string;
   isActive: boolean;
+  emailVerified: Date | null;
   permissions?: unknown;
 }
 
@@ -72,6 +73,7 @@ export async function loadUser(req: Request): Promise<AuthUser | null> {
         email: true,
         role: true,
         isActive: true,
+        emailVerified: true,
         permissions: true,
       },
     });

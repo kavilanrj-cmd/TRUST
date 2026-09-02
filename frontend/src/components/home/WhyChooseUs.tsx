@@ -32,7 +32,7 @@ export function WhyChooseUs() {
   ];
 
   return (
-    <section id="why-us" className="bg-white">
+    <section id="why-us" className="bg-white dark:bg-[#0d1224]">
       <div className="container-trust section-pad">
         <div className="mx-auto max-w-2xl text-center">
           <span className="eyebrow">{t("home.whyChooseUs.eyebrow", "Why Choose Us")}</span>
@@ -49,7 +49,7 @@ export function WhyChooseUs() {
                 <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-soft text-navy">
                   {feature.icon}
                 </span>
-                <h3 className="mt-5 font-semibold text-navy">{feature.title}</h3>
+                <h3 className="mt-5 font-semibold text-navy dark:text-white">{feature.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
               </div>
             </Reveal>

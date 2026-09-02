@@ -193,6 +193,42 @@ export const adminApi = {
     markRead: (id: string) => adminJSON(`${ADMIN_BASE}/notifications/${id}/read`, "PATCH"),
     markAllRead: () => adminJSON(`${ADMIN_BASE}/notifications/read-all`, "PATCH"),
   },
+
+  // --- Contact messages ---
+  contactMessages: {
+    list: (params: Record<string, string | undefined> = {}) => {
+      const qs = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== "") qs.set(k, v);
+      });
+      const s = qs.toString();
+      return adminJSON<any>(`${ADMIN_BASE}/contact-messages${s ? `?${s}` : ""}`);
+    },
+    detail: (id: string) => adminJSON<any>(`${ADMIN_BASE}/contact-messages/${id}`),
+    markRead: (id: string, read = true) =>
+      adminJSON<any>(`${ADMIN_BASE}/contact-messages/${id}/read`, "PATCH", { read }),
+    remove: (id: string) => adminJSON<any>(`${ADMIN_BASE}/contact-messages/${id}`, "DELETE"),
+  },
+
+  // --- Payments ---
+  payments: {
+    list: (params: Record<string, string | undefined> = {}) => {
+      const qs = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== "") qs.set(k, v);
+      });
+      const s = qs.toString();
+      return adminJSON<any>(`${ADMIN_BASE}/payments${s ? `?${s}` : ""}`);
+    },
+    exportCsv: (params: Record<string, string | undefined> = {}) => {
+      const qs = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== "") qs.set(k, v);
+      });
+      const s = qs.toString();
+      return `${ADMIN_BASE}/payments/export${s ? `?${s}` : ""}`;
+    },
+  },
 };
 
 export function statusColor(status: string): string {

@@ -6,7 +6,7 @@ import prisma from "../utils/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Resend } from "resend";
-import { STUDENT_COOKIE, cookieOptions } from "../utils/auth";
+import { STUDENT_COOKIE, cookieOptions, loadUser } from "../utils/auth";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -176,6 +176,30 @@ router.post("/logout", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Logout error:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/auth/me — current authenticated session (used by the frontend to
+// detect whether a student is logged in and to guard protected routes).
+router.get("/me", async (req: Request, res: Response) => {
+  try {
+    const user = await loadUser(req);
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        emailVerified: user.emailVerified,
+      },
+    });
+  } catch (error) {
+    console.error("Me error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

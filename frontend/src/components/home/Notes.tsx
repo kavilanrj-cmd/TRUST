@@ -10,7 +10,7 @@ const NOTES = [
 
 export function Notes() {
   return (
-    <section id="notes" className="bg-white">
+    <section id="notes" className="bg-white dark:bg-[#0d1224]">
       <div className="container-trust section-pad">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-gold-soft px-8 py-10 sm:px-12 sm:py-12">

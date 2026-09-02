@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: toggle ".dark" on <html> to activate dark: variants. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================================================
    Neelakannu Educational Trust — Design System
    Light, premium educational-trust aesthetic.
@@ -99,6 +102,48 @@
    Keeps text legible and prevents washed-out/low-contrast rendering. */
 html {
   color-scheme: light;
+}
+
+/* Dark mode applied via the ".dark" class on <html> (see DarkModeToggle). */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Dark theme palette: flips semantic tokens so bg-card / text-foreground /
+   text-muted-foreground / border-border adapt automatically. */
+html.dark {
+  --background: #0b1020;
+  --foreground: #e8ecf5;
+
+  --card: #131a2e;
+  --card-foreground: #e8ecf5;
+  --popover: #131a2e;
+  --popover-foreground: #e8ecf5;
+
+  --primary: #c8a24a;
+  --primary-foreground: #0b1020;
+  --navy: #0a1f44;
+  --navy-800: #16294a;
+  --navy-700: #1e365e;
+  --navy-600: #3b5789;
+  --navy-50: #16213a;
+
+  --gold: #d4af37;
+  --gold-600: #c8a24a;
+  --gold-soft: #1d2740;
+
+  --secondary: #161f38;
+  --secondary-foreground: #e8ecf5;
+  --muted: #161f38;
+  --muted-foreground: #a7b0c3;
+  --accent: #1b2440;
+  --accent-foreground: #f4f6fb;
+  --cream: #10162b;
+  --surface-muted: #0e1425;
+
+  --border: #243050;
+  --input: #2a3858;
+  --ring: #c8a24a;
 }
 
 body {

@@ -19,6 +19,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/students", label: "Students", icon: "users" },
   { href: "/admin/scholarships", label: "Scholarships", icon: "award" },
   { href: "/admin/announcements", label: "Announcements", icon: "megaphone" },
+  { href: "/admin/contact-messages", label: "Contact Messages", icon: "mail" },
+  { href: "/admin/payments", label: "Payments", icon: "card" },
   { href: "/admin/website", label: "Website Editor", icon: "layout" },
   { href: "/admin/media", label: "Media", icon: "image" },
   { href: "/admin/notifications", label: "Notifications", icon: "bell" },
@@ -59,6 +61,18 @@ const ICONS: Record<string, React.ReactNode> = {
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <circle cx="8.5" cy="8.5" r="1.5" />
       <path d="m21 15-5-5L5 21" />
+    </>
+  ),
+  mail: (
+    <>
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-10 5L2 7" />
+    </>
+  ),
+  card: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
     </>
   ),
   bell: (
@@ -121,6 +135,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Actively redirect unauthenticated users to /admin/login (server-side APIs
+  // also enforce auth, but we never want an admin page to render unauthenticated).
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/admin/login");
+    }
+  }, [loading, user, router]);
 
   useEffect(() => {
     if (!user) return;

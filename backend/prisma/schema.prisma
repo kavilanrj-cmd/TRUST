@@ -383,6 +383,16 @@ model AdminNotification {
   createdAt     DateTime @default(now())
 }
 
+model ContactMessage {
+  id        String   @default(uuid()) @id
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model WebsiteSetting {
   id            String   @default(uuid()) @id
   key           String   @unique

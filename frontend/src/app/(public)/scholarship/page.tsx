@@ -1,6 +1,3 @@
-import Image from "next/image";
-import Link from "next/link";
-
 export const metadata = {
   title: "Neelakannu Educational Trust - Scholarship Program",
   description: "Scholarship program details for Neelakannu Educational Trust",
@@ -10,12 +7,6 @@ export default function ScholarshipPage() {
   return (
     <section className="py-24 bg-background">
       <div className="max-w-6xl mx-auto px-4">
-        <nav className="mb-12">
-          <Link href="/" className="underline underline-offset-2 text-primary hover:text-primary-foreground">
-            &larr; Back to Home
-          </Link>
-        </nav>
-
         <header className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
             Scholarship Program

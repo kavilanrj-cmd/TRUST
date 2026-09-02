@@ -79,12 +79,18 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("home.about.mission", "home", "about", "textarea", "About · Mission", "To identify promising students, provide financial assistance and mentorship, and empower them to build brighter futures.", { maxLength: 500 }),
   def("home.about.quote", "home", "about", "text", "About · Quote", "Education is the most powerful weapon which you can use to change the world.", { maxLength: 300 }),
 
-  // ---- Scholarships ----
+  // ---- Scholarships & Grants (home info section) ----
   def("home.scholarships.eyebrow", "home", "scholarships", "text", "Scholarships · Eyebrow", "Scholarships", { maxLength: 80 }),
-  def("home.scholarships.title", "home", "scholarships", "text", "Scholarships · Title", "Scholarship Program", { maxLength: 120 }),
-  def("home.scholarships.description", "home", "scholarships", "textarea", "Scholarships · Description", "Our Scholarship Program supports deserving students with financial assistance and guidance so they can continue their education with confidence.", { maxLength: 400 }),
+  def("home.scholarships.title", "home", "scholarships", "text", "Scholarships · Title", "Scholarships and Grants", { maxLength: 120 }),
+  def("home.scholarships.description", "home", "scholarships", "textarea", "Scholarships · Description", "The Trust promotes education mainly by way of scholarships and grants to deserving and needy students, helping them continue their studies with confidence.", { maxLength: 400 }),
   def("home.scholarships.applyCta", "home", "scholarships", "text", "Scholarships · Apply CTA", "Apply Now", { maxLength: 60 }),
   def("home.scholarships.eligibilityCta", "home", "scholarships", "text", "Scholarships · Eligibility CTA", "Check Eligibility", { maxLength: 60 }),
+  def("home.scholarships.p1.title", "home", "scholarships", "text", "Scholarships · Support Pillar 1 Title", "Scholarships", { maxLength: 60 }),
+  def("home.scholarships.p1.description", "home", "scholarships", "textarea", "Scholarships · Support Pillar 1 Description", "Financial support that helps needy students continue their education.", { maxLength: 300 }),
+  def("home.scholarships.p2.title", "home", "scholarships", "text", "Scholarships · Support Pillar 2 Title", "Grants", { maxLength: 60 }),
+  def("home.scholarships.p2.description", "home", "scholarships", "textarea", "Scholarships · Support Pillar 2 Description", "Direct grants offered to deserving and economically challenged students.", { maxLength: 300 }),
+  def("home.scholarships.feeNote", "home", "scholarships", "textarea", "Scholarships · Fee Note", "A nominal, non-refundable application fee applies and is set by the Trust.", { maxLength: 300 }),
+  def("home.scholarships.note", "home", "scholarships", "textarea", "Scholarships · Footnote", "New scholarship opportunities are announced regularly. Applications open for the current intake.", { maxLength: 300 }),
 
   // ---- Featured CTA ----
   def("home.featuredCta.title", "home", "featuredCta", "text", "Featured CTA · Title", "Ready to take the next step?", { maxLength: 120 }),
@@ -147,6 +153,54 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   // ---- Footer ----
   def("home.footer.aboutTitle", "home", "footer", "text", "Footer · About Title", "About Neelakannu Educational Trust", { maxLength: 80 }),
   def("home.footer.description", "home", "footer", "textarea", "Footer · Description", "Neelakannu Educational Trust empowers deserving students through scholarships and financial assistance.", { maxLength: 400 }),
+  def("home.footer.quickTitle", "home", "footer", "text", "Footer · Quick Links Title", "Quick Links", { maxLength: 60 }),
+  def("home.footer.discoverTitle", "home", "footer", "text", "Footer · Discover Title", "Discover", { maxLength: 60 }),
+  def("home.footer.contactTitle", "home", "footer", "text", "Footer · Contact Title", "Contact", { maxLength: 60 }),
+  def("home.footer.address", "home", "footer", "textarea", "Footer · Address", "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India", { maxLength: 300 }),
+  def("home.footer.email", "home", "footer", "text", "Footer · Email", "neelakannueducationaltrust@gmail.com", { maxLength: 120 }),
+  def("home.footer.phone", "home", "footer", "text", "Footer · Phone", "94443 27336", { maxLength: 40 }),
+  def("home.footer.copyright", "home", "footer", "text", "Footer · Copyright", "All rights reserved.", { maxLength: 80 }),
+
+  // ---- Brand / Images ----
+  def("home.brand.logo", "home", "brand", "image", "Brand · Logo", "/assets/neelakannu-trust-logo.png", { help: "Logo shown in the header, hero and footer. Recommended square image." }),
+
+  // ---- What We Do (home section) ----
+  def("home.whatWeDo.eyebrow", "home", "whatWeDo", "text", "What We Do · Eyebrow", "What We Do", { maxLength: 80 }),
+  def("home.whatWeDo.title", "home", "whatWeDo", "text", "What We Do · Title", "Scholarships and Grants", { maxLength: 120 }),
+  def("home.whatWeDo.description", "home", "whatWeDo", "textarea", "What We Do · Description", "Since its inception, the trust has promoted education mainly by way of scholarships and grants to deserving and needy students.", { maxLength: 400 }),
+  def("home.whatWeDo.p1.title", "home", "whatWeDo", "text", "What We Do · Pillar 1 Title", "Scholarships", { maxLength: 60 }),
+  def("home.whatWeDo.p1.description", "home", "whatWeDo", "textarea", "What We Do · Pillar 1 Description", "Financial support that helps needy students continue their education.", { maxLength: 300 }),
+  def("home.whatWeDo.p2.title", "home", "whatWeDo", "text", "What We Do · Pillar 2 Title", "Grants", { maxLength: 60 }),
+  def("home.whatWeDo.p2.description", "home", "whatWeDo", "textarea", "What We Do · Pillar 2 Description", "Direct grants offered to deserving and economically challenged students.", { maxLength: 300 }),
+  def("home.whatWeDo.cta", "home", "whatWeDo", "text", "What We Do · CTA", "View Scholarships", { maxLength: 60 }),
+  def("home.whatWeDo.quote", "home", "whatWeDo", "textarea", "What We Do · Quote", "Promoting education through scholarships and grants to deserving and needy students.", { maxLength: 300 }),
+  def("home.whatWeDo.quoteTitle", "home", "whatWeDo", "text", "What We Do · Quote Title", "Scholarships & Grants", { maxLength: 60 }),
+
+  // ---- About page ----
+  def("about.eyebrow", "about", "about", "text", "About Page · Eyebrow", "About Us", { maxLength: 80 }),
+  def("about.title", "about", "about", "text", "About Page · Title", "About Neelakannu Educational Trust", { maxLength: 120 }),
+  def("about.intro", "about", "about", "textarea", "About Page · Intro", "Established on 14th November 2018, Neelakannu Educational Trust is a charitable organization dedicated to empowering students through education and scholarship opportunities.", { maxLength: 500 }),
+  def("about.registeredOfficeTitle", "about", "about", "text", "About Page · Registered Office Title", "Registered Office", { maxLength: 60 }),
+  def("about.address", "about", "about", "textarea", "About Page · Address", "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India", { maxLength: 300 }),
+  def("about.contactTitle", "about", "about", "text", "About Page · Contact Title", "Contact Information", { maxLength: 60 }),
+  def("about.email", "about", "about", "text", "About Page · Email", "neelakannueducationaltrust@gmail.com", { maxLength: 120 }),
+  def("about.phone", "about", "about", "text", "About Page · Phone", "94443 27336", { maxLength: 40 }),
+  def("about.founderTitle", "about", "about", "text", "About Page · Founder Title", "Founder", { maxLength: 60 }),
+  def("about.founder", "about", "about", "text", "About Page · Founder", "Prof. Dr. K. Chidambaram", { maxLength: 120 }),
+  def("about.missionTitle", "about", "about", "text", "About Page · Mission Title", "Our Mission", { maxLength: 60 }),
+  def("about.mission", "about", "about", "textarea", "About Page · Mission", "To provide deserving students with financial assistance and educational opportunities, regardless of their economic background, enabling them to pursue their academic dreams and contribute to society.", { maxLength: 600 }),
+
+  // ---- Contact page ----
+  def("contact.eyebrow", "contact", "contact", "text", "Contact Page · Eyebrow", "Contact", { maxLength: 80 }),
+  def("contact.title", "contact", "contact", "text", "Contact Page · Title", "Contact Us", { maxLength: 120 }),
+  def("contact.intro", "contact", "contact", "textarea", "Contact Page · Intro", "We'd love to hear from you. Get in touch with Neelakannu Educational Trust.", { maxLength: 300 }),
+  def("contact.officeTitle", "contact", "contact", "text", "Contact Page · Office Title", "Trust Office", { maxLength: 60 }),
+  def("contact.address", "contact", "contact", "textarea", "Contact Page · Address", "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India", { maxLength: 300 }),
+  def("contact.emailLabel", "contact", "contact", "text", "Contact Page · Email Label", "Email", { maxLength: 40 }),
+  def("contact.email", "contact", "contact", "text", "Contact Page · Email", "neelakannueducationaltrust@gmail.com", { maxLength: 120 }),
+  def("contact.phoneLabel", "contact", "contact", "text", "Contact Page · Phone Label", "Phone", { maxLength: 40 }),
+  def("contact.phone", "contact", "contact", "text", "Contact Page · Phone", "94443 27336", { maxLength: 40 }),
+  def("contact.messageTitle", "contact", "contact", "text", "Contact Page · Message Title", "Send Us a Message", { maxLength: 80 }),
 ];
 
 // Index helpers

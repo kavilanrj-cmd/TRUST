@@ -9,6 +9,7 @@ import authRoutes from "./auth/index";
 import scholarshipRoutes from "./scholarships/index";
 import documentRoutes from "./documents/index";
 import paymentRoutes from "./payments/index";
+import contactRoutes from "./contact/index";
 import adminRoutes, { routerPublic, bootstrapFounder } from "./admin/index";
 import db from "./utils/db";
 import { authenticate } from "./utils/auth";
@@ -94,6 +95,7 @@ app.use("/api/scholarships", scholarshipRoutes);
 app.use("/api/applications", authenticate, applicationRoutes);
 app.use("/api/documents", authenticate, documentRoutes);
 app.use("/api/payments", authenticate, paymentRoutes);
+app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/content", routerPublic);
 

@@ -1,13 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useHomeContent } from "@/lib/home-content";
+import { useAuth } from "@/lib/auth";
 import { ApplicationFee } from "./ApplicationFee";
 
 export function Hero() {
   const { t } = useHomeContent();
+  const { user, isLoading } = useAuth();
+  const isLoggedIn = !isLoading && !!user;
+
   return (
-    <section id="home" className="relative overflow-hidden bg-white">
+    <section id="home" className="relative overflow-hidden bg-white dark:bg-[#0d1224]">
       {/* Soft professional background treatment */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="absolute inset-0 bg-[radial-gradient(1000px_520px_at_88%_-10%,rgba(200,162,74,0.14),transparent_60%),radial-gradient(760px_420px_at_-6%_0%,rgba(22,41,74,0.07),transparent_55%)]" />
@@ -32,7 +37,7 @@ export function Hero() {
             </span>
           </div>
 
-          <h1 className="mt-6 font-serif text-4xl font-bold leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem]">
+          <h1 className="mt-6 font-serif text-4xl font-bold leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem] dark:text-white">
             {t("home.hero.title", "Neelakannu Educational Trust")}
           </h1>
 
@@ -43,7 +48,16 @@ export function Hero() {
             )}
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            {isLoggedIn ? (
+              <Link href="/student/dashboard" className="btn-gold">
+                {t("home.hero.loggedInButton", "My Dashboard")}
+              </Link>
+            ) : (
+              <Link href="/login" className="btn-gold">
+                {t("home.hero.loginCta", "Login to Apply")}
+              </Link>
+            )}
             <a href="#about" className="btn-outline">
               {t("home.hero.secondaryButton", "Learn More")}
             </a>
@@ -60,14 +74,17 @@ export function Hero() {
               aria-hidden="true"
             />
 
-            {/* graduation cap illustration */}
+            {/* Trust logo — centered, responsive, keeps aspect ratio */}
             <div className="mx-auto w-full max-w-sm text-center">
-              <div className="relative mx-auto mb-8 w-24">
-                <svg viewBox="0 0 200 120" fill="none" className="w-24 text-gold">
-                  <path d="M100 12 L176 50 L100 88 L24 50 Z" fill="currentColor" opacity="0.95" />
-                  <path d="M38 60 L38 84 C38 96 68 104 100 104 C132 104 162 96 162 84 L162 60" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" fill="none" />
-                  <path d="M176 50 L176 86" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" />
-                </svg>
+              <div className="relative mx-auto mb-8 flex justify-center">
+                <Image
+                  src="/assets/neelakannu-trust-logo.png"
+                  alt="Neelakannu Educational Trust logo"
+                  width={200}
+                  height={200}
+                  className="h-auto w-32 rounded-3xl shadow-2xl sm:w-40 lg:w-48"
+                  priority
+                />
               </div>
 
               <p className="font-serif text-2xl font-bold italic leading-snug text-white">

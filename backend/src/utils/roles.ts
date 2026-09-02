@@ -40,6 +40,8 @@ export const PERMISSIONS = {
   audit_view: "audit.view",
   // notifications
   notifications_view: "notifications.view",
+  // contact messages
+  contact_manage: "contact.manage",
   // dashboard
   dashboard_view: "dashboard.view",
 } as const;
@@ -77,6 +79,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     PERMISSIONS.media_manage,
     PERMISSIONS.audit_view,
     PERMISSIONS.notifications_view,
+    PERMISSIONS.contact_manage,
   ],
 };
 

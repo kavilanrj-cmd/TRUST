@@ -4,34 +4,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { useAuth, AuthUser } from "@/lib/auth";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 
-export default function StudentDashboard() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string; role: string; emailVerified: boolean | null } | null>(null);
+function StudentDashboardInner() {
+  const { user } = useAuth();
   const [application, setApplication] = useState<{ applicationId: string; status: string; personalDetails?: Record<string, unknown> | null; address?: Record<string, unknown> | null; parentGuardian?: Record<string, unknown> | null; academicDetails?: Record<string, unknown> | null; financialDetails?: Record<string, unknown> | null; scholarshipProgram?: { name: string } | null; createdAt: string; submittedAt: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/auth/me`, {
+    fetch(`${API_BASE_URL}/api/applications/me`, {
       credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.user) setUser(data.user);
+        setApplication(data.application || null);
       })
-      .then(() => {
-        fetch(`${API_BASE_URL}/api/applications/me`, {
-          credentials: "include",
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            setApplication(data.application);
-            setLoading(false);
-          });
-      })
-      .catch(() => setLoading(false));
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <section className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
         <p className="text-lg text-muted-foreground">Loading...</p>
@@ -39,11 +32,29 @@ export default function StudentDashboard() {
     );
   }
 
-  if (!user || !application) {
+  return renderDashboard(user, application);
+}
+
+export default function StudentDashboard() {
+  return (
+    <RequireAuth>
+      <StudentDashboardInner />
+    </RequireAuth>
+  );
+}
+
+function renderDashboard(
+  user: AuthUser,
+  application: { applicationId: string; status: string; personalDetails?: Record<string, unknown> | null; address?: Record<string, unknown> | null; parentGuardian?: Record<string, unknown> | null; academicDetails?: Record<string, unknown> | null; financialDetails?: Record<string, unknown> | null; scholarshipProgram?: { name: string } | null; createdAt: string; submittedAt: string | null } | null
+) {
+  if (!application) {
     return (
       <section className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
         <p className="text-lg text-muted-foreground">
-          Please <Link href="/login">log in</Link> to view your dashboard.
+          <Link href="/student/application" className="text-primary underline underline-offset-2 hover:text-primary/90">
+            Start your application
+          </Link>{" "}
+          to view your dashboard.
         </p>
       </section>
     );

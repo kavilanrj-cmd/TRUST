@@ -31,7 +31,7 @@ export function TrustImpact() {
     <section
       id="impact"
       aria-label="Trust impact statistics"
-      className="border-y border-border bg-surface-muted"
+      className="border-y border-border bg-surface-muted dark:bg-[#0e1425]"
     >
       <div className="container-trust py-12">
         <Reveal>
@@ -41,7 +41,7 @@ export function TrustImpact() {
                 key={stat.label}
                 className="border-l-2 border-gold/50 pl-5"
               >
-                <p className="font-serif text-4xl font-bold tracking-tight text-navy">
+                <p className="font-serif text-4xl font-bold tracking-tight text-navy dark:text-white">
                   {stat.value}
                 </p>
                 <p className="mt-1 font-semibold text-gold-600">{stat.label}</p>

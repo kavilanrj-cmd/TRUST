@@ -74,7 +74,7 @@ export function NewsEvents() {
   }, []);
 
   return (
-    <section id="news" className="bg-cream">
+    <section id="news" className="bg-cream dark:bg-[#0e1425]">
       <div className="container-trust section-pad">
         <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
           <div className="max-w-2xl">
@@ -89,7 +89,7 @@ export function NewsEvents() {
           </div>
           <a
             href="#news"
-            className="inline-flex items-center gap-2 rounded-lg border border-navy/20 bg-white px-5 py-2.5 text-sm font-semibold text-navy transition hover:bg-muted"
+            className="inline-flex items-center gap-2 rounded-lg border border-navy/20 bg-white px-5 py-2.5 text-sm font-semibold text-navy transition hover:bg-muted dark:border-white/15 dark:bg-[#131a2e] dark:text-white dark:hover:bg-black/20"
           >
             View All News
           </a>
@@ -105,7 +105,7 @@ export function NewsEvents() {
                   </span>
                   {item.createdAt && <time className="text-muted-foreground">{formatDate(item.createdAt)}</time>}
                 </div>
-                <h3 className="mt-4 font-semibold text-navy">{item.title}</h3>
+                <h3 className="mt-4 font-semibold text-navy dark:text-white">{item.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{item.content}</p>
                 <a
                   href="#news"

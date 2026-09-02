@@ -18,7 +18,7 @@ const DOCUMENTS = [
 
 export function DocumentsRequired() {
   return (
-    <section id="documents-required" className="bg-cream">
+    <section id="documents-required" className="bg-cream dark:bg-[#0e1425]">
       <div className="container-trust section-pad">
         <div className="mx-auto max-w-2xl text-center">
           <span className="eyebrow">Documents</span>
@@ -35,14 +35,14 @@ export function DocumentsRequired() {
                 {DOCUMENTS.map((doc, idx) => (
                   <li
                     key={doc}
-                    className="flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-3"
+                    className="flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-3 dark:bg-[#131a2e]"
                   >
                     <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-gold-soft text-gold-600">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="h-4 w-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                     </span>
-                    <span className="text-sm font-medium text-navy">
+                    <span className="text-sm font-medium text-navy dark:text-white">
                       <span className="mr-1.5 text-gold-600">{String(idx + 1)}.</span>
                       {doc}
                     </span>

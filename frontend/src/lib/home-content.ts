@@ -51,13 +51,19 @@ export const CMS_DEFAULTS: Record<string, string> = {
     "To identify promising students, provide financial assistance and mentorship, and empower them to build brighter futures.",
   "home.about.quote":
     "Education is the most powerful weapon which you can use to change the world.",
-  // Scholarships
+  // Scholarships & Grants (home info section)
   "home.scholarships.eyebrow": "Scholarships",
-  "home.scholarships.title": "Scholarship Program",
+  "home.scholarships.title": "Scholarships and Grants",
   "home.scholarships.description":
-    "Our Scholarship Program supports deserving students with financial assistance and guidance so they can continue their education with confidence.",
+    "The Trust promotes education mainly by way of scholarships and grants to deserving and needy students, helping them continue their studies with confidence.",
   "home.scholarships.applyCta": "Apply Now",
   "home.scholarships.eligibilityCta": "Check Eligibility",
+  "home.scholarships.p1.title": "Scholarships",
+  "home.scholarships.p1.description": "Financial support that helps needy students continue their education.",
+  "home.scholarships.p2.title": "Grants",
+  "home.scholarships.p2.description": "Direct grants offered to deserving and economically challenged students.",
+  "home.scholarships.feeNote": "A nominal, non-refundable application fee applies and is set by the Trust.",
+  "home.scholarships.note": "New scholarship opportunities are announced regularly. Applications open for the current intake.",
   // Featured CTA
   "home.featuredCta.title": "Ready to take the next step?",
   "home.featuredCta.description":
@@ -121,6 +127,57 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "home.footer.aboutTitle": "About Neelakannu Educational Trust",
   "home.footer.description":
     "Neelakannu Educational Trust empowers deserving students through scholarships and financial assistance.",
+  "home.footer.quickTitle": "Quick Links",
+  "home.footer.discoverTitle": "Discover",
+  "home.footer.contactTitle": "Contact",
+  "home.footer.address":
+    "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India",
+  "home.footer.email": "neelakannueducationaltrust@gmail.com",
+  "home.footer.phone": "94443 27336",
+  "home.footer.copyright": "All rights reserved.",
+  // Brand / Images
+  "home.brand.logo": "/assets/neelakannu-trust-logo.png",
+  // What We Do (home section)
+  "home.whatWeDo.eyebrow": "What We Do",
+  "home.whatWeDo.title": "Scholarships and Grants",
+  "home.whatWeDo.description":
+    "Since its inception, the trust has promoted education mainly by way of scholarships and grants to deserving and needy students.",
+  "home.whatWeDo.p1.title": "Scholarships",
+  "home.whatWeDo.p1.description": "Financial support that helps needy students continue their education.",
+  "home.whatWeDo.p2.title": "Grants",
+  "home.whatWeDo.p2.description": "Direct grants offered to deserving and economically challenged students.",
+  "home.whatWeDo.cta": "View Scholarships",
+  "home.whatWeDo.quote":
+    "Promoting education through scholarships and grants to deserving and needy students.",
+  "home.whatWeDo.quoteTitle": "Scholarships & Grants",
+  // About page
+  "about.eyebrow": "About Us",
+  "about.title": "About Neelakannu Educational Trust",
+  "about.intro":
+    "Established on 14th November 2018, Neelakannu Educational Trust is a charitable organization dedicated to empowering students through education and scholarship opportunities.",
+  "about.registeredOfficeTitle": "Registered Office",
+  "about.address":
+    "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India",
+  "about.contactTitle": "Contact Information",
+  "about.email": "neelakannueducationaltrust@gmail.com",
+  "about.phone": "94443 27336",
+  "about.founderTitle": "Founder",
+  "about.founder": "Prof. Dr. K. Chidambaram",
+  "about.missionTitle": "Our Mission",
+  "about.mission":
+    "To provide deserving students with financial assistance and educational opportunities, regardless of their economic background, enabling them to pursue their academic dreams and contribute to society.",
+  // Contact page
+  "contact.eyebrow": "Contact",
+  "contact.title": "Contact Us",
+  "contact.intro": "We'd love to hear from you. Get in touch with Neelakannu Educational Trust.",
+  "contact.officeTitle": "Trust Office",
+  "contact.address":
+    "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India",
+  "contact.emailLabel": "Email",
+  "contact.email": "neelakannueducationaltrust@gmail.com",
+  "contact.phoneLabel": "Phone",
+  "contact.phone": "94443 27336",
+  "contact.messageTitle": "Send Us a Message",
 };
 
 let cache: Record<string, string> = { ...CMS_DEFAULTS };

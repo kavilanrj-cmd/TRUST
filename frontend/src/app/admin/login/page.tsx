@@ -19,9 +19,11 @@ export default function AdminLoginPage() {
     setError("");
     try {
       await adminApi.login(email, password);
-      router.push("/admin/dashboard");
-    } catch (err: any) {
-      setError(err?.message || "Login failed. Please try again.");
+      router.push("/admin");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Login failed. Please try again.";
+      setError(message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }

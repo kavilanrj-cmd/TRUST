@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useHomeContent } from "@/lib/home-content";
+import { API_BASE_URL } from "@/lib/api";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -25,6 +26,7 @@ export default function ContactPage() {
   const { t } = useHomeContent();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const email = t("contact.email", "neelakannueducationaltrust@gmail.com");
   const phone = t("contact.phone", "94443 27336");
@@ -33,17 +35,46 @@ export default function ContactPage() {
     "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India"
   );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSending(true);
+    setFormError(null);
     setSent(false);
-    // Simulate a short send (UI only — no backend/database wiring here).
-    setTimeout(() => {
-      setSending(false);
+
+    const data = new FormData(e.currentTarget);
+    const name = String(data.get("name") ?? "").trim();
+    const emailValue = String(data.get("email") ?? "").trim();
+    const subject = String(data.get("subject") ?? "").trim();
+    const message = String(data.get("message") ?? "").trim();
+
+    if (!name || !emailValue || !subject || !message) {
+      setFormError("Please fill in all the fields before sending your message.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      setFormError("Please enter a valid email address.");
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email: emailValue, subject, message }),
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(result?.error || "Failed to send message");
+      }
+      setFormError(null);
       setSent(true);
-      setTimeout(() => setSent(false), 4000);
       e.currentTarget.reset();
-    }, 900);
+      setTimeout(() => setSent(false), 5000);
+    } catch (err: any) {
+      setFormError(err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -54,18 +85,6 @@ export default function ContactPage() {
       transition={{ duration: 0.5 }}
     >
       <div className="container-trust section-pad">
-        {/* Back link */}
-        <motion.nav
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="mb-12"
-        >
-          <Link href="/" className="underline underline-offset-2 text-navy/80 hover:text-gold-600">
-            &larr; Back to Home
-          </Link>
-        </motion.nav>
-
         {/* ===== Hero ===== */}
         <motion.header
           className="text-center mb-14"
@@ -78,7 +97,7 @@ export default function ContactPage() {
           </motion.span>
           <motion.h1
             variants={fadeUp}
-            className="mt-4 font-serif font-bold tracking-tight text-navy"
+            className="mt-4 font-serif font-bold tracking-tight text-navy dark:text-white"
             style={{ fontSize: "clamp(2.25rem, 5vw, 3.25rem)" }}
           >
             Contact Us
@@ -111,9 +130,9 @@ export default function ContactPage() {
             {/* Trust Office card */}
             <motion.div
               variants={fadeUp}
-              className="card-trust rounded-2xl bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_-20px_rgba(22,41,74,0.25)] sm:p-8"
+              className="card-trust rounded-2xl bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_-20px_rgba(22,41,74,0.25)] sm:p-8 dark:bg-[#131a2e]"
             >
-              <h2 className="font-serif text-2xl font-bold text-navy">
+              <h2 className="font-serif text-2xl font-bold text-navy dark:text-white">
                 {t("contact.officeTitle", "Trust Office")}
               </h2>
 
@@ -123,7 +142,7 @@ export default function ContactPage() {
                     <MapPin className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-navy">Address</p>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-navy dark:text-white">Address</p>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground whitespace-pre-line">{address}</p>
                   </div>
                 </div>
@@ -252,9 +271,9 @@ export default function ContactPage() {
           {/* RIGHT column — message form */}
           <motion.div
             variants={fadeUp}
-            className="card-trust rounded-2xl bg-white p-7 shadow-sm sm:p-8"
+            className="card-trust rounded-2xl bg-white p-7 shadow-sm sm:p-8 dark:bg-[#131a2e]"
           >
-            <h2 className="font-serif text-2xl font-bold text-navy">
+            <h2 className="font-serif text-2xl font-bold text-navy dark:text-white">
               {t("contact.messageTitle", "Send Us a Message")}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -268,6 +287,7 @@ export default function ContactPage() {
                 icon={<User className="h-5 w-5" />}
                 type="text"
                 placeholder="Your full name"
+                required
               />
               <Field
                 id="email"
@@ -275,6 +295,7 @@ export default function ContactPage() {
                 icon={<Mail className="h-5 w-5" />}
                 type="email"
                 placeholder="your.email@example.com"
+                required
               />
               <Field
                 id="subject"
@@ -282,6 +303,7 @@ export default function ContactPage() {
                 icon={<PenLine className="h-5 w-5" />}
                 type="text"
                 placeholder="Subject"
+                required
               />
               <Field
                 id="message"
@@ -290,6 +312,7 @@ export default function ContactPage() {
                 type="textarea"
                 placeholder="Your message here..."
                 rows={5}
+                required
               />
 
               <AnimatePresence>
@@ -298,9 +321,20 @@ export default function ContactPage() {
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
-                    className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+                    className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-300"
                   >
                     Message sent successfully. We will get back to you shortly.
+                  </motion.p>
+                )}
+                {formError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    role="alert"
+                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+                  >
+                    {formError}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -337,16 +371,16 @@ export default function ContactPage() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="rounded-2xl border border-gold/25 bg-white p-7 shadow-sm sm:p-8">
+          <div className="rounded-2xl border border-gold/25 bg-white p-7 shadow-sm sm:p-8 dark:bg-[#131a2e]">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-gold-600">
                 <MapPin className="h-5 w-5" />
               </span>
-              <h3 className="font-serif text-2xl font-bold text-navy">Our Location</h3>
+              <h3 className="font-serif text-2xl font-bold text-navy dark:text-white">Our Location</h3>
             </div>
             <div className="mt-5 grid gap-6 md:grid-cols-[1fr_auto]">
               <div>
-                <p className="font-semibold text-navy">Neelakannu Educational Trust</p>
+                <p className="font-semibold text-navy dark:text-white">Neelakannu Educational Trust</p>
                 <p className="mt-2 whitespace-pre-line text-muted-foreground">{address}</p>
               </div>
               <div className="flex items-start md:justify-end">
@@ -402,14 +436,14 @@ function HighlightCard({
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`card-trust rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-[0_14px_30px_-16px_rgba(22,41,74,0.25)] ${
+      className={`card-trust rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-[0_14px_30px_-16px_rgba(22,41,74,0.25)] dark:bg-[#131a2e] ${
         center ? "flex flex-col items-center text-center" : ""
       }`}
     >
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-gold-600">
         {icon}
       </span>
-      <h4 className="mt-4 text-sm font-bold text-navy">{title}</h4>
+      <h4 className="mt-4 text-sm font-bold text-navy dark:text-white">{title}</h4>
       <div className="mt-2 text-sm text-muted-foreground">{body}</div>
     </motion.div>
   );
@@ -422,6 +456,7 @@ function Field({
   type,
   placeholder,
   rows,
+  required,
 }: {
   id: string;
   label: string;
@@ -429,13 +464,15 @@ function Field({
   type: "text" | "email" | "textarea";
   placeholder: string;
   rows?: number;
+  required?: boolean;
 }) {
   const baseInput =
-    "w-full rounded-xl border border-border bg-white py-3 pl-12 pr-4 text-navy shadow-sm outline-none transition-all duration-300 placeholder:text-muted-foreground/60 focus:border-gold focus:ring-4 focus:ring-gold/15";
+    "w-full rounded-xl border border-border bg-white py-3 pl-12 pr-4 text-navy shadow-sm outline-none transition-all duration-300 placeholder:text-muted-foreground/60 focus:border-gold focus:ring-4 focus:ring-gold/15 dark:bg-[#131a2e] dark:text-white";
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-navy">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-navy dark:text-white">
         {label}
+        {required && <span className="ml-1 text-gold-600">*</span>}
       </label>
       <div className="relative">
         <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/60">
@@ -444,16 +481,20 @@ function Field({
         {type === "textarea" ? (
           <motion.textarea
             id={id}
+            name={id}
             rows={rows}
             placeholder={placeholder}
+            required={required}
             whileFocus={{ scale: 1.01 }}
             className={`${baseInput} pt-3`}
           />
         ) : (
           <motion.input
             id={id}
+            name={id}
             type={type}
             placeholder={placeholder}
+            required={required}
             whileFocus={{ scale: 1.01 }}
             className={baseInput}
           />
