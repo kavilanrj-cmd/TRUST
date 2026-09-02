@@ -50,21 +50,6 @@ export function Hero() {
           </div>
 
           <ApplicationFee />
-
-          <div className="mt-10 flex flex-wrap items-center gap-x-10 gap-y-5 border-t border-border pt-6">
-            <div className="min-w-[120px]">
-              <p className="font-serif text-3xl font-bold text-navy">{t("home.hero.stat1", "2018")}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{t("home.hero.stat1Label", "Established")}</p>
-            </div>
-            <div className="min-w-[150px] border-l border-border pl-10">
-              <p className="font-serif text-3xl font-bold text-gold-600">{t("home.hero.stat2", "100+")}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{t("home.hero.stat2Label", "Students Supported")}</p>
-            </div>
-            <div className="min-w-[150px] border-l border-border pl-10">
-              <p className="font-serif text-3xl font-bold text-navy">{t("home.hero.stat3", "100%")}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{t("home.hero.stat3Label", "Commitment to Education")}</p>
-            </div>
-          </div>
         </div>
 
         {/* Right visual */}
