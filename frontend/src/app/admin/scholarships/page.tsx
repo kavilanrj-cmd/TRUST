@@ -80,7 +80,7 @@ function ScholarshipForm({
               className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
                 form.educationLevels.includes(l)
                   ? "border-navy bg-navy text-white"
-                  : "border-border bg-white text-navy hover:bg-muted"
+                  : "border-border bg-white text-navy hover:bg-muted dark:border-white/15 dark:bg-[#131a2e] dark:text-white dark:hover:bg-white/5"
               }`}
             >
               {l.replace(/_/g, " ")}
@@ -113,9 +113,9 @@ function ScholarshipForm({
           id="isActive"
           checked={form.isActive}
           onChange={(e) => set("isActive", e.target.checked)}
-          className="h-4 w-4 rounded border-border text-navy focus:ring-navy"
+          className="h-4 w-4 rounded border-border text-navy focus:ring-navy dark:text-white"
         />
-        <label htmlFor="isActive" className="text-sm font-medium text-navy">Active</label>
+        <label htmlFor="isActive" className="text-sm font-medium text-navy dark:text-white">Active</label>
       </div>
 
       <div>
@@ -136,9 +136,9 @@ function ScholarshipForm({
                 type="checkbox"
                 checked={doc.isRequired}
                 onChange={(e) => updateDoc(i, "isRequired", e.target.checked)}
-                className="h-4 w-4 rounded border-border text-navy focus:ring-navy"
+          className="h-4 w-4 rounded border-border text-navy focus:ring-navy dark:text-white"
               />
-              <span className="text-xs font-medium text-navy">Required</span>
+              <span className="text-xs font-medium text-navy dark:text-white">Required</span>
             </div>
             <Button type="button" variant="danger" size="sm" onClick={() => removeDoc(i)}>Remove</Button>
           </div>
@@ -263,7 +263,7 @@ export default function ScholarshipsPage() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy">Scholarships</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Scholarships</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage scholarship programs and required documents.
           </p>
@@ -305,7 +305,7 @@ export default function ScholarshipsPage() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-semibold text-navy">{s.name}</h3>
+                    <h3 className="text-base font-semibold text-navy dark:text-white">{s.name}</h3>
                     <Badge className={s.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600"}>
                       {s.isActive ? "Active" : "Inactive"}
                     </Badge>

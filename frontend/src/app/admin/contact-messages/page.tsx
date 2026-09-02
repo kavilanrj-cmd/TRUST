@@ -75,7 +75,7 @@ function ContactMessagesPage() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy">Contact Messages</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Contact Messages</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {total} message{total !== 1 ? "s" : ""} · {unread} unread
           </p>
@@ -135,7 +135,7 @@ function ContactMessagesPage() {
                 {messages.map((m) => (
                   <tr key={m.id} className={`border-b border-border last:border-0 ${m.isRead ? "" : "bg-gold/5"}`}>
                     <td className="py-2.5 pr-4">
-                      <p className="font-medium text-navy">{m.name}</p>
+                      <p className="font-medium text-navy dark:text-white">{m.name}</p>
                       <p className="text-xs text-muted-foreground">{m.email}</p>
                     </td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{m.subject}</td>
@@ -151,7 +151,7 @@ function ContactMessagesPage() {
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/admin/contact-messages/${m.id}`}
-                          className="text-xs font-semibold text-navy hover:underline"
+                          className="text-xs font-semibold text-navy hover:underline dark:text-gold"
                         >
                           View
                         </Link>

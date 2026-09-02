@@ -62,7 +62,7 @@ export default function AdminSearchPage() {
                     className="flex items-center justify-between rounded-lg border border-border p-3 transition hover:shadow-sm"
                   >
                     <div>
-                      <p className="text-sm font-medium text-navy">{a.student?.name || a.personalDetails?.fullName || "—"}</p>
+                      <p className="text-sm font-medium text-navy dark:text-white">{a.student?.name || a.personalDetails?.fullName || "—"}</p>
                       <p className="text-xs text-muted-foreground">{a.applicationId} · {a.scholarshipProgram?.name || "—"}</p>
                     </div>
                     <Badge className={statusColor(a.status)}>{a.status?.replace(/_/g, " ")}</Badge>
@@ -81,7 +81,7 @@ export default function AdminSearchPage() {
                     href="/admin/scholarships"
                     className="flex items-center justify-between rounded-lg border border-border p-3 transition hover:shadow-sm"
                   >
-                    <p className="text-sm font-medium text-navy">{s.name}</p>
+                    <p className="text-sm font-medium text-navy dark:text-white">{s.name}</p>
                     <Badge className={s.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600"}>
                       {s.isActive ? "Active" : "Inactive"}
                     </Badge>
@@ -100,7 +100,7 @@ export default function AdminSearchPage() {
                     href="/admin/announcements"
                     className="block rounded-lg border border-border p-3 transition hover:shadow-sm"
                   >
-                    <p className="text-sm font-medium text-navy">{a.title}</p>
+                    <p className="text-sm font-medium text-navy dark:text-white">{a.title}</p>
                     {a.content && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{a.content}</p>}
                   </Link>
                 ))}
@@ -114,7 +114,7 @@ export default function AdminSearchPage() {
                 {results.activity.map((a: any) => (
                   <div key={a.id} className="rounded-lg border border-border p-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-navy">{a.action}</span>
+                      <span className="font-mono text-xs text-navy dark:text-white">{a.action}</span>
                       <span className="text-xs text-muted-foreground">by {a.actorName || "—"}</span>
                     </div>
                     {a.targetType && <p className="mt-1 text-xs text-muted-foreground">Target: {a.targetType} ({a.targetId})</p>}

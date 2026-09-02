@@ -30,9 +30,9 @@ export function ApplicationFee() {
   if (!fee || !fee.enabled || fee.amount <= 0) return null;
 
   return (
-    <div className="mx-auto mt-6 flex w-fit items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-4 py-2 text-sm font-semibold text-navy-800">
+    <div className="mx-auto mt-6 flex w-fit items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-4 py-2 text-sm font-semibold text-navy-800 dark:border-gold/30 dark:bg-[#1d2740] dark:text-gold">
       Application Fee:
-      <span className="font-serif text-base font-bold text-navy">
+      <span className="font-serif text-base font-bold text-navy dark:text-gold">
         ₹{Number(fee.amount).toLocaleString("en-IN")}
       </span>
     </div>

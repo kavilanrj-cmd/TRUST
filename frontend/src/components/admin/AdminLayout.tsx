@@ -169,7 +169,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#0b1020]">
         <span className="text-sm text-muted-foreground">Redirecting to login...</span>
       </div>
     );
@@ -185,7 +185,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     .toUpperCase();
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-[#0b1020]">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -246,9 +246,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-white px-4 sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-white px-4 sm:px-6 dark:bg-[#131a2e] dark:border-slate-700">
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border text-navy lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border text-navy dark:border-white/20 dark:text-white lg:hidden"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open menu"
           >
@@ -270,7 +270,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <div className="ml-auto flex items-center gap-2">
             <button
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border text-navy hover:bg-muted"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border text-navy hover:bg-muted dark:border-white/20 dark:text-white dark:hover:bg-white/10"
               onClick={() => router.push("/admin/notifications")}
               aria-label="Notifications"
             >
@@ -284,33 +284,33 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
             <div className="relative">
               <button
-                className="flex items-center gap-2 rounded-lg border border-border py-1.5 pl-1.5 pr-3 hover:bg-muted"
+                className="flex items-center gap-2 rounded-lg border border-border py-1.5 pl-1.5 pr-3 hover:bg-muted dark:border-white/20 dark:hover:bg-white/10"
                 onClick={() => setUserMenuOpen((v) => !v)}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs font-bold text-white dark:bg-gold dark:text-navy">
                   {initials}
                 </span>
-                <span className="hidden text-sm font-medium text-navy sm:block">{user.name}</span>
+                <span className="hidden text-sm font-medium text-navy sm:block dark:text-white">{user.name}</span>
               </button>
 
               {userMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-white p-1.5 shadow-lg">
-                    <div className="border-b border-border px-3 py-2">
-                      <p className="text-sm font-semibold text-navy">{user.name}</p>
+                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-white p-1.5 shadow-lg dark:border-white/15 dark:bg-[#131a2e]">
+                    <div className="border-b border-border px-3 py-2 dark:border-white/10">
+                      <p className="text-sm font-semibold text-navy dark:text-white">{user.name}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
                     <Link
                       href="/"
-                      className="block rounded-md px-3 py-2 text-sm text-navy hover:bg-muted"
+                      className="block rounded-md px-3 py-2 text-sm text-navy hover:bg-muted dark:text-white dark:hover:bg-white/10"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       View public site
                     </Link>
                     <Link
                       href="/admin/settings"
-                      className="block rounded-md px-3 py-2 text-sm text-navy hover:bg-muted"
+                      className="block rounded-md px-3 py-2 text-sm text-navy hover:bg-muted dark:text-white dark:hover:bg-white/10"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       Settings
@@ -320,7 +320,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                         setUserMenuOpen(false);
                         handleLogout();
                       }}
-                      className="block w-full rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                      className="block w-full rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
                       Log out
                     </button>

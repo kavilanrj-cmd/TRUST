@@ -13,7 +13,7 @@ export function Notes() {
     <section id="notes" className="bg-white dark:bg-[#0d1224]">
       <div className="container-trust section-pad">
         <Reveal>
-          <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-gold-soft px-8 py-10 sm:px-12 sm:py-12">
+          <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-gold-soft px-8 py-10 sm:px-12 sm:py-12 dark:border-gold/30 dark:bg-[#1d2740]">
             <div
               className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold/15 blur-2xl"
               aria-hidden="true"
@@ -21,7 +21,7 @@ export function Notes() {
             <span className="inline-flex items-center rounded-full bg-navy px-4 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-gold">
               Important Notes
             </span>
-            <h2 className="mt-4 font-serif text-2xl font-bold tracking-tight text-navy sm:text-3xl">
+            <h2 className="mt-4 font-serif text-2xl font-bold tracking-tight text-navy sm:text-3xl dark:text-white">
               Before You Apply
             </h2>
             <ul className="mt-6 space-y-4">
@@ -32,7 +32,7 @@ export function Notes() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                   </span>
-                  <p className="leading-relaxed text-navy-800">{note}</p>
+                  <p className="leading-relaxed text-navy-800 dark:text-slate-200">{note}</p>
                 </li>
               ))}
             </ul>

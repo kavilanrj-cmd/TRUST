@@ -161,11 +161,55 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "about.contactTitle": "Contact Information",
   "about.email": "neelakannueducationaltrust@gmail.com",
   "about.phone": "94443 27336",
-  "about.founderTitle": "Founder",
-  "about.founder": "Prof. Dr. K. Chidambaram",
-  "about.missionTitle": "Our Mission",
+  // Removed duplicate old entries; new founder/mission below
+  // Core Objectives and Areas of Work
+  "about.organizationTitle": "About the Organization",
+  "about.organization":
+    "Neelakannu Educational Trust is a registered public charitable trust dedicated to the advancement of education, social welfare, healthcare support, and cultural preservation across diverse sections of society. Established with a commitment to inclusive development, the Trust operates without discrimination on the basis of caste, creed, religion, or socio-economic status. The Trust seeks to empower individuals and communities through access to quality education, skill development, humanitarian assistance, and initiatives that promote national integration and social harmony. Particular emphasis is placed on supporting children, persons with disabilities, rural populations, and economically disadvantaged groups, enabling them to lead self-reliant and dignified lives.",
+  // Vision
+  "about.visionTitle": "Vision",
+  "about.vision":
+    "To build an inclusive and equitable society in which every individual, regardless of social, economic, or physical limitations, has access to education, opportunities for holistic development and the means to lead a dignified and productive life.",
+  // Mission
+  "about.missionTitle": "Mission",
   "about.mission":
-    "To provide deserving students with financial assistance and educational opportunities, regardless of their economic background, enabling them to pursue their academic dreams and contribute to society.",
+    "To promote inclusive education, social upliftment, healthcare access, and cultural enrichment by establishing and supporting institutions, programs, and initiatives that empower marginalized communities and contribute to sustainable national development.",
+  // Founder
+  "about.founderTitle": "Founder",
+  "about.founder":
+    "Prof. Dr. K. Chidambaram\nME., Ph. D.\nFounder and Settlor\nNeelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
+  // Core Objectives and Areas of Work
+  "about.coreObjectivesTitle": "Core Objectives and Areas of Work",
+  "about.coreObjectives":
+    "Promotion of Education\n• Promote education for all children without discrimination\n• Establish, manage, and support schools, colleges, technical institutions, vocational institutions, and non-formal educational centers\n• Provide scholarships, grants, books, uniforms, and educational materials to deserving students\n• Support rural and tribal education initiatives\n• Conduct evening classes, literacy programs, and correspondence courses\n• Establish libraries, reading rooms, and knowledge centers\n• Publish educational books, periodicals, and literature\n• Conduct seminars, lectures, conferences, debates, and academic programs\n• Encourage academic excellence through awards, endowments, and scholarships\n\nSpecial Education and Support for Persons with Disabilities\n• Provide education for children who are mentally challenged, hearing impaired, visually impaired, or physically disabled\n• Provide assistive devices and rehabilitation support\n• Promote vocational skills and livelihood opportunities for persons with disabilities\n• Extend financial or material assistance to differently-abled individuals.",
+  // Cultural Promotion and National Integration
+  "about.culturalTitle": "Cultural Promotion and National Integration",
+  "about.cultural":
+    "• Promote Indian culture, heritage, philosophy, music, yoga, fine arts, and traditional crafts\n• Conduct cultural programs, seminars, and discussions\n• Preserve and promote national unity through cultural awareness initiatives",
+  // Student Welfare and Infrastructure Development
+  "about.welfareTitle": "Student Welfare and Infrastructure Development",
+  "about.welfare":
+    "• Establish and operate hostels and provide food and accommodation for students\n• Create safe and supportive learning environments for disadvantaged children\n• Support educational institutions through infrastructure development",
+  // Healthcare and Medical Support
+  "about.healthcareTitle": "Healthcare and Medical Support",
+  "about.healthcare":
+    "• Establish, support, and maintain hospitals, dispensaries, laboratories, rehabilitation centers, and healthcare facilities\n• Promote research and education in various systems of medicine including Allopathy, Ayurveda, Homeopathy, Naturopathy, and others\n• Conduct medical camps, eye camps, and health awareness programs\n• Provide medical assistance to economically disadvantaged individuals\n• Support training and development of healthcare personnel",
+  // Social Welfare and Community Development
+  "about.socialTitle": "Social Welfare and Community Development",
+  "about.social":
+    "• Provide assistance to poor, destitute, elderly, and incapacitated persons\n• Establish and maintain homes for the aged\n• Provide food, clothing, shelter, and relief during natural disasters and emergencies\n• Construct and maintain community centers and public utility infrastructure\n• Provide safe drinking water facilities\n• Support rural development initiatives\n• Assist traditional artisans and craftsmen",
+  // Public Benefit and Charitable Activities
+  "about.publicBenefitTitle": "Public Benefit and Charitable Activities",
+  "about.publicBenefit":
+    "• Provide employment support through development projects\n• Support educational and research institutions through grants and donations\n• Facilitate establishment and development of public welfare institutions\n• Accept donations, gifts, and contributions to further charitable objectives",
+  // Target Beneficiaries
+  "about.beneficiariesTitle": "Target Beneficiaries",
+  "about.beneficiaries":
+    "• Children and students from economically weaker sections\n• Persons with disabilities\n• Rural and tribal communities\n• Women and vulnerable groups\n• Elderly individuals\n• Illiterate adults\n• Poor and destitute populations",
+  // Future Plans
+  "about.futureTitle": "Future Plans",
+  "about.future":
+    "The Trust aims to expand its outreach and impact through:\n• Establishment of educational and vocational training centers\n• Expansion of student support and scholarship programs\n• Development of healthcare outreach initiatives\n• Creation of sustainable livelihood opportunities\n• Strengthening rural development activities\n• Promotion of inclusive education models",
   // Contact page
   "contact.eyebrow": "Contact",
   "contact.title": "Contact Us",

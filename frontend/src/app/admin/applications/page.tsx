@@ -101,7 +101,7 @@ function ApplicationsPage() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy">Applications</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Applications</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {total} application{total !== 1 ? "s" : ""} found
           </p>
@@ -233,8 +233,8 @@ function ApplicationsPage() {
               <tbody>
                 {applications.map((a) => (
                   <tr key={a.id} className="border-b border-border last:border-0">
-                    <td className="py-2.5 pr-4 font-mono text-xs text-navy">{a.applicationId}</td>
-                    <td className="py-2.5 pr-4 font-medium text-navy">
+                    <td className="py-2.5 pr-4 font-mono text-xs text-navy dark:text-white">{a.applicationId}</td>
+                    <td className="py-2.5 pr-4 font-medium text-navy dark:text-white">
                       {a.personalDetails?.fullName || a.student?.name || "—"}
                     </td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{a.student?.email || "—"}</td>
@@ -254,7 +254,7 @@ function ApplicationsPage() {
                     </td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{fmtDate(a.submittedAt || a.createdAt)}</td>
                     <td className="py-2.5">
-                      <Link href={`/admin/applications/${a.id}`} className="text-xs font-semibold text-navy hover:underline">
+                      <Link href={`/admin/applications/${a.id}`} className="text-xs font-semibold text-navy hover:underline dark:text-gold">
                         View
                       </Link>
                     </td>

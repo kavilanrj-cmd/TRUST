@@ -77,13 +77,13 @@ export default function AdminNotificationsPage() {
               <div
                 key={n.id}
                 className={`flex items-start justify-between gap-4 rounded-lg border p-4 transition ${
-                  n.read ? "border-border bg-white" : "border-gold/30 bg-gold/5"
+                  n.read ? "border-border bg-white dark:border-white/15 dark:bg-[#131a2e]" : "border-gold/30 bg-gold/5"
                 }`}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     {!n.read && <span className="h-2 w-2 shrink-0 rounded-full bg-gold" />}
-                    <p className="text-sm font-medium text-navy">{n.title}</p>
+                    <p className="text-sm font-medium text-navy dark:text-white">{n.title}</p>
                   </div>
                   {n.message && <p className="mt-1 text-sm text-muted-foreground">{n.message}</p>}
                   <p className="mt-1 text-xs text-muted-foreground">{fmtDateTime(n.createdAt)}</p>

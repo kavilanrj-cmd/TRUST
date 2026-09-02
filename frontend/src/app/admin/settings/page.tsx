@@ -84,7 +84,7 @@ export default function AdminSettingsPage() {
                   <label className="flex items-center gap-3">
                     <input
                       type="checkbox"
-                      className="h-5 w-5 rounded border-border text-navy focus:ring-2 focus:ring-navy/30"
+                      className="h-5 w-5 rounded border-border text-navy focus:ring-2 focus:ring-navy/30 dark:text-white"
                       checked={s.value === "true"}
                       onChange={() => handleToggle(s.key)}
                     />

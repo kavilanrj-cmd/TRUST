@@ -100,7 +100,7 @@ export function NewsEvents() {
             <Reveal key={item.id} delay={(i % 3) * 90}>
               <article className="card-trust flex h-full flex-col p-7 transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(22,41,74,0.3)]">
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="inline-flex items-center rounded-full bg-gold-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy-800">
+                  <span className="inline-flex items-center rounded-full bg-gold-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-navy-800 dark:text-gold">
                     {item.category ?? "Update"}
                   </span>
                   {item.createdAt && <time className="text-muted-foreground">{formatDate(item.createdAt)}</time>}

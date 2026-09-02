@@ -70,16 +70,16 @@ export default function AdminDashboardPage() {
   return (
     <AdminLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-navy">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">Overview of applications, scholarships and activity.</p>
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         {statCards.map((c) => (
           <Link key={c.label} href={c.href}>
-            <div className="card-trust bg-white p-4 transition hover:shadow-md">
+            <div className="card-trust bg-white p-4 transition hover:shadow-md dark:bg-[#131a2e]">
               <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
-              <p className="mt-2 text-3xl font-bold text-navy">{c.value}</p>
+              <p className="mt-2 text-3xl font-bold text-navy dark:text-white">{c.value}</p>
             </div>
           </Link>
         ))}
@@ -123,10 +123,10 @@ export default function AdminDashboardPage() {
             {data.charts.statusDistribution.map((s) => (
               <div key={s.status}>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-navy">{s.status.replace(/_/g, " ")}</span>
+                  <span className="font-medium text-navy dark:text-white">{s.status.replace(/_/g, " ")}</span>
                   <span className="text-muted-foreground">{s.count}</span>
                 </div>
-                <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-100">
+                <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
                   <div className="h-full rounded-full bg-navy" style={{ width: `${(s.count / maxStatus) * 100}%` }} />
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card title="Recent Applications" className="xl:col-span-2" actions={<Link href="/admin/applications" className="text-xs font-semibold text-navy hover:underline">View all</Link>}>
+        <Card title="Recent Applications" className="xl:col-span-2" actions={<Link href="/admin/applications" className="text-xs font-semibold text-navy hover:underline dark:text-gold">View all</Link>}>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
@@ -154,9 +154,9 @@ export default function AdminDashboardPage() {
                 )}
                 {data.recentApplications.map((a) => (
                   <tr key={a.id} className="border-b border-border last:border-0">
-                    <td className="py-2.5 pr-4 font-mono text-xs text-navy">{a.applicationId}</td>
+                    <td className="py-2.5 pr-4 font-mono text-xs text-navy dark:text-white">{a.applicationId}</td>
                     <td className="py-2.5 pr-4">
-                      <Link href={`/admin/applications/${a.id}`} className="font-medium text-navy hover:underline">
+                      <Link href={`/admin/applications/${a.id}`} className="font-medium text-navy hover:underline dark:text-gold">
                         {a.student?.name || "—"}
                       </Link>
                     </td>
@@ -178,7 +178,7 @@ export default function AdminDashboardPage() {
             {data.upcomingDeadlines.map((d) => (
               <div key={d.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                 <div>
-                  <p className="text-sm font-medium text-navy">{d.name}</p>
+                  <p className="text-sm font-medium text-navy dark:text-white">{d.name}</p>
                   <p className="text-xs text-muted-foreground">Deadline</p>
                 </div>
                 <Badge className="bg-amber-50 text-amber-700">{fmtDate(d.applicationDeadline)}</Badge>
@@ -197,10 +197,10 @@ export default function AdminDashboardPage() {
             {data.charts.scholarshipWise.map((s) => (
               <div key={s.name}>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="truncate font-medium text-navy">{s.name}</span>
+                  <span className="truncate font-medium text-navy dark:text-white">{s.name}</span>
                   <span className="ml-2 text-muted-foreground">{s.count}</span>
                 </div>
-                <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-100">
+                <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
                   <div className="h-full rounded-full bg-gold" style={{ width: `${totalBySchool ? (s.count / totalBySchool) * 100 : 0}%` }} />
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function AdminDashboardPage() {
           <div className="space-y-3">
             {data.charts.educationLevels.map((e) => (
               <div key={e.level} className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
-                <span className="text-sm font-medium text-navy">{e.level || "—"}</span>
+                <span className="text-sm font-medium text-navy dark:text-white">{e.level || "—"}</span>
                 <Badge className="bg-navy-50 text-navy-800">{e.count}</Badge>
               </div>
             ))}
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
               <div key={act.id} className="flex items-start gap-3">
                 <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />
                 <div>
-                  <p className="text-sm text-navy">
+                  <p className="text-sm text-navy dark:text-white">
                     <span className="font-medium">{act.actor?.name || "Staff"}</span>{" "}
                     <span className="text-muted-foreground">{act.type?.replace(/_/g, " ") || "updated"}</span>
                   </p>
@@ -245,12 +245,12 @@ export default function AdminDashboardPage() {
 
       {data.notifications.unreadCount > 0 && (
         <div className="mt-6">
-          <Card title="Unread Notifications" actions={<Link href="/admin/notifications" className="text-xs font-semibold text-navy hover:underline">View all</Link>}>
+          <Card title="Unread Notifications" actions={<Link href="/admin/notifications" className="text-xs font-semibold text-navy hover:underline dark:text-gold">View all</Link>}>
             <div className="space-y-3">
               {data.notifications.list.map((n: any) => (
                 <div key={n.id} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
                   <div>
-                    <p className="text-sm font-medium text-navy">{n.title}</p>
+                    <p className="text-sm font-medium text-navy dark:text-white">{n.title}</p>
                     {n.message && <p className="text-xs text-muted-foreground">{n.message}</p>}
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground">{fmtDateTime(n.createdAt)}</span>

@@ -55,7 +55,7 @@ export default function AdminUsersPage() {
       {pageHeading("Staff Management", "Manage admin and reviewer accounts.")}
 
       {msg && (
-        <div className="mb-4 rounded-lg border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-navy">{msg}</div>
+        <div className="mb-4 rounded-lg border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-navy dark:text-gold">{msg}</div>
       )}
 
       <Card
@@ -85,7 +85,7 @@ export default function AdminUsersPage() {
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id} className="border-b border-border last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-navy">{u.name}</td>
+                    <td className="py-2.5 pr-4 font-medium text-navy dark:text-white">{u.name}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{u.email}</td>
                     <td className="py-2.5 pr-4"><Badge className={roleColor(u.role)}>{u.role}</Badge></td>
                     <td className="py-2.5 pr-4">
@@ -151,8 +151,8 @@ function CreateUserForm({ onClose, onCreated }: { onClose: () => void; onCreated
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-lg">
-        <h3 className="mb-4 text-base font-semibold text-navy">Add Staff Member</h3>
+      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-lg dark:border-white/15 dark:bg-[#131a2e]">
+        <h3 className="mb-4 text-base font-semibold text-navy dark:text-white">Add Staff Member</h3>
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         <div className="space-y-3">
           <Field label="Name"><input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} required /></Field>
@@ -197,12 +197,12 @@ function EditUserForm({ user, onClose, onSaved }: { user: StaffUser; onClose: ()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-lg">
-        <h3 className="mb-4 text-base font-semibold text-navy">Edit {user.name}</h3>
+      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-lg dark:border-white/15 dark:bg-[#131a2e]">
+        <h3 className="mb-4 text-base font-semibold text-navy dark:text-white">Edit {user.name}</h3>
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         <div className="space-y-3">
           <label className="flex items-center gap-3">
-            <span className="text-sm font-medium text-navy">Active</span>
+            <span className="text-sm font-medium text-navy dark:text-white">Active</span>
             <button
               type="button"
               onClick={() => setIsActive(!isActive)}
@@ -251,8 +251,8 @@ function ResetPasswordDialog({ userId, onClose }: { userId: string; onClose: () 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-lg">
-        <h3 className="mb-4 text-base font-semibold text-navy">Reset Password</h3>
+      <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-lg dark:border-white/15 dark:bg-[#131a2e]">
+        <h3 className="mb-4 text-base font-semibold text-navy dark:text-white">Reset Password</h3>
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
         {done ? (
           <div className="rounded-lg border border-green-200 bg-green-50 p-4">

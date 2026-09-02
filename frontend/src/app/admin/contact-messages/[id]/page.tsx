@@ -11,7 +11,7 @@ function Field({ label, value }: { label: string; value?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5 py-1.5 sm:flex-row sm:items-start sm:gap-4">
       <span className="min-w-[160px] text-xs font-medium text-muted-foreground sm:pt-0.5">{label}</span>
-      <span className="text-sm text-navy">{value || "—"}</span>
+      <span className="text-sm text-navy dark:text-white">{value || "—"}</span>
     </div>
   );
 }
@@ -75,10 +75,10 @@ export default function ContactMessageDetailPage() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin/contact-messages" className="text-sm font-semibold text-navy hover:underline">
+          <Link href="/admin/contact-messages" className="text-sm font-semibold text-navy hover:underline dark:text-gold">
             &larr; Back
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight text-navy">Contact Message</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Contact Message</h1>
         </div>
       </div>
 
@@ -114,7 +114,7 @@ export default function ContactMessageDetailPage() {
               <Field
                 label="Email"
                 value={
-                  <a href={`mailto:${message.email}`} className="text-navy underline hover:text-gold-600">
+                  <a href={`mailto:${message.email}`} className="text-navy underline hover:text-gold-600 dark:text-white dark:hover:text-gold">
                     {message.email}
                   </a>
                 }
@@ -127,7 +127,7 @@ export default function ContactMessageDetailPage() {
               <Field label="Subject" value={message.subject} />
               <div>
                 <p className="text-xs font-medium text-muted-foreground">Body</p>
-                <p className="mt-1 whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm leading-relaxed text-navy">
+                <p className="mt-1 whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm leading-relaxed text-navy dark:bg-[#131a2e] dark:text-slate-300">
                   {message.message}
                 </p>
               </div>

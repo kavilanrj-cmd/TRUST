@@ -117,7 +117,7 @@ export default function AnnouncementsPage() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy">Announcements</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Announcements</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage news and announcements displayed on the public site.
           </p>
@@ -153,9 +153,9 @@ export default function AnnouncementsPage() {
                 id="annActive"
                 checked={form.isActive}
                 onChange={(e) => set("isActive", e.target.checked)}
-                className="h-4 w-4 rounded border-border text-navy focus:ring-navy"
+                className="h-4 w-4 rounded border-border text-navy focus:ring-navy dark:text-white"
               />
-              <label htmlFor="annActive" className="text-sm font-medium text-navy">Active (visible on public site)</label>
+              <label htmlFor="annActive" className="text-sm font-medium text-navy dark:text-white">Active (visible on public site)</label>
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -180,7 +180,7 @@ export default function AnnouncementsPage() {
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-semibold text-navy">{a.title}</h3>
+                    <h3 className="text-base font-semibold text-navy dark:text-white">{a.title}</h3>
                     <Badge className={a.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600"}>
                       {a.isActive ? "Active" : "Inactive"}
                     </Badge>

@@ -72,7 +72,7 @@ export function Scholarships() {
                     )}
                   </svg>
                 </span>
-                <h3 className="mt-5 font-serif text-xl font-bold text-navy">{pillar.title}</h3>
+                <h3 className="mt-5 font-serif text-xl font-bold text-navy dark:text-white">{pillar.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{pillar.description}</p>
               </article>
             </Reveal>
@@ -83,12 +83,12 @@ export function Scholarships() {
           <div className="mx-auto mt-10 max-w-3xl">
             <div className="card-trust flex flex-col items-center justify-between gap-6 p-7 text-center sm:flex-row sm:text-left">
               <div>
-                <h3 className="font-serif text-xl font-bold text-navy">Application Fee</h3>
+                <h3 className="font-serif text-xl font-bold text-navy dark:text-white">Application Fee</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {showFee ? (
                     <>
                       {t("home.scholarships.feeNote", "A nominal, non-refundable application fee applies and is set by the Trust.")}{" "}
-                      <span className="font-semibold text-navy">
+                      <span className="font-semibold text-navy dark:text-gold">
                         ₹{Number(fee!.amount).toLocaleString("en-IN")}
                       </span>
                     </>

@@ -80,7 +80,7 @@ function PaymentsPage() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy">Payments</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Payments</h1>
           <p className="mt-1 text-sm text-muted-foreground">{total} payment{total !== 1 ? "s" : ""} found</p>
         </div>
         <Button variant="gold" onClick={handleExport}>Export CSV</Button>
@@ -152,17 +152,17 @@ function PaymentsPage() {
                     <td className="py-2.5 pr-4">
                       <Link
                         href={`/admin/applications/${p.application?.id}`}
-                        className="font-mono text-xs text-navy hover:underline"
+                        className="font-mono text-xs text-navy hover:underline dark:text-gold"
                       >
                         {p.application?.applicationId || "—"}
                       </Link>
                     </td>
                     <td className="py-2.5 pr-4">
-                      <p className="font-medium text-navy">
+                      <p className="font-medium text-navy dark:text-white">
                         {p.application?.personalDetails?.fullName || p.application?.student?.name || "—"}
                       </p>
                     </td>
-                    <td className="py-2.5 pr-4 text-navy">{fmt(p.amount, p.currency)}</td>
+                    <td className="py-2.5 pr-4 text-navy dark:text-white">{fmt(p.amount, p.currency)}</td>
                     <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{p.razorpayOrderId || "—"}</td>
                     <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{p.razorpayPaymentId || "—"}</td>
                     <td className="py-2.5 pr-4"><PaymentStatusBadge status={p.status} /></td>

@@ -142,7 +142,7 @@ export default function AdminWebsitePage() {
                 href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border border-navy/20 bg-white px-5 py-2.5 text-sm font-semibold text-navy transition hover:bg-muted"
+                className="inline-flex items-center gap-2 rounded-lg border border-navy/20 bg-white px-5 py-2.5 text-sm font-semibold text-navy transition hover:bg-muted dark:border-white/15 dark:bg-[#131a2e] dark:text-white dark:hover:bg-white/5"
               >
                 View live site
               </a>
@@ -164,7 +164,7 @@ export default function AdminWebsitePage() {
             <div className="max-h-[70vh] overflow-y-auto rounded-lg border border-border">
               {Array.from(groups.entries()).map(([page, sections]) => (
                 <div key={page} className="border-b border-border last:border-b-0">
-                  <div className="bg-muted/60 px-3 py-2 text-xs font-bold uppercase tracking-wide text-navy">
+                  <div className="bg-muted/60 px-3 py-2 text-xs font-bold uppercase tracking-wide text-navy dark:text-slate-300">
                     {page}
                   </div>
                   {Array.from(sections.entries()).map(([section, list]) => (
@@ -180,13 +180,13 @@ export default function AdminWebsitePage() {
                             key={f.key}
                             onClick={() => setSelected(f.key)}
                             className={`block w-full px-3 py-2 text-left text-sm transition hover:bg-muted ${
-                              selected === f.key ? "bg-gold/15 font-semibold text-navy" : "text-muted-foreground"
+                              selected === f.key ? "bg-gold/15 font-semibold text-navy dark:text-gold" : "text-muted-foreground"
                             }`}
                           >
                             <span className="flex items-center justify-between gap-2">
                               <span className="truncate">{f.label}</span>
                               {hasDraft && (
-                                <Badge className="shrink-0 bg-gold/20 text-navy">Draft</Badge>
+                                <Badge className="shrink-0 bg-gold/20 text-navy dark:text-gold">Draft</Badge>
                               )}
                               {isCurrentDirty && (
                                 <Badge className="shrink-0 bg-amber-100 text-amber-800">•</Badge>
@@ -224,8 +224,8 @@ export default function AdminWebsitePage() {
 
       {confirmPublish && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-lg">
-            <h3 className="mb-2 text-base font-semibold text-navy">Publish all draft changes?</h3>
+          <div className="w-full max-w-md rounded-xl border border-border bg-white p-6 shadow-lg dark:border-white/15 dark:bg-[#131a2e]">
+            <h3 className="mb-2 text-base font-semibold text-navy dark:text-white">Publish all draft changes?</h3>
             <p className="text-sm text-muted-foreground">
               All fields with pending drafts will become live on the public website immediately. Version snapshots are
               created so you can restore later.
@@ -266,7 +266,7 @@ function FieldEditor({
       subtitle={field.help}
       actions={
         isDraft ? (
-          <Badge className="bg-gold/20 text-navy">Unpublished draft</Badge>
+          <Badge className="bg-gold/20 text-navy dark:text-gold">Unpublished draft</Badge>
         ) : (
           <Badge className="bg-green-100 text-green-800">Live</Badge>
         )
@@ -386,7 +386,7 @@ function VersionHistory({ field }: { field: WebsiteField }) {
             <li key={v.id} className="flex items-start justify-between gap-3 rounded-lg border border-border px-3 py-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-navy">v{v.versionNumber}</span>
+                  <span className="text-xs font-semibold text-navy dark:text-white">v{v.versionNumber}</span>
                   <span className="text-xs text-muted-foreground">
                     {v.editedByName || "—"} · {v.createdAt ? new Date(v.createdAt).toLocaleString() : "—"}
                   </span>

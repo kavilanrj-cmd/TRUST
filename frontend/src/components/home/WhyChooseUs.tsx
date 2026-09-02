@@ -46,7 +46,7 @@ export function WhyChooseUs() {
           {features.map((feature, i) => (
             <Reveal key={feature.title} delay={(i % 4) * 80}>
               <div className="card-trust h-full p-7 text-center transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(22,41,74,0.3)]">
-                <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-soft text-navy">
+                <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-soft text-navy dark:text-gold">
                   {feature.icon}
                 </span>
                 <h3 className="mt-5 font-semibold text-navy dark:text-white">{feature.title}</h3>

@@ -99,8 +99,8 @@ export default function AdminAuditPage() {
                 <tbody>
                   {logs.map((log) => (
                     <tr key={log.id} className="border-b border-border last:border-0">
-                      <td className="py-2.5 pr-4 font-mono text-xs text-navy">{log.action}</td>
-                      <td className="py-2.5 pr-4 text-navy">{log.actorName || "—"}</td>
+                      <td className="py-2.5 pr-4 font-mono text-xs text-navy dark:text-white">{log.action}</td>
+                      <td className="py-2.5 pr-4 text-navy dark:text-white">{log.actorName || "—"}</td>
                       <td className="py-2.5 pr-4 text-xs text-muted-foreground">
                         {log.targetType ? `${log.targetType}` : "—"}
                         {log.targetId && <span className="ml-1 font-mono">({log.targetId.slice(0, 8)}…)</span>}

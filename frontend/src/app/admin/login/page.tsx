@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
           <p className="mt-1 text-sm text-white/70">Neelakannu Educational Trust</p>
         </div>
 
-        <div className="card-trust bg-white p-8">
+        <div className="card-trust bg-white p-8 dark:bg-[#131a2e]">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="field-label">Email address</label>
@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Authorized staff only.{" "}
-            <Link href="/" className="font-semibold text-navy hover:underline">
+            <Link href="/" className="font-semibold text-navy hover:underline dark:text-gold">
               Back to website
             </Link>
           </p>

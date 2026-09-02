@@ -582,13 +582,13 @@ export function ApplicationForm() {
         </p>
         {submittedRef && (
           <div className="mt-8 rounded-xl border border-gold/40 bg-gold-soft p-6">
-            <p className="text-sm font-medium text-navy-800">Application / Reference Number</p>
-            <p className="mt-1 text-2xl font-bold tracking-wide text-navy">{submittedRef}</p>
+            <p className="text-sm font-medium text-navy-800 dark:text-gold">Application / Reference Number</p>
+            <p className="mt-1 text-2xl font-bold tracking-wide text-navy dark:text-white">{submittedRef}</p>
             <p className="mt-2 text-xs text-muted-foreground">Please keep this reference number for future communication.</p>
           </div>
         )}
         {paymentStatus === "SUCCESS" && (
-          <div className="mx-auto mt-6 max-w-md space-y-3 rounded-xl border border-border bg-white p-5 text-left">
+          <div className="mx-auto mt-6 max-w-md space-y-3 rounded-xl border border-border bg-white dark:bg-[#131a2e] p-5 text-left">
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm text-muted-foreground">Payment status</span>
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-success">
@@ -601,13 +601,13 @@ export function ApplicationForm() {
             {paymentRef?.paymentId && (
               <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
                 <span className="text-sm text-muted-foreground">Payment ID</span>
-                <span className="font-mono text-sm font-medium text-navy">{paymentRef.paymentId}</span>
+                <span className="font-mono text-sm font-medium text-navy dark:text-white">{paymentRef.paymentId}</span>
               </div>
             )}
             {paymentRef?.amount != null && (
               <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
                 <span className="text-sm text-muted-foreground">Amount Paid</span>
-                <span className="text-sm font-semibold text-navy">₹{Number(paymentRef.amount).toLocaleString("en-IN")}</span>
+                <span className="text-sm font-semibold text-navy dark:text-white">₹{Number(paymentRef.amount).toLocaleString("en-IN")}</span>
               </div>
             )}
           </div>
@@ -654,7 +654,7 @@ export function ApplicationForm() {
                 </span>
                 <span
                   className={`hidden text-[11px] font-medium sm:block ${
-                    status === "current" ? "text-navy" : status === "complete" ? "text-success" : "text-muted-foreground"
+                    status === "current" ? "text-navy dark:text-white" : status === "complete" ? "text-success" : "text-muted-foreground"
                   }`}
                 >
                   {step.label}
@@ -698,9 +698,9 @@ export function ApplicationForm() {
       )}
 
       <div className="card-trust overflow-hidden">
-        <div className="border-b border-border bg-gradient-to-br from-navy-50 to-white px-6 py-5 sm:px-8">
+        <div className="border-b border-border bg-gradient-to-br from-navy-50 to-white dark:from-[#131a2e] dark:to-[#0b1020] px-6 py-5 sm:px-8">
           <p className="eyebrow mb-2">Step {currentStep + 1} of {STEPS.length}</p>
-          <h2 className="font-serif text-2xl font-bold text-navy">
+          <h2 className="font-serif text-2xl font-bold text-navy dark:text-white">
             {currentStep === 0 && "Personal Information"}
             {currentStep === 1 && "Contact Information"}
             {currentStep === 2 && "Academic Details"}
@@ -869,7 +869,7 @@ export function ApplicationForm() {
               <div className="md:col-span-2">
                 <span className="field-label">Academic Type *</span>
                 <div className="flex flex-wrap gap-4" role="radiogroup" aria-label="Academic Type">
-                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isSchool ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isSchool ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
                     <input
                       type="radio"
                       name="academicType"
@@ -879,7 +879,7 @@ export function ApplicationForm() {
                     />
                     School
                   </label>
-                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isCollege ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${isCollege ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
                     <input
                       type="radio"
                       name="academicType"
@@ -1011,7 +1011,7 @@ export function ApplicationForm() {
               <div className="md:col-span-2">
                 <span className="field-label">Single Parent</span>
                 <div className="flex flex-wrap gap-4" role="radiogroup" aria-label="Single Parent">
-                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.isSingleParent ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.isSingleParent ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
                     <input
                       type="radio"
                       name="singleParent"
@@ -1021,7 +1021,7 @@ export function ApplicationForm() {
                     />
                     Yes
                   </label>
-                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.isSingleParent === false ? "border-navy bg-navy-50 text-navy" : "border-border bg-white text-muted-foreground"}`}>
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.isSingleParent === false ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
                     <input
                       type="radio"
                       name="singleParent"
@@ -1056,7 +1056,7 @@ export function ApplicationForm() {
                 {errors.relationship && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.relationship}</p>}
               </div>
 
-              <div className="md:col-span-2 border-b border-border pb-1 text-sm font-semibold uppercase tracking-wide text-navy-700">
+              <div className="md:col-span-2 border-b border-border pb-1 text-sm font-semibold uppercase tracking-wide text-navy-700 dark:text-slate-300">
                 Financial Details
               </div>
               <div>
@@ -1100,7 +1100,7 @@ export function ApplicationForm() {
                 </div>
               )}
 
-              <div className="rounded-xl border border-border bg-white p-6">
+              <div className="rounded-xl border border-border bg-white dark:bg-[#131a2e] p-6">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-gold">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="h-6 w-6">
@@ -1108,7 +1108,7 @@ export function ApplicationForm() {
                     </svg>
                   </span>
                   <div>
-                    <h3 className="text-base font-semibold text-navy">Application Fee</h3>
+                    <h3 className="text-base font-semibold text-navy dark:text-white">Application Fee</h3>
                     <p className="text-sm text-muted-foreground">
                       {fee && fee.enabled
                         ? `Please pay the application fee of ₹${Number(fee.amount).toLocaleString("en-IN")} to complete your application.`
@@ -1121,7 +1121,7 @@ export function ApplicationForm() {
                   <div className="mt-5 flex flex-wrap items-end justify-between gap-4 rounded-xl border border-border bg-surface-muted p-5">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Payable</p>
-                      <p className="font-serif text-3xl font-bold text-navy">
+                      <p className="font-serif text-3xl font-bold text-navy dark:text-white">
                         ₹{Number(fee.amount).toLocaleString("en-IN")}
                       </p>
                     </div>
@@ -1167,14 +1167,14 @@ export function ApplicationForm() {
                 )}
 
                 {paymentStatus === "SUCCESS" && paymentRef?.paymentId && (
-                  <div className="mt-5 grid gap-3 rounded-xl border border-border bg-white p-5 sm:grid-cols-2">
+                  <div className="mt-5 grid gap-3 rounded-xl border border-border bg-white dark:bg-[#131a2e] p-5 sm:grid-cols-2">
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Payment ID</p>
-                      <p className="mt-1 font-mono text-sm text-navy">{paymentRef.paymentId}</p>
+                      <p className="mt-1 font-mono text-sm text-navy dark:text-white">{paymentRef.paymentId}</p>
                     </div>
                     <div>
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Amount Paid</p>
-                      <p className="mt-1 text-sm font-semibold text-navy">
+                      <p className="mt-1 text-sm font-semibold text-navy dark:text-white">
                         ₹{paymentRef.amount != null ? Number(paymentRef.amount).toLocaleString("en-IN") : ""}
                       </p>
                     </div>
@@ -1243,7 +1243,7 @@ export function ApplicationForm() {
                 <label className="flex items-start gap-3">
                   <input
                     type="checkbox"
-                    className="mt-1 h-5 w-5 rounded border-border text-navy focus:ring-2 focus:ring-navy/30"
+                    className="mt-1 h-5 w-5 rounded border-border text-navy dark:text-white focus:ring-2 focus:ring-navy/30"
                     checked={showDeclaration}
                     onChange={(e) => {
                       setShowDeclaration(e.target.checked);
@@ -1261,7 +1261,7 @@ export function ApplicationForm() {
         </div>
 
         {/* Footer nav */}
-        <div className="flex flex-col-reverse items-stretch gap-3 border-t border-border bg-navy-50/50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="flex flex-col-reverse items-stretch gap-3 border-t border-border bg-navy-50/50 dark:bg-white/5 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <button
             type="button"
             onClick={goBack}
@@ -1323,7 +1323,7 @@ export function ApplicationForm() {
 
 function ReviewBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-border bg-white p-5">
+    <section className="rounded-xl border border-border bg-white dark:bg-[#131a2e] p-5">
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-navy-700">{title}</h3>
       <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">{children}</dl>
     </section>

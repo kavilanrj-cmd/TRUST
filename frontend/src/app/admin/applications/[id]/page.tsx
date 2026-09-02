@@ -28,8 +28,8 @@ const DOC_STATUSES = ["VERIFIED", "REJECTED", "RE_UPLOAD_REQUESTED", "PENDING"];
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-navy">{title}</h3>
-      <div className="rounded-lg border border-border bg-gray-50 p-4">{children}</div>
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-navy dark:text-white">{title}</h3>
+      <div className="rounded-lg border border-border bg-gray-50 p-4 dark:border-white/15 dark:bg-[#131a2e]">{children}</div>
     </div>
   );
 }
@@ -38,7 +38,7 @@ function FieldRow({ label, value }: { label: string; value?: React.ReactNode }) 
   return (
     <div className="flex flex-col gap-0.5 py-1.5 sm:flex-row sm:items-center sm:gap-4">
       <span className="min-w-[160px] text-xs font-medium text-muted-foreground">{label}</span>
-      <span className="text-sm text-navy">{value || "—"}</span>
+      <span className="text-sm text-navy dark:text-white">{value || "—"}</span>
     </div>
   );
 }
@@ -176,7 +176,7 @@ export default function ApplicationDetailPage() {
   return (
     <AdminLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-navy">
+        <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">
           Application {app.applicationId}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -293,7 +293,7 @@ export default function ApplicationDetailPage() {
                   <tbody>
                     {docs.map((doc: any) => (
                       <tr key={doc.id} className="border-b border-border last:border-0">
-                        <td className="py-2.5 pr-4 font-medium text-navy">{doc.originalFilename || doc.name}</td>
+                        <td className="py-2.5 pr-4 font-medium text-navy dark:text-white">{doc.originalFilename || doc.name}</td>
                         <td className="py-2.5 pr-4 text-muted-foreground">{doc.fileType || "—"}</td>
                         <td className="py-2.5 pr-4">
                           <Badge className={statusColor(doc.verificationStatus || "PENDING")}>
@@ -302,7 +302,7 @@ export default function ApplicationDetailPage() {
                         </td>
                         <td className="py-2.5 pr-4">
                           <button
-                            className="text-xs font-semibold text-navy hover:underline"
+                            className="text-xs font-semibold text-navy hover:underline dark:text-gold"
                             onClick={() => handleDownload(doc.id)}
                           >
                             Download
@@ -417,10 +417,10 @@ export default function ApplicationDetailPage() {
             <div className="space-y-3">
               {notes.map((n: any) => (
                 <div key={n.id} className="rounded-lg border border-border p-3">
-                  <p className="text-sm text-navy whitespace-pre-wrap">{n.content}</p>
+                  <p className="text-sm text-navy whitespace-pre-wrap dark:text-slate-300">{n.content}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {n.author?.name || "Staff"} &middot; {fmtDateTime(n.createdAt)}
-                    {n.isInternal && <span className="ml-2 rounded bg-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-navy">Internal</span>}
+                    {n.isInternal && <span className="ml-2 rounded bg-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-navy dark:text-gold">Internal</span>}
                   </p>
                 </div>
               ))}
@@ -434,7 +434,7 @@ export default function ApplicationDetailPage() {
                   <div key={act.id} className="flex items-start gap-3">
                     <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold" />
                     <div>
-                      <p className="text-sm text-navy">
+                      <p className="text-sm text-navy dark:text-white">
                         <span className="font-medium">{act.actorName || "Staff"}</span>{" "}
                         <span className="text-muted-foreground">{act.action?.replace(/_/g, " ")}</span>
                       </p>

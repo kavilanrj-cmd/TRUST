@@ -40,7 +40,7 @@ export function WhatWeDo() {
 
               <div className="mt-9 grid gap-5 sm:grid-cols-2">
                 <div className="rounded-2xl border border-border bg-muted p-6 dark:bg-[#131a2e]">
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-navy">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-navy dark:text-gold">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="h-6 w-6">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
@@ -50,7 +50,7 @@ export function WhatWeDo() {
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{pillars[0].description}</p>
                 </div>
                 <div className="rounded-2xl border border-border bg-muted p-6 dark:bg-[#131a2e]">
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-navy">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-navy dark:text-gold">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="h-6 w-6">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>

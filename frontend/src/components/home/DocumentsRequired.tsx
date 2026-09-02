@@ -52,8 +52,8 @@ export function DocumentsRequired() {
             </div>
           </Reveal>
 
-          <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-gold/30 bg-gold-soft p-6 text-center">
-            <p className="text-sm leading-relaxed text-navy-800">
+          <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-gold/30 bg-gold-soft p-6 text-center dark:border-gold/30 dark:bg-[#1d2740]">
+            <p className="text-sm leading-relaxed text-navy-800 dark:text-slate-300">
               Please keep soft copies of all required documents ready before accessing the application form.
             </p>
           </div>

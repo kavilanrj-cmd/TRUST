@@ -190,6 +190,54 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("about.missionTitle", "about", "about", "text", "About Page · Mission Title", "Our Mission", { maxLength: 60 }),
   def("about.mission", "about", "about", "textarea", "About Page · Mission", "To provide deserving students with financial assistance and educational opportunities, regardless of their economic background, enabling them to pursue their academic dreams and contribute to society.", { maxLength: 600 }),
 
+  // ---- About the Organization ----
+  def("about.organizationTitle", "about", "about", "text", "About Page · About The Organization Title", "About the Organization", { maxLength: 120 }),
+  def("about.organization", "about", "about", "textarea", "About Page · About The Organization", "Neelakannu Educational Trust is a registered public charitable trust dedicated to the advancement of education, social welfare, healthcare support, and cultural preservation across diverse sections of society. Established with a commitment to inclusive development, the Trust operates without discrimination on the basis of caste, creed, religion, or socio-economic status. The Trust seeks to empower individuals and communities through access to quality education, skill development, humanitarian assistance, and initiatives that promote national integration and social harmony. Particular emphasis is placed on supporting children, persons with disabilities, rural populations, and economically disadvantaged groups, enabling them to lead self-reliant and dignified lives.", { maxLength: 2000 }),
+
+  // ---- Vision ----
+  def("about.visionTitle", "about", "about", "text", "About Page · Vision Title", "Vision", { maxLength: 120 }),
+  def("about.vision", "about", "about", "textarea", "About Page · Vision", "To build an inclusive and equitable society in which every individual, regardless of social, economic, or physical limitations, has access to education, opportunities for holistic development and the means to lead a dignified and productive life.", { maxLength: 2000 }),
+
+  // ---- Mission ----
+  def("about.missionTitle", "about", "about", "text", "About Page · Mission Title", "Mission", { maxLength: 120 }),
+  def("about.mission", "about", "about", "textarea", "About Page · Mission", "To promote inclusive education, social upliftment, healthcare access, and cultural enrichment by establishing and supporting institutions, programs, and initiatives that empower marginalized communities and contribute to sustainable national development.", { maxLength: 2000 }),
+
+  // ---- Founder ----
+  def("about.founderTitle", "about", "about", "text", "About Page · Founder Title", "Founder", { maxLength: 60 }),
+  def("about.founder", "about", "about", "textarea", "About Page · Founder", "Prof. Dr. K. Chidambaram\nME., Ph. D.\nFounder and Settlor\nNeelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.", { maxLength: 3000 }),
+
+  // ---- Core Objectives and Areas of Work ----
+  def("about.coreObjectivesTitle", "about", "about", "text", "About Page · Core Objectives Title", "Core Objectives and Areas of Work", { maxLength: 120 }),
+  def("about.coreObjectives", "about", "about", "textarea", "About Page · Core Objectives Content", "Promotion of Education\n• Promote education for all children without discrimination\n• Establish, manage, and support schools, colleges, technical institutions, vocational institutions, and non-formal educational centers\n• Provide scholarships, grants, books, uniforms, and educational materials to deserving students\n• Support rural and tribal education initiatives\n• Conduct evening classes, literacy programs, and correspondence courses\n• Establish libraries, reading rooms, and knowledge centers\n• Publish educational books, periodicals, and literature\n• Conduct seminars, lectures, conferences, debates, and academic programs\n• Encourage academic excellence through awards, endowments, and scholarships\n\nSpecial Education and Support for Persons with Disabilities\n• Provide education for children who are mentally challenged, hearing impaired, visually impaired, or physically disabled\n• Provide assistive devices and rehabilitation support\n• Promote vocational skills and livelihood opportunities for persons with disabilities\n• Extend financial or material assistance to differently-abled individuals.", { maxLength: 3000 }),
+
+  // ---- Cultural Promotion and National Integration ----
+  def("about.culturalTitle", "about", "about", "text", "About Page · Cultural Promotion Title", "Cultural Promotion and National Integration", { maxLength: 120 }),
+  def("about.cultural", "about", "about", "textarea", "About Page · Cultural Promotion Content", "• Promote Indian culture, heritage, philosophy, music, yoga, fine arts, and traditional crafts\n• Conduct cultural programs, seminars, and discussions\n• Preserve and promote national unity through cultural awareness initiatives", { maxLength: 2000 }),
+
+  // ---- Student Welfare and Infrastructure Development ----
+  def("about.welfareTitle", "about", "about", "text", "About Page · Welfare Title", "Student Welfare and Infrastructure Development", { maxLength: 120 }),
+  def("about.welfare", "about", "about", "textarea", "About Page · Welfare Content", "• Establish and operate hostels and provide food and accommodation for students\n• Create safe and supportive learning environments for disadvantaged children\n• Support educational institutions through infrastructure development", { maxLength: 2000 }),
+
+  // ---- Healthcare and Medical Support ----
+  def("about.healthcareTitle", "about", "about", "text", "About Page · Healthcare Title", "Healthcare and Medical Support", { maxLength: 120 }),
+  def("about.healthcare", "about", "about", "textarea", "About Page · Healthcare Content", "• Establish, support, and maintain hospitals, dispensaries, laboratories, rehabilitation centers, and healthcare facilities\n• Promote research and education in various systems of medicine including Allopathy, Ayurveda, Homeopathy, Naturopathy, and others\n• Conduct medical camps, eye camps, and health awareness programs\n• Provide medical assistance to economically disadvantaged individuals\n• Support training and development of healthcare personnel", { maxLength: 3000 }),
+
+  // ---- Social Welfare and Community Development ----
+  def("about.socialTitle", "about", "about", "text", "About Page · Social Title", "Social Welfare and Community Development", { maxLength: 120 }),
+  def("about.social", "about", "about", "textarea", "About Page · Social Content", "• Provide assistance to poor, destitute, elderly, and incapacitated persons\n• Establish and maintain homes for the aged\n• Provide food, clothing, shelter, and relief during natural disasters and emergencies\n• Construct and maintain community centers and public utility infrastructure\n• Provide safe drinking water facilities\n• Support rural development initiatives\n• Assist traditional artisans and craftsmen", { maxLength: 3000 }),
+
+  // ---- Public Benefit and Charitable Activities ----
+  def("about.publicBenefitTitle", "about", "about", "text", "About Page · Public Benefit Title", "Public Benefit and Charitable Activities", { maxLength: 120 }),
+  def("about.publicBenefit", "about", "about", "textarea", "About Page · Public Benefit Content", "• Provide employment support through development projects\n• Support educational and research institutions through grants and donations\n• Facilitate establishment and development of public welfare institutions\n• Accept donations, gifts, and contributions to further charitable objectives", { maxLength: 2000 }),
+
+  // ---- Target Beneficiaries ----
+  def("about.beneficiariesTitle", "about", "about", "text", "About Page · Target Beneficiaries Title", "Target Beneficiaries", { maxLength: 120 }),
+  def("about.beneficiaries", "about", "about", "textarea", "About Page · Target Beneficiaries Content", "• Children and students from economically weaker sections\n• Persons with disabilities\n• Rural and tribal communities\n• Women and vulnerable groups\n• Elderly individuals\n• Illiterate adults\n• Poor and destitute populations", { maxLength: 2000 }),
+
+  // ---- Future Plans ----
+  def("about.futureTitle", "about", "about", "text", "About Page · Future Plans Title", "Future Plans", { maxLength: 120 }),
+  def("about.future", "about", "about", "textarea", "About Page · Future Plans Content", "The Trust aims to expand its outreach and impact through:\n• Establishment of educational and vocational training centers\n• Expansion of student support and scholarship programs\n• Development of healthcare outreach initiatives\n• Creation of sustainable livelihood opportunities\n• Strengthening rural development activities\n• Promotion of inclusive education models", { maxLength: 3000 }),
+
   // ---- Contact page ----
   def("contact.eyebrow", "contact", "contact", "text", "Contact Page · Eyebrow", "Contact", { maxLength: 80 }),
   def("contact.title", "contact", "contact", "text", "Contact Page · Title", "Contact Us", { maxLength: 120 }),

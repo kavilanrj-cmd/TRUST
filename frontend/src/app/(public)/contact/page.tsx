@@ -152,10 +152,10 @@ export default function ContactPage() {
                     <Mail className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-navy">Email</p>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-navy dark:text-white">Email</p>
                     <a
                       href={`mailto:${email}`}
-                      className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600 hover:underline"
+                      className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600"
                     >
                       {email}
                     </a>
@@ -167,10 +167,10 @@ export default function ContactPage() {
                     <Phone className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-navy">Phone</p>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-navy dark:text-white">Phone</p>
                     <a
                       href={`tel:${phone.replace(/\s/g, "")}`}
-                      className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600 hover:underline"
+                      className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600"
                     >
                       {phone}
                     </a>
@@ -207,7 +207,7 @@ export default function ContactPage() {
                 body={
                   <a
                     href={`mailto:${email}`}
-                    className="break-all text-navy underline-offset-2 transition-colors hover:text-gold-600 hover:underline"
+                    className="break-all text-navy underline-offset-2 transition-colors hover:text-gold-600 dark:text-white"
                   >
                     {email}
                   </a>
@@ -220,7 +220,7 @@ export default function ContactPage() {
                 body={
                   <a
                     href={`tel:${phone.replace(/\s/g, "")}`}
-                    className="text-navy underline-offset-2 transition-colors hover:text-gold-600 hover:underline"
+                    className="text-navy underline-offset-2 transition-colors hover:text-gold-600 dark:text-white"
                   >
                     {phone}
                   </a>
@@ -388,7 +388,7 @@ export default function ContactPage() {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-navy/15 px-5 py-2.5 text-sm font-semibold text-navy transition hover:border-gold hover:bg-gold-soft"
+                  className="inline-flex items-center gap-2 rounded-xl border border-navy/15 px-5 py-2.5 text-sm font-semibold text-navy transition hover:border-gold hover:bg-gold-soft dark:border-white/20 dark:text-white dark:hover:bg-white/10"
                 >
                   <MapPin className="h-4 w-4 text-gold-600" />
                   View on Map
@@ -406,7 +406,7 @@ export default function ContactPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
         >
-          <h3 className="text-xl font-medium mb-4 text-navy">Quick Links</h3>
+          <h3 className="text-xl font-medium mb-4 text-navy dark:text-white">Quick Links</h3>
           <ul className="grid grid-cols-2 gap-4 text-sm text-muted-foreground md:grid-cols-3">
             <li><Link href="/" className="underline underline-offset-2 hover:text-gold-600">Home</Link></li>
             <li><Link href="/about" className="underline underline-offset-2 hover:text-gold-600">About</Link></li>

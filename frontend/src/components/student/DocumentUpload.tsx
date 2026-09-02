@@ -193,7 +193,7 @@ export function DocumentUpload({
     <div>
       <div className="mb-5 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
         <div>
-          <h3 className="text-base font-semibold text-navy">Upload Required Documents</h3>
+          <h3 className="text-base font-semibold text-navy dark:text-white">Upload Required Documents</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Upload clear and readable copies of the required documents.
           </p>
@@ -234,7 +234,7 @@ export function DocumentUpload({
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-navy">{doc.label}</span>
+                    <span className="text-sm font-semibold text-navy dark:text-white">{doc.label}</span>
                     {file && file.uploading && (
                       <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
                         Uploading…
@@ -252,7 +252,7 @@ export function DocumentUpload({
                   <p className="mt-0.5 text-xs text-muted-foreground">{doc.desc}</p>
 
                   {file ? (
-                    <div className="mt-3 rounded-lg border border-border bg-white px-3 py-2">
+                    <div className="mt-3 rounded-lg border border-border bg-white dark:bg-[#131a2e] px-3 py-2">
                       <p className="truncate text-xs font-medium text-foreground" title={file.name}>
                         {file.name}
                       </p>
@@ -263,7 +263,7 @@ export function DocumentUpload({
                         <button
                           type="button"
                           onClick={() => inputRefs.current[doc.key]?.click()}
-                          className="text-xs font-medium text-navy underline underline-offset-2 hover:text-navy-700"
+                          className="text-xs font-medium text-navy underline underline-offset-2 hover:text-navy-700 dark:text-gold dark:hover:text-gold"
                         >
                           Replace
                         </button>
@@ -277,7 +277,7 @@ export function DocumentUpload({
                       </div>
                     </div>
                   ) : (
-                    <label className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-navy hover:border-navy/40 hover:bg-muted">
+                    <label className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border bg-white dark:bg-[#131a2e] px-3 py-2 text-xs font-medium text-navy dark:text-white hover:border-navy/40 hover:bg-muted">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>

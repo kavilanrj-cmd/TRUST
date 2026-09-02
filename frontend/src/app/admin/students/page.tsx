@@ -70,7 +70,7 @@ function StudentsPage() {
     <AdminLayout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-navy">Students</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-navy dark:text-white">Students</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {total} student{total !== 1 ? "s" : ""} found
           </p>
@@ -149,7 +149,7 @@ function StudentsPage() {
               <tbody>
                 {students.map((s) => (
                   <tr key={s.id} className="border-b border-border last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-navy">{s.name || "—"}</td>
+                    <td className="py-2.5 pr-4 font-medium text-navy dark:text-white">{s.name || "—"}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{s.email || "—"}</td>
                     <td className="py-2.5 pr-4">
                       {s.emailVerified ? (
@@ -160,7 +160,7 @@ function StudentsPage() {
                     </td>
                     <td className="py-2.5 pr-4">
                       {s.application ? (
-                        <Link href={`/admin/applications/${s.application.id}`} className="font-mono text-xs text-navy hover:underline">
+                        <Link href={`/admin/applications/${s.application.id}`} className="font-mono text-xs text-navy hover:underline dark:text-gold">
                           {s.application.applicationId}
                         </Link>
                       ) : (
@@ -178,7 +178,7 @@ function StudentsPage() {
                     <td className="py-2.5 pr-4 text-muted-foreground">{s.application?.submittedAt ? fmtDate(s.application.submittedAt) : (s.application?.createdAt ? fmtDate(s.application.createdAt) : "—")}</td>
                     <td className="py-2.5">
                       {s.application && (
-                        <Link href={`/admin/applications/${s.application.id}`} className="text-xs font-semibold text-navy hover:underline">
+                        <Link href={`/admin/applications/${s.application.id}`} className="text-xs font-semibold text-navy hover:underline dark:text-gold">
                           View Application
                         </Link>
                       )}

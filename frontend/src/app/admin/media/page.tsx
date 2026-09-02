@@ -102,7 +102,7 @@ export default function AdminMediaPage() {
       {pageHeading("Media Library", "Upload, manage and organize images.")}
 
       {msg && (
-        <div className="mb-4 rounded-lg border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-navy">{msg}</div>
+        <div className="mb-4 rounded-lg border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-navy dark:text-gold">{msg}</div>
       )}
 
       <Card
@@ -132,7 +132,7 @@ export default function AdminMediaPage() {
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {items.map((item) => (
               <div key={item.id} className="group relative overflow-hidden rounded-lg border border-border">
-                <div className="aspect-square bg-gray-100">
+                <div className="aspect-square bg-gray-100 dark:bg-white/5">
                   <img
                     src={adminApi.media.serve(item.filename)}
                     alt={item.altText || item.originalName}
@@ -141,7 +141,7 @@ export default function AdminMediaPage() {
                   />
                 </div>
                 <div className="p-2">
-                  <p className="truncate text-xs font-medium text-navy">{item.originalName}</p>
+                  <p className="truncate text-xs font-medium text-navy dark:text-white">{item.originalName}</p>
                   <p className="text-[11px] text-muted-foreground">{fmtSize(item.size)} · {item.mimeType.split("/")[1]?.toUpperCase()}</p>
                   {item.usageCount > 0 && (
                     <Badge className="mt-1 bg-amber-50 text-amber-700">Used {item.usageCount}×</Badge>
@@ -171,8 +171,8 @@ export default function AdminMediaPage() {
 
       {editingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-lg">
-            <h3 className="mb-4 text-base font-semibold text-navy">Edit Alt Text</h3>
+          <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-lg dark:border-white/15 dark:bg-[#131a2e]">
+            <h3 className="mb-4 text-base font-semibold text-navy dark:text-white">Edit Alt Text</h3>
             <Field label="Alt text">
               <input
                 className={inputCls}

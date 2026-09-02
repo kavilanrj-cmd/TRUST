@@ -43,27 +43,27 @@ export default function VisionMissionPage() {
         </div>
 
         <section className="mt-16">
-          <h2 className="text-2xl font-semibold mb-6">Core Values</h2>
+          <h2 className="text-2xl font-semibold mb-6 dark:text-white">Core Values</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 border rounded bg-primary/5 text-primary-foreground">
+            <div className="p-4 border rounded bg-primary/5 text-primary-foreground dark:text-white">
               <h4 className="font-medium mb-2">Integrity</h4>
               <p className="text-sm text-muted-foreground">
                 Transparent and ethical operations in all trust activities.
               </p>
             </div>
-            <div className="p-4 border rounded bg-primary/5 text-primary-foreground">
+            <div className="p-4 border rounded bg-primary/5 text-primary-foreground dark:text-white">
               <h4 className="font-medium mb-2">Equity</h4>
               <p className="text-sm text-muted-foreground">
                 Fair and impartial distribution of scholarship opportunities.
               </p>
             </div>
-            <div className="p-4 border rounded bg-primary/5 text-primary-foreground">
+            <div className="p-4 border rounded bg-primary/5 text-primary-foreground dark:text-white">
               <h4 className="font-medium mb-2">Excellence</h4>
               <p className="text-sm text-muted-foreground">
                 Encouraging and supporting academic excellence in all students.
               </p>
             </div>
-            <div className="p-4 border rounded bg-primary/5 text-primary-foreground">
+            <div className="p-4 border rounded bg-primary/5 text-primary-foreground dark:text-white">
               <h4 className="font-medium mb-2">Service</h4>
               <p className="text-sm text-muted-foreground">
                 Dedicated service to the student community and society.
