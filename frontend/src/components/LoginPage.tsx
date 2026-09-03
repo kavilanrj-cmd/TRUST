@@ -280,6 +280,7 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={(v) => handleChange("password", v)}
                 error={form.errors.password}
+                setCapsLockWarning={setCapsLockWarning}
               />
             </motion.div>
 
@@ -466,10 +467,10 @@ function PasswordField({
   setCapsLockWarning?: (value: boolean) => void;
 }) {
   const [focused, setFocused] = useState(false);
-  const [passwordShow, setPasswordShow] = useState(false);
-  const actualShow = show ?? false;
-  const actualSetShow = setShow ?? ((s: boolean) => {});
-  const actualSetCapsLockWarning = setCapsLockWarning ?? ((_: boolean) => {});
+  const [internalShow, setInternalShow] = useState(false);
+  const actualShow = show ?? internalShow;
+  const actualSetShow = setShow ?? setInternalShow;
+  const actualSetCapsLockWarning = setCapsLockWarning ?? (() => {});
   const showIcon = value.length > 0 || focused;
 
   return (

@@ -15,8 +15,6 @@ interface FeeConfig {
 export default function HowToApplyPage() {
   const { t } = useHomeContent();
   const [fee, setFee] = useState<FeeConfig | null>(null);
-  const [declarationAgreed, setDeclarationAgreed] = useState(false);
-  const [declarationError, setDeclarationError] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/application-fee`, { cache: "no-store" })
@@ -105,69 +103,22 @@ export default function HowToApplyPage() {
             </h2>
             <ul className="mt-6 space-y-4">
               <li className="flex items-start gap-3">
-                <span className="mt-1 text-gold-600"></span>
+                <span className="mt-1 text-gold-600"></span>
                 <span className="text-muted-foreground">Candidate must submit the scholarship application within the deadline specified by the trust.</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="mt-1 text-gold-600"></span>
+                <span className="mt-1 text-gold-600"></span>
                 <span className="text-muted-foreground">Application that is incomplete are missing required document will be summerly rejected</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="mt-1 text-gold-600"></span>
+                <span className="mt-1 text-gold-600"></span>
                 <span className="text-muted-foreground">Application will be considered on first come first serve basis, academic eligibility and income criteria</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="mt-1 text-gold-600"></span>
+                <span className="mt-1 text-gold-600"></span>
                 <span className="text-muted-foreground">Trust reserves the right to approve or reject the application</span>
               </li>
             </ul>
-          </div>
-        </Reveal>
-
-        <Reveal delay={250}>
-          <div className="mx-auto mt-14 max-w-3xl rounded-2xl border border-navy/10 bg-white p-8 dark:border-white/10 dark:bg-[#131a2e]">
-            <h2 className="font-serif text-xl font-bold text-navy dark:text-white">
-              DECLARATION
-            </h2>
-            <p className="mt-6 text-muted-foreground leading-relaxed">
-              I hereby declare that the information provided in this scholarship application is true, complete and accurate to the best of my knowledge. I understand that any false or misleading information may result in the rejection of my application or cancellation of the scholarship at any stage.
-            </p>
-            <div className="mt-6">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={declarationAgreed}
-                  onChange={(e) => {
-                    setDeclarationAgreed(e.target.checked);
-                    if (e.target.checked) setDeclarationError(false);
-                  }}
-                  className="mt-1 h-5 w-5 rounded border-navy/30 text-gold focus:ring-gold/50 cursor-pointer"
-                />
-                <span className="text-sm font-medium text-navy dark:text-white">
-                  I agree to the above declaration
-                </span>
-              </label>
-              {declarationError && (
-                <p className="mt-2 text-sm text-destructive" role="alert">
-                  You must agree to the declaration before proceeding.
-                </p>
-              )}
-            </div>
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!declarationAgreed) {
-                    setDeclarationError(true);
-                    return;
-                  }
-                  window.location.href = "/student/application";
-                }}
-                className="btn-gold rounded-xl px-7 py-3"
-              >
-                Proceed to Application
-              </button>
-            </div>
           </div>
         </Reveal>
       </section>

@@ -17,6 +17,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "neelakannu-educational-trust-jwt-s
 const JWT_EXPIRES_IN = "7d";
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "neelakannu-educational-trust-refresh-super-secret-key-2026";
 const REFRESH_EXPIRES_IN = "30d";
+const FRONTEND_BASE_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 const SENDER = "neelakannu@edu.trust";
 
@@ -77,7 +78,7 @@ router.post("/register", async (req: Request, res: Response) => {
       from: SENDER,
       to: email,
       subject: "Verify your email - Neelakannu Educational Trust",
-      html: `<p>Click <a href="http://localhost:4000/auth/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`
+      html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`
     });
 
     // Generate JWT token
@@ -284,7 +285,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
       from: SENDER,
       to: email,
       subject: "Reset your password - Neelakannu Educational Trust",
-      html: `<p>Click <a href="http://localhost:4000/auth/reset-password?token=${resetToken}">here</a> to reset your password.</p>`
+      html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/reset-password?token=${resetToken}">here</a> to reset your password.</p>`
     });
 
     return res.json({

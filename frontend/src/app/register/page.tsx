@@ -264,7 +264,12 @@ export default function RegisterPage() {
       // Email verification is required before login; redirect to the login page.
       router.push("/login");
     } catch (err: any) {
-      setError(err?.message || "Unable to connect to the server. Please try again.");
+      const msg = err?.message || "";
+      if (msg === "Failed to fetch" || msg.includes("NetworkError") || msg.includes("network")) {
+        setError("Unable to connect to the server. Please try again later.");
+      } else {
+        setError(msg || "Registration failed. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -475,7 +480,6 @@ export default function RegisterPage() {
                 <PasswordField
                   value={password}
                   onChange={(v) => setPassword(v)}
-                  error={error}
                   show={showPassword}
                   setShow={setShowPassword}
                   onKeyDown={handlePasswordKeyDown}
@@ -487,7 +491,6 @@ export default function RegisterPage() {
                 <PasswordField
                   value={confirmPassword}
                   onChange={(v) => setConfirmPassword(v)}
-                  error={error}
                   show={showConfirmPassword}
                   setShow={setShowConfirmPassword}
                   onKeyDown={handlePasswordKeyDown}

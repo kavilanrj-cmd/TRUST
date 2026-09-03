@@ -26,20 +26,10 @@ export function About() {
                   {t("home.about.visionTitle", "Our Vision")}
                 </p>
                 <p className="mt-3 font-serif text-xl font-bold leading-snug text-navy dark:text-slate-200">
-                  A society where every deserving student, regardless of economic background, has access to quality
-                  education and the opportunity to reach their full potential.
+                  To build an inclusive and equitable society in which every individual, regardless of social, economic, or physical limitations, has access to education, opportunities for holistic development and the means to lead a dignified and productive life.
                 </p>
                 <p className="mt-4 text-sm font-semibold text-navy-700 dark:text-gold">
                   &ldquo;{t("home.hero.quote", "Empowering education, enabling dreams")}&rdquo;
-                </p>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-gold/25 bg-gold-soft p-6 dark:border-gold/30 dark:bg-[#1d2740]">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-gold-600 dark:text-gold">
-                  OUR MISSION
-                </p>
-                <p className="mt-3 font-serif text-xl font-bold leading-snug text-navy dark:text-slate-200">
-                  To promote inclusive education, social upliftment, healthcare access, and cultural enrichment by establishing and supporting institutions, programs, and initiatives that empower marginalized communities and contribute to sustainable national development.
                 </p>
               </div>
 

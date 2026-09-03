@@ -45,7 +45,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
     "Neelakannu Educational Trust was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed.",
   "home.about.visionTitle": "Our Vision",
   "home.about.vision":
-    "A society where every deserving student, regardless of economic background, has access to quality education and the opportunity to reach their full potential.",
+    "To build an inclusive and equitable society in which every individual, regardless of social, economic, or physical limitations, has access to education, opportunities for holistic development and the means to lead a dignified and productive life.",
   "home.about.missionTitle": "Our Mission",
   "home.about.mission":
     "To promote inclusive education, social upliftment, healthcare access, and cultural enrichment by establishing and supporting institutions, programs, and initiatives that empower marginalized communities and contribute to sustainable national development.",

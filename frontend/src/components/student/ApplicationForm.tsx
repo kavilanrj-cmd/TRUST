@@ -526,7 +526,7 @@ export function ApplicationForm() {
 
   const submitApplication = useCallback(async () => {
     if (!showDeclaration) {
-      setDeclarationError("Please confirm that the information provided is true and complete.");
+      setDeclarationError("Please agree to the declaration before submitting your application.");
       return;
     }
     setDeclarationError(null);
@@ -1240,7 +1240,10 @@ export function ApplicationForm() {
               </div>
 
               <div className="rounded-xl border border-border bg-surface-muted p-5">
-                <label className="flex items-start gap-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  I hereby declare that the information provided in this scholarship application is true, complete and accurate to the best of my knowledge. I understand that any false or misleading information may result in the rejection of my application or cancellation of the scholarship at any stage.
+                </p>
+                <label className="mt-4 flex items-start gap-3">
                   <input
                     type="checkbox"
                     className="mt-1 h-5 w-5 rounded border-border text-navy dark:text-white focus:ring-2 focus:ring-navy/30"
@@ -1250,8 +1253,8 @@ export function ApplicationForm() {
                       if (e.target.checked) setDeclarationError(null);
                     }}
                   />
-                  <span className="text-sm text-foreground">
-                    I confirm that the information provided is true and complete.
+                  <span className="text-sm font-medium text-foreground">
+                    I agree to the above declaration
                   </span>
                 </label>
                 {declarationError && <p className="mt-2 text-sm text-destructive" role="alert">{declarationError}</p>}
@@ -1286,7 +1289,7 @@ export function ApplicationForm() {
             <button
               type="button"
               onClick={() => {
-                setDeclarationError("Please confirm that the information provided is true and complete.");
+                setDeclarationError("Please agree to the declaration before submitting your application.");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
               className="btn-gold"
