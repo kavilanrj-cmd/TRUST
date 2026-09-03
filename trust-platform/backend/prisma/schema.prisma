@@ -1,0 +1,416 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource postgres {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+  REVIEWER
+  FOUNDER
+}
+
+model User {
+  id          String   @default(uuid()) @id
+  name        String?
+  email       String   @unique
+  password    String
+  role        UserRole @default(STUDENT)
+  emailVerified Boolean?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  isFounderProtected Boolean @default(false)
+  permissions Json?
+  lastLoginAt DateTime?
+  lastLoginIp String?
+  createdById String?
+
+  applications Application[]
+  emailVerifications EmailVerification[]
+  passwordResetTokens PasswordResetToken[]
+  applicationNotes ApplicationNote[]
+  applicationActivities ApplicationActivity[]
+  siteContents SiteContent[]
+  contentVersions ContentVersion[]
+  mediaAssets MediaAsset[]
+  auditLogs AuditLog[]
+  adminNotifications AdminNotification[]
+  websiteSettings WebsiteSetting[]
+  emailTemplates EmailTemplate[]
+}
+
+model ScholarshipProgram {
+  id          String   @default(uuid()) @id
+  name        String
+  description String?
+  educationLevels EducationLevel[]
+  minimumMarks Decimal?
+  minimumCGPA Decimal?
+  maximumFamilyIncome Decimal?
+  applicationFee Decimal
+  applicationDeadline DateTime
+  isActive    Boolean  @default(true)
+  requiredDocuments DocumentConfig[]  @relation(name: "documents")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  applications Application[]
+}
+
+model Criteria {
+  educationLevel EducationLevel @id
+  minimumMarks     Decimal
+  minimumCGPA      Decimal
+  familyIncomeMax  Decimal
+}
+
+enum EducationLevel {
+  HIGH_SCHOOL
+  DIPLOMA
+  UNDERGRADUATE
+  POSTGRADUATE
+}
+
+model DocumentConfig {
+  id          String   @default(uuid()) @id
+  name        String
+  description String?
+  scholarshipProgram ScholarshipProgram @relation(name: "documents", fields: [scholarshipProgramId], references: [id])
+  scholarshipProgramId String
+  maxFileSize Int
+  allowedTypes String[]
+  isRequired   Boolean  @default(true)
+}
+
+model Application {
+  id               String   @default(uuid()) @id
+  applicationId    String   @unique
+  status           ApplicationStatus  @default(DRAFT)
+  student          User       @relation(fields: [studentId], references: [id])
+  studentId        String
+  scholarshipProgram ScholarshipProgram? @relation(fields: [scholarshipProgramId], references: [id])
+  scholarshipProgramId String?
+  submittedAt      DateTime?
+  correctionNote   String?
+  personalDetails  PersonalDetails?
+  personalDetailsId String?
+  address          Address?
+  addressId        String?
+  parentGuardian   ParentGuardian?
+  parentGuardianId String?
+  academicDetails  AcademicDetails?
+  academicDetailsId String?
+  financialDetails FinancialDetails?
+  financialDetailsId String?
+  applicationDocuments ApplicationDocument[]
+  payments         Payment[]
+  receipts         Receipt[]
+  notes            ApplicationNote[]
+  activities       ApplicationActivity[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  DOCUMENT_VERIFICATION
+  APPROVED
+  REJECTED
+  WAITLISTED
+  WITHDRAWN
+  CORRECTION_REQUESTED
+}
+
+model PersonalDetails {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String  @unique
+  fullName        String
+  bankRecordName  String?
+  dateOfBirth     DateTime
+  gender          String
+  phone           String
+  idProofNumber   String?
+}
+
+model Address {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String  @unique
+  street          String
+  doorNumber      String?
+  city            String
+  district        String
+  state           String
+  pinCode         String
+}
+
+model ParentGuardian {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String  @unique
+  guardianName    String
+  relationship    String
+  occupation      String
+  contactNumber   String
+  isSingleParent  Boolean?
+  income          Decimal?
+}
+
+model AcademicDetails {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String  @unique
+  schoolCollege   String
+  academicType    String?
+  course          String
+  educationLevel  EducationLevel
+  academicYear    String
+  yearOfStudy     String
+  className       String?
+  section         String?
+  semester        String?
+  ugPg            String?
+  marksPercentageCGPA String
+}
+
+model FinancialDetails {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String  @unique
+  familyIncome    Decimal
+  incomeSource    String
+}
+
+model ApplicationDocument {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String
+  documentType    String?
+  storageKey      String
+  storageProvider  String
+  originalFilename String
+  fileType        String
+  fileSize        Int
+  uploadedAt      DateTime @default(now())
+  uploadedBy      String
+  verificationStatus String @default("PENDING")
+  verificationNote String?
+  verifiedById    String?
+  verifiedAt      DateTime?
+}
+
+model Payment {
+  id               String   @default(uuid()) @id
+  application      Application @relation(fields: [applicationId], references: [id])
+  applicationId    String
+  razorpayOrderId   String @unique
+  razorpayPaymentId String?
+  amount           Decimal
+  currency         String   @default("INR")
+  status           PaymentStatus  @default(PENDING)
+  paymentDate      DateTime?
+  createdAt        DateTime @default(now())
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  REFUNDED
+}
+
+model Receipt {
+  id               String   @default(uuid()) @id
+  application      Application @relation(fields: [applicationId], references: [id])
+  applicationId    String
+  receiptKey       String
+  trustName        String
+  studentName      String
+  amount           Decimal
+  paymentId        String
+  paymentDate      DateTime
+  status           String
+  generatedAt      DateTime @default(now())
+}
+
+model Announcement {
+  id          String   @default(uuid()) @id
+  title       String
+  content     String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  category    String?
+  imageUrl    String?
+  scheduledFor DateTime?
+  publishedAt DateTime?
+  createdBy   String?
+}
+
+model EmailVerification {
+  id              String   @default(uuid()) @id
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+  verificationToken String @unique
+  expiresAt       DateTime
+  used            Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id              String   @default(uuid()) @id
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+  resetToken      String @unique
+  expiresAt       DateTime
+  used            Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model WebhookLog {
+  id               String   @default(uuid()) @id
+  razorPayEventId String   @unique
+  event            String
+  applicationId    String?
+  processedAt      DateTime @default(now())
+  status           String   @default("PROCESSED")
+}
+
+model ApplicationNote {
+  id            String   @default(uuid()) @id
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  author        User     @relation(fields: [authorId], references: [id])
+  authorId      String
+  content       String
+  isInternal    Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+model ApplicationActivity {
+  id            String   @default(uuid()) @id
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  actor         User?    @relation(fields: [actorId], references: [id])
+  actorId       String?
+  actorName     String?
+  action        String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+}
+
+model SiteContent {
+  id            String   @default(uuid()) @id
+  key           String   @unique
+  type          String   @default("text")
+  page          String
+  section       String?
+  label         String?
+  value         String?
+  draftValue    String?
+  maxLength     Int?
+  editable      Boolean  @default(true)
+  updatedBy     User?    @relation(fields: [updatedById], references: [id])
+  updatedById   String?
+  lastPublishedAt DateTime?
+  publishedBy   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  versions      ContentVersion[]
+}
+
+model ContentVersion {
+  id            String   @default(uuid()) @id
+  siteContent   SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+  siteContentId String
+  versionNumber Int
+  value         String?
+  changedBy     User?   @relation(fields: [changedById], references: [id])
+  changedById   String?
+  editedByName  String?
+  summary       String?
+  createdAt     DateTime @default(now())
+
+  @@unique([siteContentId, versionNumber])
+}
+
+model MediaAsset {
+  id            String   @default(uuid()) @id
+  filename      String
+  originalName  String?
+  storageKey    String   @unique
+  mimeType      String
+  size          Int
+  width         Int?
+  height        Int?
+  altText       String?
+  uploadedBy    User?    @relation(fields: [uploadedById], references: [id])
+  uploadedById  String?
+  createdAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id            String   @default(uuid()) @id
+  actor         User?    @relation(fields: [actorId], references: [id])
+  actorId       String?
+  actorName     String?
+  action        String
+  targetType    String?
+  targetId      String?
+  metadata      Json?
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+}
+
+model AdminNotification {
+  id            String   @default(uuid()) @id
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  type          String
+  title         String
+  message       String?
+  link          String?
+  read          Boolean  @default(false)
+  createdById   String?
+  createdAt     DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @default(uuid()) @id
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model WebsiteSetting {
+  id            String   @default(uuid()) @id
+  key           String   @unique
+  value         String?
+  type          String   @default("text")
+  label         String?
+  isSecret      Boolean  @default(false)
+  updatedBy     User?    @relation(fields: [updatedById], references: [id])
+  updatedById   String?
+  updatedAt     DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id            String   @default(uuid()) @id
+  type          String   @unique
+  subject       String
+  body          String
+  updatedBy     User?    @relation(fields: [updatedById], references: [id])
+  updatedById   String?
+  updatedAt     DateTime @updatedAt
+}

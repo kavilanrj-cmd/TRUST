@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    container_name: neelakannu_db
+    restart: always
+    environment:
+      POSTGRES_DB: neulakannu
+      POSTGRES_USER: neulakannu_user
+      POSTGRES_PASSWORD: neulakannu_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neulakannu_user -d neulakannu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:latest
+    container_name: neelakannu_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+
+volumes:
+  pg_data:
