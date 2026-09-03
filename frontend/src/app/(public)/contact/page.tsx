@@ -179,56 +179,6 @@ export default function ContactPage() {
               </div>
             </motion.div>
 
-            {/* Contact information highlights — Visit Us / Email Us / Call Us */}
-            <motion.div
-              variants={fadeUp}
-              className="grid gap-4 sm:grid-cols-3"
-            >
-              <HighlightCard
-                icon={<MapPin className="h-5 w-5" />}
-                title="Visit Us"
-                body={
-                  <span className="whitespace-pre-line">
-                    No. 1/82, Ayyanar Street,
-                    {"\n"}
-                    Shakthi Ayyanar Nagar,
-                    {"\n"}
-                    Thiruvanchery,
-                    {"\n"}
-                    Chennai - 600 126,
-                    {"\n"}
-                    Tamil Nadu, India
-                  </span>
-                }
-              />
-              <HighlightCard
-                icon={<Mail className="h-5 w-5" />}
-                title="Email Us"
-                body={
-                  <a
-                    href={`mailto:${email}`}
-                    className="break-all text-navy underline-offset-2 transition-colors hover:text-gold-600 dark:text-white"
-                  >
-                    {email}
-                  </a>
-                }
-                center
-              />
-              <HighlightCard
-                icon={<Phone className="h-5 w-5" />}
-                title="Call Us"
-                body={
-                  <a
-                    href={`tel:${phone.replace(/\s/g, "")}`}
-                    className="text-navy underline-offset-2 transition-colors hover:text-gold-600 dark:text-white"
-                  >
-                    {phone}
-                  </a>
-                }
-                center
-              />
-            </motion.div>
-
             {/* Need Help card */}
             <motion.div
               variants={fadeUp}
@@ -417,34 +367,6 @@ export default function ContactPage() {
           </ul>
         </motion.div>
       </div>
-    </motion.div>
-  );
-}
-
-function HighlightCard({
-  icon,
-  title,
-  body,
-  center,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: React.ReactNode;
-  center?: boolean;
-}) {
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`card-trust rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-[0_14px_30px_-16px_rgba(22,41,74,0.25)] dark:bg-[#131a2e] ${
-        center ? "flex flex-col items-center text-center" : ""
-      }`}
-    >
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-gold-600">
-        {icon}
-      </span>
-      <h4 className="mt-4 text-sm font-bold text-navy dark:text-white">{title}</h4>
-      <div className="mt-2 text-sm text-muted-foreground">{body}</div>
     </motion.div>
   );
 }

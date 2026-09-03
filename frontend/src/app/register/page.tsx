@@ -8,11 +8,9 @@ import { API_BASE_URL } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import {
-  User,
   Lock,
   Eye,
   EyeOff,
-  Loader2,
   Sparkles,
   ShieldCheck,
   CheckCircle2,
@@ -44,87 +42,6 @@ const particles = [
   { top: "55%", left: "40%", size: 6, delay: 2.6 },
 ];
 
-function FloatingField({
-  id,
-  label,
-  type,
-  icon,
-  value,
-  onChange,
-  error,
-}: {
-  id: string;
-  label: string;
-  type: string;
-  icon: React.ReactNode;
-  value: string;
-  onChange: (v: string) => void;
-  error?: string;
-}) {
-  const [focused, setFocused] = React.useState(false);
-  const showIcon = value.length > 0 || focused;
-
-  return (
-    <div>
-      <motion.div
-        className="relative"
-        animate={error ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
-        transition={{ duration: 0.35 }}
-      >
-        <div
-          className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${showIcon ? "text-[#D4AF37]" : "text-muted-foreground/50 dark:text-white/40"}`}
-        >
-          {icon}
-        </div>
-
-        <input
-          id={id}
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
-          className={`w-full rounded-2xl border bg-white py-4 pl-12 pr-4 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-transparent dark:bg-[#111827] dark:text-white ${
-            error
-              ? "border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100"
-              : focused
-                ? "border-[#D4AF37] ring-4 ring-[#D4AF37]/15"
-                : "border-muted-foreground/20 focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15 dark:border-white/15"
-          }`}
-          placeholder={label}
-        />
-
-        <label
-          htmlFor={id}
-          className={`pointer-events-none absolute left-4 origin-left rounded-md px-1 transition-all duration-200 ${
-            focused || value
-              ? "top-0 -translate-y-1/2 bg-[#F7F7F5] text-xs font-semibold dark:bg-[#0b1020]"
-              : "top-1/2 -translate-y-1/2 pl-8 text-sm"
-          } ${focused || value ? (error ? "text-red-500" : "text-[#0A1F44] dark:text-white") : "text-muted-foreground/60 dark:text-white/50"}`}
-        >
-          {label}
-        </label>
-
-        <AnimatePresence>
-          {error && (
-            <motion.p
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              id={`${id}-error`}
-              className="mt-1.5 text-sm text-red-500"
-            >
-              {error}
-            </motion.p>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
-  );
-}
-
 function PasswordField({
   value,
   onChange,
@@ -140,8 +57,6 @@ function PasswordField({
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
   onKeyDown?: (e: React.KeyboardEvent) => void;
 }) {
-  const showIcon = value.length > 0;
-
   return (
     <div>
       <motion.div
@@ -150,7 +65,7 @@ function PasswordField({
         transition={{ duration: 0.35 }}
       >
         <div
-          className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${showIcon ? "text-[#D4AF37]" : "text-muted-foreground/50 dark:text-white/40"}`}
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 dark:text-white/40"
         >
           <Lock className="h-5 w-5" />
         </div>
@@ -160,25 +75,16 @@ function PasswordField({
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={() => {}}
-          onBlur={() => {}}
           onKeyDown={onKeyDown}
           aria-invalid={!!error}
           aria-describedby={error ? "password-error" : undefined}
-className={`w-full rounded-2xl border bg-white py-4 pl-12 pr-12 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-transparent dark:bg-[#111827] dark:text-white ${
+          className={`w-full rounded-lg border bg-white py-3 pl-12 pr-12 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-muted-foreground/50 dark:bg-[#131a2e] dark:text-white dark:placeholder:text-white/40 ${
               error
                 ? "border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100"
                 : "border-muted-foreground/20 focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15 dark:border-white/15"
             }`}
-          placeholder="Password"
+          placeholder="Enter your password"
         />
-
-        <label
-          htmlFor="password"
-          className={`pointer-events-none absolute left-4 origin-left rounded-md px-1 transition-all duration-200 ${value ? "top-0 -translate-y-1/2 bg-[#F7F7F5] text-xs font-semibold dark:bg-[#0b1020]" : "top-1/2 -translate-y-1/2 pl-8 text-sm"} ${value ? (error ? "text-red-500" : "text-[#0A1F44] dark:text-white") : "text-muted-foreground/60 dark:text-white/50"}`}
-        >
-          Password
-        </label>
 
         {value.length > 0 && (
           <button
@@ -285,7 +191,7 @@ export default function RegisterPage() {
   };
 
   const inputCls =
-    "w-full rounded-lg border px-4 py-3 focus:ring-2 focus:ring-gold focus:border-transparent dark:bg-[#131a2e] dark:text-white dark:border-white/15";
+    "w-full rounded-lg border px-4 py-3 text-[#0A1F44] bg-white border-muted-foreground/20 focus:ring-2 focus:ring-gold focus:border-transparent dark:bg-[#131a2e] dark:text-white dark:border-white/15";
 
   return (
     <section className="relative min-h-screen w-full bg-[#F7F7F5] px-4 py-12 dark:bg-[#0b1020]">
@@ -405,7 +311,7 @@ export default function RegisterPage() {
 
         {/* ===== Signup form panel (right) ===== */}
         <motion.main
-          className="flex w-full flex-col justify-center px-6 py-10 sm:px-10 lg:min-h-screen lg:py-16"
+          className="flex w-full flex-col justify-center px-6 py-10 sm:px-10 lg:min-h-screen lg:py-16 text-[#0A1F44] dark:text-white"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
@@ -499,7 +405,7 @@ export default function RegisterPage() {
 
               {capsLockWarning && (
                 <div
-                  className="rounded-full bg-navy/80 border border-gold/30 rounded-xl p-3 mb-3 shadow-lg backdrop-blur-sm dark:bg-[#0d1224]"
+                  className="rounded-xl border border-yellow-300 bg-yellow-50 p-3 shadow-sm dark:border-yellow-500/30 dark:bg-yellow-500/10"
                   style={{ animation: "fadeIn 0.3s ease-out, slideIn 0.3s ease-out" }}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -510,7 +416,7 @@ export default function RegisterPage() {
                     >
                       <path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 2a6 6 0 100 12A6 6 0 0010 4zM9.5 9.5a1.5 1.5 0 010 3 1.5 1.5 0 010-3zM12 12a1 1 0 010 2 1 1 0 010-2z" />
                     </svg>
-                    <span className="text-white/90 text-sm font-medium">Caps Lock is ON</span>
+                    <span className="text-yellow-700 text-sm font-medium dark:text-yellow-300">Caps Lock is ON</span>
                   </span>
                 </div>
               )}

@@ -62,21 +62,22 @@ export function Scholarships() {
           <div className="mx-auto mt-10 max-w-3xl">
             <div className="card-trust flex flex-col items-center justify-between gap-6 p-7 text-center sm:flex-row sm:text-left">
               <div>
-                <h3 className="font-serif text-xl font-bold text-navy dark:text-white">Application Fee</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {showFee ? (
-                    <>
-                      {t("home.scholarships.feeNote", "A nominal, non-refundable application fee applies and is set by the Trust.")}{" "}
-                      <span className="font-semibold text-navy dark:text-gold">
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-gold-600 dark:text-gold">
+                  Application Fee
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="font-serif text-4xl font-bold text-navy dark:text-gold">
+                    {showFee ? (
+                      <>
                         ₹{Number(fee!.amount).toLocaleString("en-IN")}
-                      </span>
-                    </>
-                  ) : (
-                    t(
-                      "home.scholarships.feeNote",
-                      "A nominal, non-refundable application fee applies and is set by the Trust."
-                    )
-                  )}
+                      </>
+                    ) : (
+                      "₹500"
+                    )}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  A non-refundable application fee of ₹500 is applicable.
                 </p>
               </div>
               <Link href="/how-to-apply" className="btn-outline rounded-lg px-6 py-3 text-sm">
