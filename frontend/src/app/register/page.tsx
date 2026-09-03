@@ -64,9 +64,7 @@ function PasswordField({
         animate={error ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
         transition={{ duration: 0.35 }}
       >
-        <div
-          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 dark:text-white/40"
-        >
+        <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-300">
           <Lock className="h-5 w-5" />
         </div>
 
@@ -78,10 +76,10 @@ function PasswordField({
           onKeyDown={onKeyDown}
           aria-invalid={!!error}
           aria-describedby={error ? "password-error" : undefined}
-          className={`w-full rounded-lg border bg-white py-3 pl-12 pr-12 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-muted-foreground/50 dark:bg-[#131a2e] dark:text-white dark:placeholder:text-white/40 ${
+          className={`w-full rounded-lg border bg-white py-3 pl-12 pr-12 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-slate-400 border-slate-300 dark:bg-[#151D35] dark:text-white dark:placeholder:text-slate-400 dark:border-slate-700 ${
               error
                 ? "border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100"
-                : "border-muted-foreground/20 focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/15 dark:border-white/15"
+                : "focus:border-[#D4AF37] focus:ring-4 focus:ring-[#D4AF37]/30 dark:focus:border-[#D4AF37] dark:focus:ring-[#D4AF37]/30"
             }`}
           placeholder="Enter your password"
         />
@@ -91,7 +89,7 @@ function PasswordField({
             type="button"
             onClick={() => setShow((s) => !s)}
             aria-label={show ? "Hide password" : "Show password"}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-[#0A1F44] dark:hover:text-white"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 transition-colors hover:text-[#0A1F44] dark:text-slate-300 dark:hover:text-white"
           >
             {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
@@ -191,7 +189,7 @@ export default function RegisterPage() {
   };
 
   const inputCls =
-    "w-full rounded-lg border px-4 py-3 text-[#0A1F44] bg-white border-muted-foreground/20 focus:ring-2 focus:ring-gold focus:border-transparent dark:bg-[#131a2e] dark:text-white dark:border-white/15";
+    "w-full rounded-lg border px-4 py-3 text-[#0A1F44] bg-white placeholder:text-slate-400 border-slate-300 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 dark:bg-[#151D35] dark:text-white dark:placeholder:text-slate-400 dark:border-slate-700 dark:focus:border-[#D4AF37] dark:focus:ring-[#D4AF37]/30";
 
   return (
     <section className="relative min-h-screen w-full bg-[#F7F7F5] px-4 py-12 dark:bg-[#0b1020]">
@@ -351,7 +349,7 @@ export default function RegisterPage() {
               <h1 className="text-3xl font-bold tracking-tight text-[#0A1F44] sm:text-4xl dark:text-white">
                 Create Account
               </h1>
-              <p className="mt-2 text-muted-foreground dark:text-white/70">
+              <p className="mt-2 text-slate-600 dark:text-slate-300">
                 Sign up to apply for scholarships
               </p>
             </motion.header>
@@ -440,9 +438,9 @@ export default function RegisterPage() {
             </form>
 
             <div className="text-center">
-              <p className="text-sm text-muted-foreground dark:text-white/70">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 Already have an account?{" "}
-                <Link href="/login" className="font-medium text-[#0A1F44] underline underline-offset-2 hover:text-[#B8902F] dark:text-[#D4AF37]">
+                <Link href="/login" className="font-medium text-[#D4AF37] underline underline-offset-2 hover:text-[#B8902F]">
                   Login
                 </Link>
               </p>

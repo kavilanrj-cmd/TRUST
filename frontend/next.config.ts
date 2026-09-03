@@ -1,12 +1,15 @@
 import type { NextConfig } from "next";
 
-const API_TARGET = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_TARGET =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://trust-backend.vercel.app"
+    : "http://localhost:5000");
 
 if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_API_URL) {
   console.warn(
     "[next.config] NEXT_PUBLIC_API_URL is not set in production. " +
-      "API /api/* rewrites will target http://localhost:5000, which is unreachable " +
-      "on Vercel. Set NEXT_PUBLIC_API_URL to your deployed backend URL."
+      "API /api/* rewrites will target the default deployed backend URL."
   );
 }
 
