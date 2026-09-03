@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Scholarship {
   applicationFee: number | null;
   applicationDeadline: string | null;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function ScholarshipDetailsPage() {
   return <ScholarshipDetailsContent />;
@@ -23,7 +22,7 @@ function ScholarshipDetailsContent() {
 
     async function load() {
       try {
-        const res = await fetch(`${API_URL}/api/scholarships`, {
+        const res = await fetch(`${API_BASE_URL}/api/scholarships`, {
           cache: "no-store",
         });
         if (!res.ok) {
