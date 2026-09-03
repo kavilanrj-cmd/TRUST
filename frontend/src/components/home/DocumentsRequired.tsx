@@ -5,6 +5,7 @@ import { Reveal } from "./Reveal";
 const DOCUMENTS = [
   "SSLC",
   "HSC",
+  "Current Semester Result",
   "Bonafide Certificate",
   "ID Card",
   "Community Certificate",
