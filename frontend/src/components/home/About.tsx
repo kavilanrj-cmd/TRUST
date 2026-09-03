@@ -34,33 +34,13 @@ export function About() {
                 </p>
               </div>
 
-              <div className="mt-9 grid gap-5 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border bg-muted p-6 dark:bg-[#131a2e]">
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-navy dark:text-gold">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="h-6 w-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </span>
-                  <h3 className="mt-4 font-semibold text-navy dark:text-white">{t("home.about.missionTitle", "Our Mission")}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {t(
-                      "home.about.mission",
-                      "To identify promising students, provide financial assistance and mentorship, and empower them to build brighter futures."
-                    )}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-muted p-6 dark:bg-[#131a2e]">
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold-soft text-navy dark:text-gold">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className="h-6 w-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                    </svg>
-                  </span>
-                  <h3 className="mt-4 font-semibold text-navy dark:text-white">Our Purpose</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    To remove financial barriers so talent and hard work, not circumstance, decide a student&rsquo;s future.
-                  </p>
-                </div>
+              <div className="mt-6 rounded-2xl border border-gold/25 bg-gold-soft p-6 dark:border-gold/30 dark:bg-[#1d2740]">
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-gold-600 dark:text-gold">
+                  OUR MISSION
+                </p>
+                <p className="mt-3 font-serif text-xl font-bold leading-snug text-navy dark:text-slate-200">
+                  To promote inclusive education, social upliftment, healthcare access, and cultural enrichment by establishing and supporting institutions, programs, and initiatives that empower marginalized communities and contribute to sustainable national development.
+                </p>
               </div>
 
               <a href="#scholarships" className="btn-primary mt-9">

@@ -43,9 +43,23 @@ export default function AboutPage() {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4">{t("about.founderTitle", "Founder")}</h2>
+          <h2 className="text-2xl font-semibold mb-4 dark:text-white">{t("about.founderTitle", "Founder")}</h2>
+          <div className="text-muted-foreground mb-4">
+            <p className="font-serif text-xl font-bold leading-tight">
+              {t("about.founder", "Prof. Dr. K. Chidambaram")}
+            </p>
+            <p className="text-sm font-medium tracking-wider dark:text-gold">
+              {t("about.founder.subheading", "Founder and Settlor")}
+            </p>
+          </div>
+        </div>
+
+        <div className="pt-6">
           <p className="text-muted-foreground leading-relaxed">
-            {t("about.founder", "Prof. Dr. K. Chidambaram")}
+            {t("about.founder.para1", "Neelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.")}
+          </p>
+          <p className="text-muted-foreground leading-relaxed mt-4" style={{ textAlign: 'justify' }}>
+            {t("about.founder.para2", "Driven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.")}
           </p>
         </div>
 
@@ -75,7 +89,7 @@ export default function AboutPage() {
               <li>Conduct seminars, lectures, conferences, debates, and academic programs</li>
               <li>Encourage academic excellence through awards, endowments, and scholarships</li>
             </ul>
-            <li className="font-medium mt-6">Special Education and Support for Persons with Disabilities</li>
+            <li className="text-2xl font-bold mb-4 dark:text-white">Special Education and Support for Persons with Disabilities</li>
             <ul className="pl-6 space-y-1">
               <li>Provide education for children who are mentally challenged, hearing impaired, visually impaired, or physically disabled</li>
               <li>Provide assistive devices and rehabilitation support</li>

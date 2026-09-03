@@ -6,7 +6,7 @@ import { API_BASE_URL } from "@/lib/api";
 const REQUIRED_DOCUMENTS = [
   { key: "sslc", label: "SSLC", desc: "Upload your SSLC certificate" },
   { key: "hsc", label: "HSC", desc: "Upload your HSC certificate" },
-  { key: "currentSemesterMarksheet", label: "Current Semester Marksheet", desc: "Upload your current semester marksheet" },
+  { key: "currentSemesterResult", label: "Current Semester Result", desc: "Upload your current semester result" },
   { key: "bonafide", label: "Bonafide Certificate", desc: "Upload a bonafide certificate from your institution" },
   { key: "idCard", label: "ID Card", desc: "Upload a copy of your ID card" },
   { key: "community", label: "Community Certificate", desc: "Upload your community certificate" },

@@ -3,7 +3,7 @@
 import { Reveal } from "./Reveal";
 
 const NOTES = [
-  "Preference will be given to girl students, children from lower income group families, differently abled children.",
+  "Preference will be given to girl students, children from lower income group families, differently abled children, and children from single-parent families.",
   "The application form needs to be filled online, and the documents requested should also be uploaded while submitting the application form.",
   "Kindly download the list of documents required and keep soft copies of the same ready before accessing the application form.",
 ];

@@ -51,6 +51,7 @@ export default function LoginPage() {
     isLoading: false,
   });
   const [formError, setFormError] = useState<string | null>(null);
+  const [capsLockWarning, setCapsLockWarning] = useState<boolean | null>(null);
 
   const handleChange = (field: keyof Pick<FormState, "identifier" | "password">, value: string) => {    setForm((prev) => ({
       ...prev,
@@ -282,6 +283,24 @@ export default function LoginPage() {
               />
             </motion.div>
 
+            {capsLockWarning && (
+              <div
+                className="rounded-full bg-navy/80 border border-gold/30 rounded-xl p-3 mb-3 shadow-lg backdrop-blur-sm"
+                style={{ animation: "fadeIn 0.3s ease-out" }}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <svg
+                    className="h-4 w-4 text-yellow-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 2a6 6 0 100 12A6 6 0 0010 4zM9.5 9.5a1.5 1.5 0 010 3 1.5 1.5 0 010-3zM12 12a1 1 0 010 2 1 1 0 010-2z" />
+                  </svg>
+                  <span className="text-white/90 text-sm font-medium">Caps Lock is ON</span>
+                </span>
+              </div>
+            )}
+
             {/* Remember me + forgot */}
             <motion.div
               variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
@@ -435,13 +454,22 @@ function PasswordField({
   value,
   onChange,
   error,
+  show,
+  setShow,
+  setCapsLockWarning,
 }: {
   value: string;
   onChange: (v: string) => void;
   error?: string;
+  show?: boolean;
+  setShow?: React.Dispatch<React.SetStateAction<boolean>>;
+  setCapsLockWarning?: (value: boolean) => void;
 }) {
   const [focused, setFocused] = useState(false);
-  const [show, setShow] = useState(false);
+  const [passwordShow, setPasswordShow] = useState(false);
+  const actualShow = show ?? false;
+  const actualSetShow = setShow ?? ((s: boolean) => {});
+  const actualSetCapsLockWarning = setCapsLockWarning ?? ((_: boolean) => {});
   const showIcon = value.length > 0 || focused;
 
   return (
@@ -459,11 +487,18 @@ function PasswordField({
 
         <input
           id="password"
-          type={show ? "text" : "password"}
+          type={actualShow ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
+onKeyDown={(e) => {
+          if (e.getModifierState("CapsLock")) {
+            actualSetCapsLockWarning(true);
+          } else {
+            actualSetCapsLockWarning(false);
+          }
+        }}
           aria-invalid={!!error}
           aria-describedby={error ? "password-error" : undefined}
           className={`w-full rounded-2xl border bg-white py-4 pl-12 pr-12 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-transparent dark:bg-[#111827] dark:text-white ${
@@ -490,11 +525,11 @@ function PasswordField({
         {value.length > 0 && (
           <button
             type="button"
-            onClick={() => setShow((s) => !s)}
-            aria-label={show ? "Hide password" : "Show password"}
+            onClick={() => actualSetShow(!actualShow)}
+            aria-label={actualShow ? "Hide password" : "Show password"}
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground/60 transition-colors hover:text-[#0A1F44] dark:hover:text-white"
           >
-            {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            {actualShow ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
         )}
       </motion.div>

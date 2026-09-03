@@ -48,7 +48,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
     "A society where every deserving student, regardless of economic background, has access to quality education and the opportunity to reach their full potential.",
   "home.about.missionTitle": "Our Mission",
   "home.about.mission":
-    "To identify promising students, provide financial assistance and mentorship, and empower them to build brighter futures.",
+    "To promote inclusive education, social upliftment, healthcare access, and cultural enrichment by establishing and supporting institutions, programs, and initiatives that empower marginalized communities and contribute to sustainable national development.",
   "home.about.quote":
     "Education is the most powerful weapon which you can use to change the world.",
   // Scholarships & Grants (home info section)
@@ -152,7 +152,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "home.whatWeDo.quoteTitle": "Scholarships & Grants",
   // About page
   "about.eyebrow": "About Us",
-  "about.title": "About Neelakannu Educational Trust",
+  "about.title": "Neelakannu Educational Trust",
   "about.intro":
     "Established on 14th November 2018, Neelakannu Educational Trust is a charitable organization dedicated to empowering students through education and scholarship opportunities.",
   "about.registeredOfficeTitle": "Registered Office",
@@ -178,6 +178,11 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "about.founderTitle": "Founder",
   "about.founder":
     "Prof. Dr. K. Chidambaram\nME., Ph. D.\nFounder and Settlor\nNeelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
+  "about.founder.subheading": "Founder and Settlor",
+  "about.founder.para1":
+    "Neelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.",
+  "about.founder.para2":
+    "Driven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
   // Core Objectives and Areas of Work
   "about.coreObjectivesTitle": "Core Objectives and Areas of Work",
   "about.coreObjectives":
