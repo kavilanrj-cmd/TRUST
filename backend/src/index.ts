@@ -18,10 +18,17 @@ import { getApplicationFeeConfig } from "./utils/applicationFee";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const clientOrigins = (process.env.FRONTEND_URL || "http://localhost:3000")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+// CORS origin allow-list. Combine FRONTEND_URL env (comma-separated) with the
+// known deployed frontend so production credentialed requests are never blocked
+// even if FRONTEND_URL is missing in a given environment.
+const CORS_ORIGINS = new Set([
+  ...(process.env.FRONTEND_URL || "http://localhost:3000")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
+  "https://my-trust-nine.vercel.app",
+]);
+const clientOrigins = Array.from(CORS_ORIGINS);
 
 // Security headers
 app.use(helmet());
