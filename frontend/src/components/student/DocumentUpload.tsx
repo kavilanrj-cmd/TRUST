@@ -55,7 +55,7 @@ function formatFileSize(bytes: number): string {
 const ICONS: Record<string, string> = {
   sslc: "🎓",
   hsc: "📘",
-  currentSemesterMarksheet: "📋",
+  currentSemesterResult: "📋",
   bonafide: "🏫",
   idCard: "🪪",
   community: "🗂️",
