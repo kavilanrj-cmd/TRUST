@@ -1,4 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "comment": "Root Directory / framework detection note: This monorepo contains 'trust-platform/frontend' (Next.js app) and 'trust-platform/backend' (Express API). Set the Vercel project Root Directory to 'trust-platform/frontend' for the Next.js app (auto-detects Next.js). The backend is deployed separately from 'trust-platform/backend'."
-}
