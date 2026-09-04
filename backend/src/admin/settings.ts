@@ -24,6 +24,7 @@ export const SAFE_SETTINGS: Record<string, { label: string; type: string }> = {
   "app.upiQrUrl": { label: "UPI QR Image URL", type: "url" },
   "app.upiVpa": { label: "UPI ID / VPA (e.g. trust@upi)", type: "text" },
   "app.upiInstructions": { label: "UPI Scan & Pay Instructions", type: "textarea" },
+  "app.applicationDeadline": { label: "Scholarship Application Deadline (datetime)", type: "datetime" },
   "app.supportEmail": { label: "Support Email", type: "text" },
 };
 

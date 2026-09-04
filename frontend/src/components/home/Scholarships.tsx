@@ -1,35 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { API_BASE_URL } from "@/lib/api";
 import { useHomeContent } from "@/lib/home-content";
 import { Reveal } from "./Reveal";
 
-interface FeeConfig {
-  amount: number;
-  enabled: boolean;
-  currency: string;
-}
-
 export function Scholarships() {
   const { t } = useHomeContent();
-  const [fee, setFee] = useState<FeeConfig | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_BASE_URL}/api/application-fee`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!cancelled && d) setFee(d);
-      })
-      .catch(() => {
-        /* ignore network errors */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const pillars = [
     {
@@ -48,8 +24,6 @@ export function Scholarships() {
     },
   ];
 
-  const showFee = fee && fee.enabled && fee.amount > 0;
-
   return (
     <section id="scholarships" className="bg-cream">
       <div className="container-trust section-pad">
@@ -63,23 +37,10 @@ export function Scholarships() {
             <div className="card-trust flex flex-col items-center justify-between gap-6 p-7 text-center sm:flex-row sm:text-left">
               <div>
                 <p className="text-sm font-bold uppercase tracking-[0.18em] text-gold-600 dark:text-gold">
-                  Application Fee
+                  Scholarships for Deserving Students
                 </p>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="font-serif text-4xl font-bold text-navy dark:text-gold">
-                    {showFee ? (
-                      <>
-                        ₹{Number(fee!.amount).toLocaleString("en-IN")}
-                      </>
-                    ) : (
-                      "—"
-                    )}
-                  </span>
-                </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {showFee
-                    ? `A non-refundable application fee of ₹${Number(fee!.amount).toLocaleString("en-IN")} is applicable.`
-                    : "A non-refundable application fee is applicable."}
+                  Find out how to apply and what documentation is required for the current intake.
                 </p>
               </div>
               <Link href="/how-to-apply" className="btn-outline rounded-lg px-6 py-3 text-sm">

@@ -81,8 +81,16 @@ export const adminApi = {
       return adminJSON<any>(`${ADMIN_BASE}/applications${s ? `?${s}` : ""}`);
     },
     detail: (id: string) => adminJSON<any>(`${ADMIN_BASE}/applications/${id}`),
-    changeStatus: (id: string, data: { status: string; note?: string }) =>
-      adminJSON<any>(`${ADMIN_BASE}/applications/${id}/status`, "PATCH", data),
+    changeStatus: (
+      id: string,
+      data: {
+        status: string;
+        note?: string;
+        message?: string;
+        missingDocuments?: string[];
+        rejectionReasons?: string[];
+      }
+    ) => adminJSON<any>(`${ADMIN_BASE}/applications/${id}/status`, "PATCH", data),
     addNote: (id: string, data: { content: string }) =>
       adminJSON<any>(`${ADMIN_BASE}/applications/${id}/notes`, "POST", data),
     exportCsv: (params: Record<string, string | undefined>) => {

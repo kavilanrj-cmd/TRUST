@@ -4,8 +4,26 @@
 import express, { Request, Response } from "express";
 import prisma from "../utils/db";
 import { notifyNewApplication } from "../admin/applications";
+import { getApplicationDeadlineConfig, deadlineClosedMessage } from "../utils/applicationDeadline";
 
 const router = express.Router();
+
+// The exact set of required scholarship documents (order preserved).
+// Used to compute per-document upload status for the student status view.
+export const REQUIRED_DOCUMENTS: Array<{ key: string; label: string }> = [
+  { key: "sslc", label: "SSLC" },
+  { key: "hsc", label: "HSC" },
+  { key: "currentSemesterResult", label: "Current Semester Result" },
+  { key: "bonafide", label: "Bonafide Certificate" },
+  { key: "idCard", label: "ID Card" },
+  { key: "community", label: "Community Certificate" },
+  { key: "income", label: "Income Certificate" },
+  { key: "pan", label: "PAN" },
+  { key: "aadhar", label: "Aadhar" },
+  { key: "bankPassbook", label: "Bank Passbook (Student Account)" },
+  { key: "disability", label: "Disability Certificate" },
+  { key: "sports", label: "Sports Certificate" },
+];
 
 // Normalize a client-supplied date (YYYY-MM-DD or full ISO string, or empty)
 // into a value Prisma can write to a DateTime column. Date-picker inputs send
@@ -48,6 +66,18 @@ router.post("/", async (req: Request, res: Response) => {
 
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Enforce the scholarship application deadline for NEW applications.
+    // Timezone-independent: compares the server's current UTC time against the
+    // configured deadline. Once closed, no user can start a new application via
+    // the API, even if the frontend is bypassed.
+    const deadline = await getApplicationDeadlineConfig();
+    if (deadline.deadline && new Date(deadline.deadline).getTime() < Date.now()) {
+      return res.status(403).json({
+        error: deadlineClosedMessage(new Date(deadline.deadline)),
+        deadlineClosed: true,
+      });
     }
 
     const {
@@ -191,6 +221,8 @@ router.get("/me", async (req: Request, res: Response) => {
         academicDetails: true,
         financialDetails: true,
         scholarshipProgram: true,
+        applicationDocuments: true,
+        payments: { orderBy: { createdAt: "desc" } },
       },
     });
 
@@ -198,8 +230,39 @@ router.get("/me", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "No application found. Start an application first." });
     }
 
+    // Compute payment status from the most recent payment.
+    const latestPayment = application.payments?.[0] || null;
+    const paymentStatus = latestPayment
+      ? latestPayment.status
+      : "NO_PAYMENT";
+
+    // Compute upload status for each required document (based on whether a row
+    // exists for that documentType). A student only sees their own application.
+    const docRows = (application.applicationDocuments || []) as Array<{ documentType: string | null }>;
+    const uploadedKeys = new Set(docRows.map((d) => d.documentType).filter((t): t is string => !!t));
+    const documents = REQUIRED_DOCUMENTS.map((d) => ({
+      key: d.key,
+      label: d.label,
+      uploaded: uploadedKeys.has(d.key),
+    }));
+
+    const { applicationDocuments, payments, ...safeApplication } = application;
+
     return res.json({
-      application,
+      application: {
+        ...safeApplication,
+        submissionStatus: application.status,
+        paymentStatus,
+        documents,
+        decision: {
+          reviewedAt: application.reviewedAt,
+          reviewedByName: application.reviewedByName,
+          decisionMessage: application.decisionMessage,
+          missingDocuments: application.missingDocuments,
+          rejectionReasons: application.rejectionReasons,
+          correctionNote: application.correctionNote,
+        },
+      },
     });
   } catch (error) {
     console.error("Get own application error:", error);

@@ -96,6 +96,12 @@ model Application {
   scholarshipProgramId String?
   submittedAt      DateTime?
   correctionNote   String?
+  reviewedById     String?
+  reviewedByName   String?
+  reviewedAt       DateTime?
+  decisionMessage  String?
+  rejectionReasons Json?
+  missingDocuments Json?
   personalDetails  PersonalDetails?
   personalDetailsId String?
   address          Address?

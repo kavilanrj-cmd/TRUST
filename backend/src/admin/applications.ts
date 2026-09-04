@@ -243,7 +243,7 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { status, note, reason } = req.body;
+      const { status, note, reason, message, missingDocuments, rejectionReasons } = req.body;
 
       if (!status) return res.status(400).json({ error: "Status is required" });
       if (!VALID_STATUSES.includes(status)) {
@@ -264,7 +264,17 @@ router.patch(
         return res.status(400).json({ error: "A reason is required for this status change" });
       }
 
-      const reasonText = reason || note || null;
+      const reasonText = reason || note || message || null;
+
+      // Decision metadata: persisted when an application is accepted (APPROVED) or rejected.
+      const isDecision = status === "APPROVED" || status === "REJECTED";
+      const user = (req as any).authUser;
+      const cleanMissing = Array.isArray(missingDocuments)
+        ? missingDocuments.filter((d: unknown) => typeof d === "string" && d.trim())
+        : undefined;
+      const cleanReasons = Array.isArray(rejectionReasons)
+        ? rejectionReasons.filter((d: unknown) => typeof d === "string" && d.trim())
+        : undefined;
 
       const updated = await prisma.application.update({
         where: { id },
@@ -272,18 +282,36 @@ router.patch(
           status,
           ...(reasonText ? { correctionNote: reasonText } : {}),
           ...(status === "SUBMITTED" && !application.submittedAt ? { submittedAt: new Date() } : {}),
+          ...(isDecision
+            ? {
+                reviewedById: user.id,
+                reviewedByName: user.name || user.email || null,
+                reviewedAt: new Date(),
+                ...(message ? { decisionMessage: message } : {}),
+              }
+            : {}),
+          ...(status === "REJECTED"
+            ? {
+                rejectionReasons: cleanReasons ? cleanReasons : undefined,
+                missingDocuments: cleanMissing ? cleanMissing : undefined,
+              }
+            : {}),
         },
       });
 
       // activity entry
-      const user = (req as any).authUser;
       await prisma.applicationActivity.create({
         data: {
           applicationId: id,
           actorId: user.id,
           actorName: user.name || user.email,
           action: "status_changed",
-          metadata: { from: application.status, to: status, note: reasonText },
+          metadata: {
+            from: application.status,
+            to: status,
+            note: reasonText,
+            ...(status === "REJECTED" ? { rejectionReasons: cleanReasons, missingDocuments: cleanMissing } : {}),
+          },
         },
       });
 

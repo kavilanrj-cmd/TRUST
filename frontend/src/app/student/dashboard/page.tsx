@@ -9,7 +9,28 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 
 function StudentDashboardInner() {
   const { user } = useAuth();
-  const [application, setApplication] = useState<{ applicationId: string; status: string; personalDetails?: Record<string, unknown> | null; address?: Record<string, unknown> | null; parentGuardian?: Record<string, unknown> | null; academicDetails?: Record<string, unknown> | null; financialDetails?: Record<string, unknown> | null; scholarshipProgram?: { name: string } | null; createdAt: string; submittedAt: string | null } | null>(null);
+  const [application, setApplication] = useState<{
+    applicationId: string;
+    status: string;
+    paymentStatus?: string;
+    documents?: Array<{ key: string; label: string; uploaded: boolean }>;
+    decision?: {
+      decisionMessage?: string | null;
+      reviewedAt?: string | null;
+      reviewedByName?: string | null;
+      missingDocuments?: string[] | null;
+      rejectionReasons?: string[] | null;
+      correctionNote?: string | null;
+    } | null;
+    personalDetails?: Record<string, unknown> | null;
+    address?: Record<string, unknown> | null;
+    parentGuardian?: Record<string, unknown> | null;
+    academicDetails?: Record<string, unknown> | null;
+    financialDetails?: Record<string, unknown> | null;
+    scholarshipProgram?: { name: string } | null;
+    createdAt: string;
+    submittedAt: string | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +66,28 @@ export default function StudentDashboard() {
 
 function renderDashboard(
   user: AuthUser,
-  application: { applicationId: string; status: string; personalDetails?: Record<string, unknown> | null; address?: Record<string, unknown> | null; parentGuardian?: Record<string, unknown> | null; academicDetails?: Record<string, unknown> | null; financialDetails?: Record<string, unknown> | null; scholarshipProgram?: { name: string } | null; createdAt: string; submittedAt: string | null } | null
+  application: {
+    applicationId: string;
+    status: string;
+    paymentStatus?: string;
+    documents?: Array<{ key: string; label: string; uploaded: boolean }>;
+    decision?: {
+      decisionMessage?: string | null;
+      reviewedAt?: string | null;
+      reviewedByName?: string | null;
+      missingDocuments?: string[] | null;
+      rejectionReasons?: string[] | null;
+      correctionNote?: string | null;
+    } | null;
+    personalDetails?: Record<string, unknown> | null;
+    address?: Record<string, unknown> | null;
+    parentGuardian?: Record<string, unknown> | null;
+    academicDetails?: Record<string, unknown> | null;
+    financialDetails?: Record<string, unknown> | null;
+    scholarshipProgram?: { name: string } | null;
+    createdAt: string;
+    submittedAt: string | null;
+  } | null
 ) {
   if (!application) {
     return (
@@ -63,6 +105,9 @@ function renderDashboard(
   const {
     applicationId,
     status,
+    paymentStatus,
+    documents,
+    decision,
     scholarshipProgram,
     createdAt,
     submittedAt,
@@ -76,20 +121,24 @@ function renderDashboard(
     SUCCESS: "Success",
     FAILED: "Failed",
     REFUNDED: "Refunded",
+    NO_PAYMENT: "Not Paid",
   };
 
   const applicationStatusMap: Record<string, string> = {
     DRAFT: "Draft",
     SUBMITTED: "Submitted",
     UNDER_REVIEW: "Under Review",
-    APPROVED: "Approved",
+    APPROVED: "Accepted",
     REJECTED: "Rejected",
     WAITLISTED: "Waitlisted",
     CORRECTION_REQUESTED: "Correction Requested",
   };
 
-  const paymentStatus = paymentStatusMap[status] || "Pending";
+  const displayPaymentStatus = paymentStatus
+    ? paymentStatusMap[paymentStatus] || paymentStatus
+    : paymentStatusMap[status] || "Pending";
   const appStatus = applicationStatusMap[status] || "Draft";
+  const decisionDate = decision?.reviewedAt ? new Date(decision.reviewedAt).toLocaleDateString() : null;
   const submissionDate = submittedAt ? new Date(submittedAt).toLocaleDateString() : createdAt ? new Date(createdAt).toLocaleDateString() : "N/A";
 
   // For correction requested, show correction note
@@ -129,14 +178,36 @@ function renderDashboard(
                 <strong>Status:</strong> {appStatus}
               </p>
               <p className="text-muted-foreground">
-                <strong>Payment Status:</strong> {paymentStatus}
+                <strong>Payment Status:</strong> {displayPaymentStatus}
               </p>
               <p className="text-muted-foreground">
                 <strong>Submission Date:</strong> {submissionDate}
               </p>
+              {decisionDate && (
+                <p className="text-muted-foreground">
+                  <strong>Decision Date:</strong> {decisionDate}
+                </p>
+              )}
               <p className="text-muted-foreground">
                 <strong>Scholarship:</strong> {scholarshipName}
               </p>
+              {decision?.decisionMessage && (
+                <div className="mt-2 rounded-lg border border-border bg-gray-50 p-3">
+                  <p className="text-sm text-navy whitespace-pre-wrap dark:text-slate-300">
+                    {decision.decisionMessage}
+                  </p>
+                </div>
+              )}
+              {decision?.rejectionReasons && decision.rejectionReasons.length > 0 && (
+                <p className="text-muted-foreground">
+                  <strong>Reasons:</strong> {decision.rejectionReasons.join(", ")}
+                </p>
+              )}
+              {decision?.missingDocuments && decision.missingDocuments.length > 0 && (
+                <p className="text-muted-foreground">
+                  <strong>Missing documents:</strong> {decision.missingDocuments.join(", ")}
+                </p>
+              )}
             </div>
           </div>
 
@@ -257,18 +328,31 @@ function renderDashboard(
           {applicationId && (
             <div className="p-6 rounded-lg border border-gray-200 bg-white">
               <h3 className="text-xl font-medium mb-4">Documents</h3>
-              <p className="text-muted-foreground">
-                {application?.status === "SUBMITTED" || application?.status === "APPROVED" ? (
-                  "Documents have been uploaded and verified"
-                ) : (
-                  <a
-                    href="/student/application"
-                    className="underline text-primary hover:text-primary/90"
-                  >
-                    Upload Documents
-                  </a>
-                )}
-              </p>
+              {documents && documents.length > 0 ? (
+                <ul className="divide-y divide-gray-100">
+                  {documents.map((d) => (
+                    <li key={d.key} className="flex items-center justify-between py-2 text-sm">
+                      <span className="text-gray-700">{d.label}</span>
+                      <span className={d.uploaded ? "font-medium text-green-600" : "font-medium text-red-600"}>
+                        {d.uploaded ? "✓ Uploaded" : "Missing"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">
+                  {status === "SUBMITTED" || status === "APPROVED" ? (
+                    "Documents have been uploaded and verified"
+                  ) : (
+                    <a
+                      href="/student/application"
+                      className="underline text-primary hover:text-primary/90"
+                    >
+                      Upload Documents
+                    </a>
+                  )}
+                </p>
+              )}
             </div>
           )}
 
@@ -294,13 +378,17 @@ function renderDashboard(
             {status === "APPROVED" && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
                 <p className="text-green-800 font-medium">Congratulations!</p>
-                <p className="text-green-700 mt-1">Your application has been approved!</p>
+                <p className="text-green-700 mt-1">Your application has been accepted for the scholarship!</p>
               </div>
             )}
             {status === "REJECTED" && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
                 <p className="text-red-800 font-medium">Application Rejected</p>
-                <p className="text-red-700 mt-1">Your application was not selected for this scholarship.</p>
+                <p className="text-red-700 mt-1">
+                  {decision?.decisionMessage
+                    ? decision.decisionMessage
+                    : "Your application was not accepted for this scholarship."}
+                </p>
               </div>
             )}
             {status === "WAITLISTED" && (

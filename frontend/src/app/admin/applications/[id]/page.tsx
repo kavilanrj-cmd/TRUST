@@ -25,6 +25,31 @@ const TRANSITIONS: Record<string, string[]> = {
 
 const DOC_STATUSES = ["VERIFIED", "REJECTED", "RE_UPLOAD_REQUESTED", "PENDING"];
 
+// The exact 12 required scholarship documents (order preserved from the app form).
+const REQUIRED_DOCUMENTS = [
+  { key: "sslc", label: "SSLC" },
+  { key: "hsc", label: "HSC" },
+  { key: "currentSemesterResult", label: "Current Semester Result" },
+  { key: "bonafide", label: "Bonafide Certificate" },
+  { key: "idCard", label: "ID Card" },
+  { key: "community", label: "Community Certificate" },
+  { key: "income", label: "Income Certificate" },
+  { key: "pan", label: "PAN" },
+  { key: "aadhar", label: "Aadhar" },
+  { key: "bankPassbook", label: "Bank Passbook (Student Account)" },
+  { key: "disability", label: "Disability Certificate" },
+  { key: "sports", label: "Sports Certificate" },
+];
+
+// Rejection reason options shown in the reject dialog.
+const REJECTION_REASONS = [
+  "Incomplete application",
+  "Missing required documents",
+  "Payment not completed",
+  "Not eligible for scholarship",
+  "Incorrect details provided",
+];
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
@@ -63,6 +88,14 @@ export default function ApplicationDetailPage() {
   const [docVerify, setDocVerify] = useState<Record<string, string>>({});
   const [docNote, setDocNote] = useState<Record<string, string>>({});
   const [verifyLoading, setVerifyLoading] = useState<Record<string, boolean>>({});
+
+  // Decision dialog state
+  const [decisionDialog, setDecisionDialog] = useState<"" | "ACCEPT" | "REJECT">("");
+  const [decisionMsg, setDecisionMsg] = useState("");
+  const [selectedReasons, setSelectedReasons] = useState<Set<string>>(new Set());
+  const [selectedMissing, setSelectedMissing] = useState<Set<string>>(new Set());
+  const [decisionLoading, setDecisionLoading] = useState(false);
+  const [decisionError, setDecisionError] = useState("");
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
@@ -104,6 +137,98 @@ export default function ApplicationDetailPage() {
       setStatusMsg(e.message || "Failed to update status");
     } finally {
       setStatusLoading(false);
+    }
+  };
+
+  const openAcceptDialog = () => {
+    setDecisionDialog("ACCEPT");
+    setDecisionMsg(
+      `Congratulations! Your application (${app.applicationId}) has been accepted. Welcome to the Neelakannu Educational Trust scholarship programme.`
+    );
+    setSelectedReasons(new Set());
+    setSelectedMissing(new Set());
+    setDecisionError("");
+  };
+
+  const openRejectDialog = () => {
+    const docs = app.applicationDocuments || [];
+    const uploaded = new Set(docs.map((d: any) => d.documentType).filter(Boolean));
+    const missing = REQUIRED_DOCUMENTS.filter((d) => !uploaded.has(d.key)).map((d) => d.label);
+    const reasons = new Set<string>();
+    if (missing.length > 0) reasons.add("Missing required documents");
+    const paymentDone = (app.payments || []).some((p: any) => p.status === "SUCCESS");
+    if (!paymentDone) reasons.add("Payment not completed");
+
+    setDecisionDialog("REJECT");
+    setSelectedMissing(new Set(missing));
+    setSelectedReasons(reasons);
+    const msg =
+      `Thank you for applying to the Neelakannu Educational Trust scholarship. ` +
+      (reasons.size > 0
+        ? `Unfortunately, your application could not be accepted for the following reason(s): ${Array.from(reasons).join(", ")}.`
+        : `Unfortunately, we are unable to consider your application at this time.`) +
+      `\n\nFor queries, please contact the trust office.`;
+    setDecisionMsg(msg);
+    setDecisionError("");
+  };
+
+  const closeDecisionDialog = () => {
+    if (decisionLoading) return;
+    setDecisionDialog("");
+    setDecisionMsg("");
+    setSelectedReasons(new Set());
+    setSelectedMissing(new Set());
+    setDecisionError("");
+  };
+
+  const toggleReason = (reason: string) => {
+    setSelectedReasons((prev) => {
+      const next = new Set(prev);
+      if (next.has(reason)) next.delete(reason);
+      else next.add(reason);
+      return next;
+    });
+  };
+
+  const toggleMissing = (docKey: string) => {
+    setSelectedMissing((prev) => {
+      const next = new Set(prev);
+      if (next.has(docKey)) next.delete(docKey);
+      else next.add(docKey);
+      return next;
+    });
+  };
+
+  const submitDecision = async () => {
+    if (decisionLoading) return;
+    if (decisionDialog === "REJECT" && selectedReasons.size === 0) {
+      setDecisionError("Select at least one reason for rejection.");
+      return;
+    }
+    setDecisionLoading(true);
+    setDecisionError("");
+    try {
+      if (decisionDialog === "ACCEPT") {
+        await adminApi.applications.changeStatus(id, {
+          status: "APPROVED",
+          message: decisionMsg.trim() || undefined,
+        });
+      } else {
+        const missingLabels = REQUIRED_DOCUMENTS.filter((d) => selectedMissing.has(d.label)).map((d) => d.label);
+        await adminApi.applications.changeStatus(id, {
+          status: "REJECTED",
+          message: decisionMsg.trim() || undefined,
+          missingDocuments: missingLabels,
+          rejectionReasons: Array.from(selectedReasons),
+        });
+      }
+      closeDecisionDialog();
+      setStatusNote("");
+      fetchDetail();
+    } catch (e: any) {
+      setDecisionError(e.message || "Failed to save decision");
+    } finally {
+      setDecisionLoading(false);
     }
   };
 
@@ -173,6 +298,12 @@ export default function ApplicationDetailPage() {
   const notes = app.notes || [];
   const payments = app.payments || [];
 
+  const uploadedDocKeys = new Set(docs.map((d: any) => d.documentType).filter(Boolean));
+  const requiredChecklist = REQUIRED_DOCUMENTS.map((d) => ({
+    ...d,
+    uploaded: uploadedDocKeys.has(d.key),
+  }));
+
   return (
     <AdminLayout>
       <div className="mb-6">
@@ -190,6 +321,28 @@ export default function ApplicationDetailPage() {
           {app.scholarshipProgram?.name || "—"}
         </span>
       </div>
+
+      {app.reviewedAt && (
+        <Section title="Decision Record">
+          <FieldRow label="Decision Date" value={fmtDateTime(app.reviewedAt)} />
+          <FieldRow label="Reviewed By" value={app.reviewedByName || "—"} />
+          {app.decisionMessage && (
+            <div className="mt-2 rounded-lg border border-border bg-background p-3 text-sm text-navy dark:bg-[#0f1526] dark:text-slate-300">
+              <p className="whitespace-pre-wrap">{app.decisionMessage}</p>
+            </div>
+          )}
+          {app.rejectionReasons && app.rejectionReasons.length > 0 && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              <strong>Reasons:</strong> {app.rejectionReasons.join(", ")}
+            </p>
+          )}
+          {app.missingDocuments && app.missingDocuments.length > 0 && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              <strong>Missing documents:</strong> {app.missingDocuments.join(", ")}
+            </p>
+          )}
+        </Section>
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2 space-y-6">
@@ -277,6 +430,21 @@ export default function ApplicationDetailPage() {
             </Section>
           )}
 
+          <Section title="Document Checkpoint">
+            <ul className="divide-y divide-border">
+              {requiredChecklist.map((d) => (
+                <li key={d.key} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span className="text-navy dark:text-white">{d.label}</span>
+                  {d.uploaded ? (
+                    <Badge className="bg-green-50 text-green-700">Uploaded</Badge>
+                  ) : (
+                    <Badge className="bg-red-50 text-red-600">Missing</Badge>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Section>
+
           {docs.length > 0 && (
             <Section title="Documents">
               <div className="overflow-x-auto">
@@ -349,6 +517,30 @@ export default function ApplicationDetailPage() {
         </div>
 
         <div className="space-y-6">
+          <Card title="Application Decision">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Record a formal accept or reject decision. The applicant is shown your decision with any reasons or missing documents.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                disabled={!allowedTransitions.includes("APPROVED")}
+                onClick={openAcceptDialog}
+                className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                disabled={!allowedTransitions.includes("REJECTED")}
+                onClick={openRejectDialog}
+                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Reject
+              </button>
+            </div>
+          </Card>
+
           <Card title="Change Status">
             {allowedTransitions.length === 0 ? (
               <p className="text-sm text-muted-foreground">No status transitions available from {app.status}.</p>
@@ -447,6 +639,109 @@ export default function ApplicationDetailPage() {
           )}
         </div>
       </div>
+
+      {decisionDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-[#0f1526]">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-navy dark:text-white">
+                  {decisionDialog === "ACCEPT" ? "Accept Application" : "Reject Application"}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {app.applicationId} &middot; {app.student?.email || app.personalDetails?.fullName}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDecisionDialog}
+                className="text-muted-foreground hover:text-navy dark:hover:text-white"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {decisionDialog === "REJECT" && (
+              <div className="mb-4 space-y-4">
+                <div>
+                  <p className="mb-1 text-sm font-semibold text-navy dark:text-white">Missing Documents</p>
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Select which of the required documents the applicant has not uploaded.
+                  </p>
+                  <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto">
+                    {requiredChecklist.map((d) => (
+                      <label key={d.key} className="flex items-center gap-2 text-sm text-navy dark:text-white">
+                        <input
+                          type="checkbox"
+                          checked={selectedMissing.has(d.label)}
+                          onChange={() => d.uploaded && toggleMissing(d.label)}
+                          disabled={d.uploaded}
+                        />
+                        <span className={d.uploaded ? "text-muted-foreground line-through" : ""}>{d.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-sm font-semibold text-navy dark:text-white">Reasons for Rejection</p>
+                  <p className="mb-2 text-xs text-muted-foreground">Select one or more reasons.</p>
+                  <div className="space-y-2">
+                    {REJECTION_REASONS.map((r) => (
+                      <label key={r} className="flex items-center gap-2 text-sm text-navy dark:text-white">
+                        <input
+                          type="checkbox"
+                          checked={selectedReasons.has(r)}
+                          onChange={() => toggleReason(r)}
+                        />
+                        {r}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-semibold text-navy dark:text-white">
+                Message to Applicant
+              </label>
+              <textarea
+                className="field-input"
+                rows={5}
+                value={decisionMsg}
+                onChange={(e) => setDecisionMsg(e.target.value)}
+              />
+            </div>
+
+            {decisionError && <p className="mb-3 text-xs text-red-600">{decisionError}</p>}
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeDecisionDialog}
+                disabled={decisionLoading}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitDecision}
+                disabled={decisionLoading}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${
+                  decisionDialog === "ACCEPT" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {decisionLoading ? "Saving..." : decisionDialog === "ACCEPT" ? "Accept Application" : "Reject Application"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

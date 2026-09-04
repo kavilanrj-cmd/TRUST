@@ -2,14 +2,38 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 import { useHomeContent } from "@/lib/home-content";
 import { useAuth } from "@/lib/auth";
-import { ApplicationFee } from "./ApplicationFee";
+
+interface DeadlineConfig {
+  deadline: string | null;
+  formatted: string | null;
+  closed: boolean;
+}
 
 export function Hero() {
   const { t } = useHomeContent();
   const { user, isLoading } = useAuth();
+  const [deadline, setDeadline] = useState<DeadlineConfig | null>(null);
   const isLoggedIn = !isLoading && !!user;
+  const isClosed = !!deadline?.deadline && deadline.closed;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE_URL}/api/application-deadline`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d) setDeadline(d);
+      })
+      .catch(() => {
+        /* ignore network errors */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section id="home" className="relative overflow-hidden bg-white dark:bg-[#0d1224]">
@@ -49,7 +73,11 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            {isLoggedIn ? (
+            {isClosed ? (
+              <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-navy-50 px-6 py-3 text-sm font-semibold text-muted-foreground">
+                Applications Closed
+              </span>
+            ) : isLoggedIn ? (
               <Link href="/student/dashboard" className="btn-gold">
                 {t("home.hero.loggedInButton", "My Dashboard")}
               </Link>
@@ -63,7 +91,11 @@ export function Hero() {
             </a>
           </div>
 
-          <ApplicationFee />
+          {isClosed && deadline?.formatted && (
+            <p className="mt-4 max-w-xl text-sm font-medium text-red-600">
+              Applications Closed. The last date to apply was {deadline.formatted}.
+            </p>
+          )}
         </div>
 
         {/* Right visual */}

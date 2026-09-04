@@ -14,6 +14,7 @@ import adminRoutes, { routerPublic, bootstrapFounder } from "./admin/index";
 import db from "./utils/db";
 import { authenticate } from "./utils/auth";
 import { getApplicationFeeConfig } from "./utils/applicationFee";
+import { getApplicationDeadlineConfig } from "./utils/applicationDeadline";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -97,6 +98,18 @@ app.get("/api/application-fee", async (_req: Request, res: Response) => {
     res.json(fee);
   } catch (e) {
     console.error("Get application fee error:", e);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Public scholarship application deadline used by the home page and forms.
+// The backend is the authority for whether applications are open/closed.
+app.get("/api/application-deadline", async (_req: Request, res: Response) => {
+  try {
+    const deadline = await getApplicationDeadlineConfig();
+    res.json(deadline);
+  } catch (e) {
+    console.error("Get application deadline error:", e);
     res.status(500).json({ error: "Internal server error" });
   }
 });
