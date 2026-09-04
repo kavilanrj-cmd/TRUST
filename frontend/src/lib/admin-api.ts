@@ -228,6 +228,7 @@ export const adminApi = {
       const s = qs.toString();
       return `${ADMIN_BASE}/payments/export${s ? `?${s}` : ""}`;
     },
+    verify: (paymentId: string) => adminJSON<any>(`${ADMIN_BASE}/payments/${paymentId}/verify`, "POST"),
   },
 };
 

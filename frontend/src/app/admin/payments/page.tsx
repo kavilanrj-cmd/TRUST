@@ -66,6 +66,19 @@ function PaymentsPage() {
     fetchPayments();
   };
 
+  const handleVerify = async (id: string) => {
+    if (!window.confirm("Mark this payment as verified (SUCCESS)?")) return;
+    const label = payments.find((p) => p.id === id)?.razorpayPaymentId || id;
+    setError("");
+    try {
+      const res = await adminApi.payments.verify(id);
+      window.alert(res?.message || `Payment ${label} verified.`);
+      fetchPayments();
+    } catch (e: any) {
+      setError(e.message || "Could not verify payment");
+    }
+  };
+
   const handleExport = () => {
     window.location.href = adminApi.payments.exportCsv({ status: status || undefined, search: search || undefined });
   };
@@ -140,10 +153,11 @@ function PaymentsPage() {
                   <th className="pb-2 pr-4 font-semibold">Application ID</th>
                   <th className="pb-2 pr-4 font-semibold">Applicant</th>
                   <th className="pb-2 pr-4 font-semibold">Amount</th>
-                  <th className="pb-2 pr-4 font-semibold">Razorpay Order ID</th>
-                  <th className="pb-2 pr-4 font-semibold">Razorpay Payment ID</th>
+                  <th className="pb-2 pr-4 font-semibold">Order Ref</th>
+                  <th className="pb-2 pr-4 font-semibold">Transaction Ref</th>
                   <th className="pb-2 pr-4 font-semibold">Status</th>
-                  <th className="pb-2 font-semibold">Date</th>
+                  <th className="pb-2 pr-4 font-semibold">Date</th>
+                  <th className="pb-2 font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,7 +180,16 @@ function PaymentsPage() {
                     <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{p.razorpayOrderId || "—"}</td>
                     <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{p.razorpayPaymentId || "—"}</td>
                     <td className="py-2.5 pr-4"><PaymentStatusBadge status={p.status} /></td>
-                    <td className="py-2.5 text-muted-foreground">{fmtDateTime(p.paymentDate || p.createdAt)}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{fmtDateTime(p.paymentDate || p.createdAt)}</td>
+                    <td className="py-2.5">
+                      {p.status === "PENDING" ? (
+                        <Button variant="outline" size="sm" onClick={() => handleVerify(p.id)}>
+                          Verify
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -72,12 +72,14 @@ export function Scholarships() {
                         ₹{Number(fee!.amount).toLocaleString("en-IN")}
                       </>
                     ) : (
-                      "₹500"
+                      "—"
                     )}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  A non-refundable application fee of ₹500 is applicable.
+                  {showFee
+                    ? `A non-refundable application fee of ₹${Number(fee!.amount).toLocaleString("en-IN")} is applicable.`
+                    : "A non-refundable application fee is applicable."}
                 </p>
               </div>
               <Link href="/how-to-apply" className="btn-outline rounded-lg px-6 py-3 text-sm">

@@ -142,5 +142,37 @@ router.get(
   }
 );
 
+// POST /api/admin/payments/:id/verify — admin manually verifies a UPI payment,
+// marking it SUCCESS so the applicant can submit their application.
+router.post(
+  "/payments/:id/verify",
+  authenticate,
+  requirePermission(PERMISSIONS.applications_status),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const payment = await prisma.payment.findUnique({ where: { id } });
+      if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+
+      const updated = await prisma.payment.update({
+        where: { id },
+        data: { status: "SUCCESS", paymentDate: new Date() },
+      });
+
+      return res.json({
+        message: "Payment verified successfully",
+        id: updated.id,
+        status: updated.status,
+      });
+    } catch (error) {
+      console.error("Admin verify payment error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 export { VALID_STATUSES };
 export default router;

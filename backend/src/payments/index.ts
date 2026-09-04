@@ -69,6 +69,53 @@ router.post("/create-order", async (req: Request, res: Response) => {
       });
     }
 
+    // --- Temporary UPI QR payment method ---
+    // When paymentMethod is "upi" we do not call Razorpay. We create a PENDING
+    // payment row and return the UPI QR details for the applicant to scan & pay.
+    // The fee amount is always the admin-controlled app.applicationFee value.
+    // When Razorpay is added later, paymentMethod becomes "razorpay" and this
+    // branch is skipped in favour of the existing order-creation flow below.
+    if (feeConfig.paymentMethod === "upi") {
+      const upiRef = `upi_${crypto.randomUUID()}`;
+      let payment;
+      if (existingPayment) {
+        payment = await prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: {
+            razorpayOrderId: upiRef,
+            razorpayPaymentId: null,
+            amount: feeConfig.amount,
+            currency: "INR",
+            status: "PENDING",
+            paymentDate: null,
+          },
+        });
+      } else {
+        payment = await prisma.payment.create({
+          data: {
+            applicationId: application.id,
+            razorpayOrderId: upiRef,
+            amount: feeConfig.amount,
+            currency: "INR",
+            status: "PENDING",
+          },
+        });
+      }
+
+      return res.json({
+        id: upiRef,
+        orderId: upiRef,
+        paymentId: payment.id,
+        amount: feeConfig.amount,
+        currency: "INR",
+        status: "PENDING",
+        paymentMethod: "upi",
+        upi: feeConfig.upi || { qrUrl: "", vpa: "", instructions: "" },
+        feeNotice: "Scan the UPI QR code and pay the application fee, then enter your UPI transaction reference below.",
+      });
+    }
+
+    // --- Razorpay order creation (future / when paymentMethod == "razorpay") ---
     // Amount in paise
     const orderAmount = Math.round(feeConfig.amount * 100);
     const receipt = `NET_${application.applicationId}`;
@@ -139,6 +186,61 @@ router.post("/create-order", async (req: Request, res: Response) => {
     return res.json(responseBody);
   } catch (error) {
     console.error("Create order error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Confirm that an applicant has paid via UPI and submitted their transaction
+// reference. The payment is recorded as PENDING and must be verified by an admin
+// before the application can be submitted.
+router.post("/confirm", async (req: Request, res: Response) => {
+  try {
+    const { applicationId, upiTransactionId } = req.body;
+    const userId = (req as any).user?.userId;
+
+    if (!applicationId || !upiTransactionId) {
+      return res.status(400).json({ error: "Application ID and UPI transaction reference are required" });
+    }
+
+    const application = await prisma.application.findFirst({
+      where: { applicationId, studentId: userId },
+    });
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+    if (application.status !== "DRAFT") {
+      return res.status(400).json({ error: "Payment can only be confirmed for draft applications" });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: { applicationId: application.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!payment) {
+      return res.status(400).json({ error: "Please create a payment order first." });
+    }
+
+    if (payment.status === "SUCCESS") {
+      return res.json({ status: "SUCCESS", message: "Payment already verified." });
+    }
+
+    const updated = await prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        razorpayPaymentId: String(upiTransactionId).trim(),
+        status: "PENDING",
+      },
+    });
+
+    return res.json({
+      status: "PENDING",
+      message: "Payment details submitted. It will be verified by the trust before submission.",
+      paymentId: updated.id,
+      txnId: updated.razorpayPaymentId,
+    });
+  } catch (error) {
+    console.error("Confirm UPI payment error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });

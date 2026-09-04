@@ -160,12 +160,20 @@ export function ApplicationForm() {
   const [docCount, setDocCount] = useState(0);
 
   // Payment state
-  const [fee, setFee] = useState<{ amount: number; enabled: boolean; currency: string } | null>(null);
+  const [fee, setFee] = useState<{
+    amount: number;
+    enabled: boolean;
+    currency: string;
+    paymentMethod?: "upi" | "razorpay";
+    upi?: { qrUrl: string; vpa: string; instructions: string };
+  } | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<"NO_PAYMENT" | "PENDING" | "SUCCESS" | "FAILED">("NO_PAYMENT");
   const [paying, setPaying] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState<{ type: "error" | "success" | "info"; text: string } | null>(null);
-  const [paymentRef, setPaymentRef] = useState<{ paymentId?: string | null; amount?: number | null } | null>(null);
+  const [paymentRef, setPaymentRef] = useState<{ paymentId?: string | null; amount?: number | null; txnId?: string | null } | null>(null);
+  const [upiQrOpen, setUpiQrOpen] = useState(false);
+  const [upiTxnId, setUpiTxnId] = useState("");
 
   // Try to resume an existing draft
   useEffect(() => {
@@ -236,7 +244,7 @@ export function ApplicationForm() {
       .then((d) => {
         if (alive && d && d.status !== "NO_PAYMENT") {
           setPaymentStatus(d.status);
-          setPaymentRef({ paymentId: d.razorpayPaymentId, amount: d.amount });
+          setPaymentRef({ paymentId: d.paymentId, amount: d.amount, txnId: d.razorpayPaymentId });
         }
       })
       .catch(() => {});
@@ -424,20 +432,12 @@ export function ApplicationForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const loadRazorpayScript = useCallback((): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if ((window as any).Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  }, []);
-
+  // Temporary UPI QR payment flow. Opens the "Pay" panel showing the fee, the
+  // admin-configured UPI QR code, and scan-and-pay instructions. The applicant
+  // then enters their UPI transaction reference which is stored as PENDING and
+  // must be verified by an admin before the application can be submitted.
+  // When Razorpay is added (paymentMethod === "razorpay"), this path is replaced
+  // by the checkout flow while the fee stays admin-controlled.
   const payApplication = useCallback(async () => {
     if (!applicationId) {
       setPaymentNotice({ type: "error", text: "Please save your application before paying." });
@@ -462,67 +462,62 @@ export function ApplicationForm() {
         setPaymentNotice({ type: "success", text: "Payment already completed." });
         return;
       }
-      const ready = await loadRazorpayScript();
-      if (!ready) {
-        throw new Error("Unable to load the secure payment gateway. Please try again.");
+      if (order.paymentMethod === "upi") {
+        setFee((f) => f && { ...f, upi: order.upi || f.upi, paymentMethod: "upi" });
+        setUpiQrOpen(true);
+        setPaymentNotice(null);
+        return;
       }
-      const rz = new (window as any).Razorpay({
-        key: order.key,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Neelakannu Educational Trust",
-        description: "Scholarship Application Fee",
-        order_id: order.id,
-        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
-          await verifyPayment(response);
-        },
-        modal: {
-          ondismiss: () => {
-            setPaying(false);
-            setPaymentNotice({ type: "info", text: "Payment cancelled. You can retry whenever you are ready." });
-          },
-        },
-        theme: { color: "#1b3a5c" },
-      });
-      rz.open();
+      // Future Razorpay path
+      setPaymentNotice({ type: "info", text: "Online payment gateway is being configured. Please check back shortly." });
     } catch (err) {
       setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Payment could not be started." });
+    } finally {
       setPaying(false);
     }
-  }, [applicationId, loadRazorpayScript]);
+  }, [applicationId]);
 
-  const verifyPayment = useCallback(
-    async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
-      setVerifying(true);
-      setPaying(false);
-      setPaymentNotice(null);
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/payments/verify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            razorpayOrderId: response.razorpay_order_id,
-            razorpayPaymentId: response.razorpay_payment_id,
-            razorpaySignature: response.razorpay_signature,
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(data.error || "Payment verification failed.");
-        }
-        setPaymentStatus("SUCCESS");
-        setPaymentRef({ paymentId: response.razorpay_payment_id, amount: data.amount });
-        setPaymentNotice({ type: "success", text: "Payment successful! You can now submit your application." });
-      } catch (err) {
-        setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Could not verify payment. Please contact support." });
-        setPaymentStatus("FAILED");
-      } finally {
-        setVerifying(false);
+  const confirmUpiPayment = useCallback(async () => {
+    const txn = upiTxnId.trim();
+    if (!applicationId) {
+      setPaymentNotice({ type: "error", text: "Please save your application before confirming payment." });
+      return;
+    }
+    if (!txn) {
+      setPaymentNotice({ type: "error", text: "Please enter the UPI transaction reference (UTR) shown in your payment app." });
+      return;
+    }
+    setVerifying(true);
+    setPaymentNotice(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/payments/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ applicationId, upiTransactionId: txn }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Could not confirm your payment. Please try again.");
       }
-    },
-    []
-  );
+      if (data.status === "SUCCESS") {
+        setPaymentStatus("SUCCESS");
+        setPaymentNotice({ type: "success", text: "Payment already verified. You can now submit your application." });
+      } else {
+        setPaymentStatus("PENDING");
+        setPaymentRef({ paymentId: data.paymentId, txnId: data.txnId, amount: fee?.amount });
+        setPaymentNotice({
+          type: "info",
+          text: "Payment details submitted. Our team will verify your transaction. Once verified, you can submit your application.",
+        });
+      }
+      setUpiQrOpen(false);
+    } catch (err) {
+      setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Could not confirm your payment." });
+    } finally {
+      setVerifying(false);
+    }
+  }, [applicationId, upiTxnId, fee]);
 
   const submitApplication = useCallback(async () => {
     if (!showDeclaration) {
@@ -602,6 +597,12 @@ export function ApplicationForm() {
               <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
                 <span className="text-sm text-muted-foreground">Payment ID</span>
                 <span className="font-mono text-sm font-medium text-navy dark:text-white">{paymentRef.paymentId}</span>
+              </div>
+            )}
+            {paymentRef?.txnId && (
+              <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
+                <span className="text-sm text-muted-foreground">UPI Transaction Ref</span>
+                <span className="font-mono text-sm font-medium text-navy dark:text-white">{paymentRef.txnId}</span>
               </div>
             )}
             {paymentRef?.amount != null && (
@@ -1132,6 +1133,13 @@ export function ApplicationForm() {
                         </svg>
                         Payment Successful
                       </span>
+                    ) : paymentStatus === "PENDING" ? (
+                      <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Awaiting Verification
+                      </span>
                     ) : (
                       <button
                         type="button"
@@ -1139,9 +1147,78 @@ export function ApplicationForm() {
                         disabled={paying || verifying}
                         className="btn-gold disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {paying ? "Opening payment…" : "Pay Application Fee"}
+                        {paying ? "Preparing payment…" : "Pay Application Fee"}
                       </button>
                     )}
+                  </div>
+                )}
+
+                {upiQrOpen && fee?.upi && paymentStatus !== "SUCCESS" && (
+                  <div className="mt-5 rounded-xl border border-gold/40 bg-gold-soft/40 p-6 dark:border-gold/20 dark:bg-[#1d2740]">
+                    <h4 className="text-sm font-bold uppercase tracking-wide text-navy dark:text-white">
+                      Scan &amp; Pay via UPI
+                    </h4>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Pay the application fee of{" "}
+                      <strong className="text-navy dark:text-gold">
+                        ₹{Number(fee.amount).toLocaleString("en-IN")}
+                      </strong>{" "}
+                      by scanning the QR code with any UPI app.
+                    </p>
+
+                    <div className="mt-5 flex flex-col items-center gap-5 sm:flex-row sm:items-start">
+                      {fee.upi.qrUrl ? (
+                        <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                          <img
+                            src={fee.upi.qrUrl}
+                            alt="UPI payment QR code"
+                            className="h-52 w-52 object-contain"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-52 w-52 items-center justify-center rounded-xl border border-dashed border-border bg-white p-3 text-center text-sm text-muted-foreground dark:bg-[#131a2e]">
+                          UPI QR code will appear here once configured by the trust.
+                        </div>
+                      )}
+
+                      <div className="flex-1 space-y-3 text-sm text-navy-800 dark:text-muted-foreground">
+                        <ol className="list-decimal space-y-1.5 pl-5">
+                          <li>Open any UPI app (GPay, PhonePe, Paytm, etc.)</li>
+                          <li>Choose &quot;Scan &amp; Pay&quot; and scan the QR code</li>
+                          <li>Enter the application fee amount and complete the payment</li>
+                          <li>Copy the UPI transaction reference (UTR) and enter it below</li>
+                        </ol>
+                        {fee.upi.vpa && (
+                          <p className="text-xs text-muted-foreground">
+                            UPI ID: <span className="font-mono font-medium text-navy dark:text-gold">{fee.upi.vpa}</span>
+                          </p>
+                        )}
+                        {fee.upi.instructions && (
+                          <p className="rounded-lg border border-gold/30 bg-gold-soft px-3 py-2 text-xs text-navy-800">
+                            {fee.upi.instructions}
+                          </p>
+                        )}
+                        <label className="block">
+                          <span className="field-label">UPI Transaction Reference (UTR)</span>
+                          <input
+                            type="text"
+                            className="field-input"
+                            placeholder="e.g. 4152XXXXXXXX"
+                            value={upiTxnId}
+                            onChange={(e) => setUpiTxnId(e.target.value)}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={confirmUpiPayment}
+                          disabled={verifying}
+                          className="btn-gold disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {verifying ? "Submitting…" : "I Have Paid — Submit for Verification"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1178,6 +1255,12 @@ export function ApplicationForm() {
                         ₹{paymentRef.amount != null ? Number(paymentRef.amount).toLocaleString("en-IN") : ""}
                       </p>
                     </div>
+                    {paymentRef?.txnId && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">UPI Transaction Ref</p>
+                        <p className="mt-1 font-mono text-sm text-navy dark:text-white">{paymentRef.txnId}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
