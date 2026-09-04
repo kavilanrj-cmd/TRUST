@@ -26,6 +26,20 @@ function toDateTime(value: unknown): string | undefined {
   return undefined;
 }
 
+// The form saves drafts step-by-step, so required fields on later steps are not
+// filled yet when the application is first created. Prisma rejects `undefined`
+// for non-optional fields, so coerce empty/absent values to a safe placeholder.
+function strOr(value: unknown, fallback = ""): string {
+  if (value == null || value === "") return fallback;
+  return String(value);
+}
+
+function numOr(value: unknown, fallback = 0): number {
+  if (value == null || value === "") return fallback;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 // Create a new application (or draft)
 router.post("/", async (req: Request, res: Response) => {
   try {
@@ -83,52 +97,52 @@ router.post("/", async (req: Request, res: Response) => {
       student: { connect: { id: userId } },
       personalDetails: personalDetails ? {
         create: {
-          fullName: (personalDetails as any).fullName,
-          bankRecordName: (personalDetails as any).nameBankRecord ?? (personalDetails as any).bankRecordName,
+          fullName: strOr((personalDetails as any).fullName),
+          bankRecordName: strOr((personalDetails as any).nameBankRecord ?? (personalDetails as any).bankRecordName, ""),
           dateOfBirth: toDateTime((personalDetails as any).dateOfBirth),
-          gender: (personalDetails as any).gender,
-          phone: (personalDetails as any).phone,
+          gender: strOr((personalDetails as any).gender),
+          phone: strOr((personalDetails as any).phone),
         }
       } : undefined,
       address: address ? {
         create: {
-          street: (address as any).street,
-          doorNumber: (address as any).doorNumber,
-          city: (address as any).city,
-          district: (address as any).district,
-          state: (address as any).state,
-          pinCode: (address as any).pinCode,
+          street: strOr((address as any).street),
+          doorNumber: strOr((address as any).doorNumber, ""),
+          city: strOr((address as any).city),
+          district: strOr((address as any).district),
+          state: strOr((address as any).state),
+          pinCode: strOr((address as any).pinCode),
         }
       } : undefined,
       parentGuardian: parentGuardian ? {
         create: {
-          guardianName: (parentGuardian as any).guardianName,
-          relationship: (parentGuardian as any).relationship,
-          occupation: (parentGuardian as any).occupation,
-          contactNumber: (parentGuardian as any).contactNumber,
-          isSingleParent: (parentGuardian as any).isSingleParent,
-          income: (parentGuardian as any).income,
+          guardianName: strOr((parentGuardian as any).guardianName),
+          relationship: strOr((parentGuardian as any).relationship),
+          occupation: strOr((parentGuardian as any).occupation),
+          contactNumber: strOr((parentGuardian as any).contactNumber),
+          isSingleParent: (parentGuardian as any).isSingleParent ?? false,
+          income: (parentGuardian as any).income != null ? numOr((parentGuardian as any).income) : undefined,
         }
       } : undefined,
       academicDetails: academicDetails ? {
         create: {
-          schoolCollege: (academicDetails as any).schoolCollege,
-          academicType: (academicDetails as any).academicType,
-          course: (academicDetails as any).course,
-          educationLevel: (academicDetails as any).educationLevel,
-          academicYear: (academicDetails as any).academicYear,
-          yearOfStudy: (academicDetails as any).yearOfStudy,
-          className: (academicDetails as any).className,
-          section: (academicDetails as any).section,
-          semester: (academicDetails as any).semester,
-          ugPg: (academicDetails as any).ugPg,
-          marksPercentageCGPA: (academicDetails as any).marksPercentageCGPA,
+          schoolCollege: strOr((academicDetails as any).schoolCollege),
+          academicType: strOr((academicDetails as any).academicType, ""),
+          course: strOr((academicDetails as any).course),
+          educationLevel: strOr((academicDetails as any).educationLevel, "UNDERGRADUATE"),
+          academicYear: strOr((academicDetails as any).academicYear),
+          yearOfStudy: strOr((academicDetails as any).yearOfStudy, ""),
+          className: strOr((academicDetails as any).className, ""),
+          section: strOr((academicDetails as any).section, ""),
+          semester: strOr((academicDetails as any).semester, ""),
+          ugPg: strOr((academicDetails as any).ugPg, ""),
+          marksPercentageCGPA: strOr((academicDetails as any).marksPercentageCGPA, ""),
         }
       } : undefined,
       financialDetails: financialDetails ? {
         create: {
-          familyIncome: (financialDetails as any).familyIncome,
-          incomeSource: (financialDetails as any).incomeSource,
+          familyIncome: numOr((financialDetails as any).familyIncome, 0),
+          incomeSource: strOr((financialDetails as any).incomeSource),
         }
       } : undefined,
     };
@@ -336,8 +350,10 @@ router.patch("/:id", async (req: Request, res: Response) => {
       await prisma.financialDetails.update({
         where: { applicationId: id },
         data: {
-          familyIncome: (financialDetails as any).familyIncome,
-          incomeSource: (financialDetails as any).incomeSource,
+          ...((financialDetails as any).familyIncome !== undefined && (financialDetails as any).familyIncome !== null
+            ? { familyIncome: numOr((financialDetails as any).familyIncome) }
+            : {}),
+          incomeSource: (financialDetails as any).incomeSource !== undefined ? strOr((financialDetails as any).incomeSource) : undefined,
         },
       });
     }
