@@ -81,20 +81,10 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    const errors = validate();
-    if (Object.keys(errors).length > 0) {
-      setForm((prev) => ({ ...prev, errors }));
-      return;
-    }
-    setForm((prev) => ({ ...prev, isLoading: true, errors: {} }));
 
-    try {
-      await login(form.identifier.trim(), form.password);
-      router.push("/student/application");
-    } catch (err: any) {
-      setFormError(err?.message || "Login failed. Please try again.");
-      setForm((prev) => ({ ...prev, isLoading: false }));
-    }
+    // TEMPORARY: Authentication bypass — navigate directly to application.
+    // Real authentication will be restored later.
+    router.push("/student/application");
   };
 
   return (
