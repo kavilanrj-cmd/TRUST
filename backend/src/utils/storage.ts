@@ -1,17 +1,132 @@
 // Media storage layer.
-// Default storage is local disk for the running instance. R2 object storage
-// can be substituted behind the same interface. Only image/path metadata is
-// stored in the database — binary files live in the storage backend, never
-// in the DB.
+// Default storage is local disk (for local development). In production the
+// backend runs on Vercel serverless where the local filesystem is read-only
+// and ephemeral, so documents are stored in Amazon S3 instead. Only
+// metadata (storageKey/provider/etc.) is stored in the database — binary
+// files live in the storage backend, never in the DB.
+//
+// Storage mode is chosen via MEDIA_STORAGE:
+//   "local" (default, dev)  -> writes to UPLOAD_DIR on disk
+//   "s3"                    -> writes to the configured S3 bucket
 
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import multer from "multer";
 import { Request } from "express";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
 
-const STORAGE_MODE = process.env.MEDIA_STORAGE || "local";
+const STORAGE_MODE = (process.env.MEDIA_STORAGE || "local").toLowerCase();
 export const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || "uploads");
+
+function getEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) throw new Error(`Missing required environment variable: ${name}`);
+  return v;
+}
+
+// Lazy singleton S3 client (never reads credentials from source; uses env).
+let s3Client: S3Client | null = null;
+function getS3Client(): S3Client {
+  if (!s3Client) {
+    s3Client = new S3Client({
+      region: getEnv("AWS_REGION"),
+      credentials: {
+        accessKeyId: getEnv("AWS_ACCESS_KEY_ID"),
+        secretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY"),
+      },
+    });
+  }
+  return s3Client;
+}
+
+export function getDocumentBucket(): string {
+  return getEnv("AWS_BUCKET_NAME");
+}
+
+export function isS3Mode(): boolean {
+  return STORAGE_MODE === "s3";
+}
+
+// Persist a document buffer to the current storage backend.
+// Returns the object key and the provider name stored in the database.
+export async function saveDocumentBuffer(
+  buffer: Buffer,
+  contentType: string,
+  bucket: string
+): Promise<{ storageKey: string; storageProvider: string }> {
+  if (isS3Mode()) {
+    const key = `documents/${crypto.randomBytes(16).toString("hex")}`;
+    await getS3Client().send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      })
+    );
+    return { storageKey: key, storageProvider: "s3" };
+  }
+  // Local disk (development only).
+  const key = `documents/${crypto.randomBytes(16).toString("hex")}`;
+  const absPath = storageKeyToAbsolutePath(key);
+  ensureDir(path.dirname(absPath));
+  fs.writeFileSync(absPath, buffer);
+  return { storageKey: key, storageProvider: "local" };
+}
+
+export async function deleteDocumentObject(storageKey: string, storageProvider: string): Promise<void> {
+  if ((storageProvider || "s3").toLowerCase() === "s3" || isS3Mode()) {
+    if (storageKey) {
+      await getS3Client().send(
+        new DeleteObjectCommand({ Bucket: getDocumentBucket(), Key: storageKey })
+      );
+    }
+    return;
+  }
+  deleteFileByKey(storageKey);
+}
+
+export async function objectExists(storageKey: string, storageProvider: string): Promise<boolean> {
+  if ((storageProvider || "s3").toLowerCase() === "s3" || isS3Mode()) {
+    try {
+      await getS3Client().send(new HeadObjectCommand({ Bucket: getDocumentBucket(), Key: storageKey }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return fileExists(storageKey);
+}
+
+// Fetch a document's bytes from the current storage backend for secure serving.
+export async function getDocumentBuffer(
+  storageKey: string,
+  storageProvider: string
+): Promise<{ data: Buffer; contentType: string }> {
+  if ((storageProvider || "s3").toLowerCase() === "s3" || isS3Mode()) {
+    const resp = await getS3Client().send(
+      new GetObjectCommand({ Bucket: getDocumentBucket(), Key: storageKey })
+    );
+    if (!resp.Body) {
+      throw new Error("Document body is empty or unavailable");
+    }
+    const bytes = await resp.Body.transformToByteArray();
+    return {
+      data: Buffer.from(bytes),
+      contentType: resp.ContentType || "application/octet-stream",
+    };
+  }
+  const absPath = storageKeyToAbsolutePath(storageKey);
+  const data = fs.readFileSync(absPath);
+  return { data, contentType: "application/octet-stream" };
+}
 
 // Allowed image MIME types and their extensions.
 export const ALLOWED_IMAGE_MIMES: Record<string, string> = {
@@ -84,19 +199,11 @@ export const imageUpload = multer({
   },
 });
 
-// Multer disk storage for application documents.
+// Multer storage for application documents. Uses memory storage so uploads
+// never need to be written to a (read-only on Vercel) local disk; the route
+// persists the buffer to S3 or local disk afterwards via saveDocumentBuffer.
 export const documentUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      ensureDir(path.join(UPLOAD_DIR, "documents"));
-      cb(null, path.join(UPLOAD_DIR, "documents"));
-    },
-    filename: (_req, file, cb) => {
-      const ext = path.extname(safeFileName(file.originalname));
-      const id = crypto.randomBytes(16).toString("hex");
-      cb(null, id + ext);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_DOC_SIZE, files: 4 },
   fileFilter: (_req: Request, file: Express.Multer.File, cb) => {
     if (ALLOWED_DOC_MIMES.includes(file.mimetype)) {

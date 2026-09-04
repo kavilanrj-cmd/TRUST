@@ -6,9 +6,19 @@
 
 import express, { Request, Response } from "express";
 import prisma from "../utils/db";
-import { documentUpload, safeFileName } from "../utils/storage";
+import { ROLES } from "../utils/roles";
+import {
+  documentUpload,
+  safeFileName,
+  saveDocumentBuffer,
+  deleteDocumentObject,
+  getDocumentBucket,
+  getDocumentBuffer,
+} from "../utils/storage";
 
 const router = express.Router();
+
+const STAFF_ROLES: string[] = [ROLES.FOUNDER, ROLES.ADMIN, ROLES.REVIEWER];
 
 // Allowed MIME types for scholarship documents
 const ALLOWED_MIME_TYPES = [
@@ -144,16 +154,26 @@ router.post("/:applicationId/upload", documentUpload.single("file"), async (req:
       return res.status(400).json({ error: "documentType is required" });
     }
 
-    const storageKey = `documents/${file.filename}`;
+    // Persist the uploaded buffer to the configured storage backend (S3 in
+    // production, local disk in development) and record its updated metadata.
+    const { storageKey, storageProvider } = await saveDocumentBuffer(
+      file.buffer,
+      file.mimetype,
+      getDocumentBucket()
+    );
 
-    // Replace an existing record of the same document type (re-upload).
+    // Replace an existing record of the same document type (re-upload):
+    // delete the previous object from storage, then store the new one.
     const existing = await prisma.applicationDocument.findFirst({
       where: { applicationId: application.id, documentType },
     });
+    if (existing && existing.storageKey && existing.storageKey !== storageKey) {
+      await deleteDocumentObject(existing.storageKey, existing.storageProvider).catch(() => {});
+    }
 
     const documentData = {
       storageKey,
-      storageProvider: "local",
+      storageProvider,
       originalFilename: safeFileName(file.originalname),
       fileType: file.mimetype,
       fileSize: file.size,
@@ -210,6 +230,50 @@ router.get("/:applicationId/documents", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/applications/:applicationId/documents/:documentId/file
+// Securely stream a single document's bytes from the configured storage backend.
+// Access is restricted to the application owner (student/guest) or admin staff.
+router.get("/:applicationId/documents/:documentId/file", async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).authUser as { id: string; userId: string; role?: string } | undefined;
+    const userId = authUser?.userId || authUser?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const { applicationId, documentId } = req.params;
+
+    const application = await prisma.application.findFirst({
+      where: { applicationId },
+    });
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const isOwner = application.studentId === userId;
+    const isStaff = !!authUser?.role && STAFF_ROLES.includes(authUser.role as string);
+    if (!isOwner && !isStaff) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const document = await prisma.applicationDocument.findFirst({
+      where: { id: documentId, applicationId: application.id },
+    });
+    if (!document) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    const { data, contentType } = await getDocumentBuffer(document.storageKey, document.storageProvider);
+    res.setHeader("Content-Type", contentType || "application/octet-stream");
+    res.setHeader("Content-Disposition", `filename="${safeFileName(document.originalFilename)}"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    return res.send(data);
+  } catch (error) {
+    console.error("Get document file error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // DELETE /api/applications/:applicationId/documents/:documentId
 router.delete("/:applicationId/documents/:documentId", async (req: Request, res: Response) => {
   try {
@@ -240,6 +304,10 @@ router.delete("/:applicationId/documents/:documentId", async (req: Request, res:
       return res.status(404).json({ error: "Document not found" });
     }
 
+    // Remove the binary object from storage (S3/local) before deleting metadata.
+    if (document.storageKey) {
+      await deleteDocumentObject(document.storageKey, document.storageProvider).catch(() => {});
+    }
     await prisma.applicationDocument.delete({ where: { id: documentId } });
 
     return res.json({ message: "Document removed successfully" });
