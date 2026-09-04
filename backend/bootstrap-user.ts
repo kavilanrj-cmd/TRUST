@@ -9,11 +9,11 @@ async function main() {
   const users = await prisma.user.findMany({ where: { role: { in: ['FOUNDER', 'ADMIN', 'REVIEWER'] } }, select: { email: true, role: true, name: true } });
   console.log('Staff users:', users);
   
-  // Create founder if none exist
-  const staffCount = await prisma.user.count({ where: { role: { in: ['FOUNDER', 'ADMIN', 'REVIEWER'] } } });
-  console.log('Staff count:', staffCount);
+  // Create founder if none exists (guard on founder, not any staff)
+  const founderCount = await prisma.user.count({ where: { role: 'FOUNDER' } });
+  console.log('Founder count:', founderCount);
   
-  if (staffCount === 0) {
+  if (founderCount === 0) {
     const email = process.env.FOUNDER_EMAIL;
     const password = process.env.FOUNDER_PASSWORD;
     if (email && password) {

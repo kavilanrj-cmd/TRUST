@@ -27,19 +27,22 @@ import paymentsRouter from "./payments";
 const router = Router();
 const staffRoles = ["FOUNDER", "ADMIN", "REVIEWER"];
 
-// Bootstrap: if no staff accounts exist, create a founder from env (development initial setup).
+// Bootstrap: create a founder from env (FOUNDER_EMAIL/FOUNDER_PASSWORD) if no
+// founder account exists yet. Guarded on founder existence (not any staff) so it
+// never duplicates an existing founder, but still provisions one even if
+// ADMIN/REVIEWER accounts were added independently.
 export async function bootstrapFounder(): Promise<void> {
   console.log("🔄 Bootstrap founder: starting...");
   try {
     // Ensure database is connected
     await prisma.$connect();
     console.log("🔄 Bootstrap founder: database connected");
-    const staffCount = await prisma.user.count({ where: { role: { in: staffRoles } } });
-    console.log("🔄 Bootstrap founder: staff count =", staffCount);
-    if (staffCount === 0) {
-      const email = process.env.FOUNDER_EMAIL;
-      const password = process.env.FOUNDER_PASSWORD;
-      console.log("🔄 Bootstrap founder: email =", email, "password set =", !!password);
+    const founderCount = await prisma.user.count({ where: { role: "FOUNDER" } });
+    console.log("🔄 Bootstrap founder: founder count =", founderCount);
+    const email = process.env.FOUNDER_EMAIL;
+    const password = process.env.FOUNDER_PASSWORD;
+    console.log("🔄 Bootstrap founder: email =", email, "password set =", !!password);
+    if (founderCount === 0) {
       if (email && password) {
         const hashed = await bcrypt.hash(password, 10);
         await prisma.user.create({
@@ -54,10 +57,10 @@ export async function bootstrapFounder(): Promise<void> {
         });
         console.log("✅ Bootstrap founder account created from environment variables");
       } else {
-        console.warn("⚠️  No staff accounts and no FOUNDER_EMAIL/FOUNDER_PASSWORD set. Admin login unavailable.");
+        console.warn("⚠️  No founder account and no FOUNDER_EMAIL/FOUNDER_PASSWORD set. Admin login unavailable.");
       }
     } else {
-      console.log("🔄 Bootstrap founder: staff already exists, skipping creation");
+      console.log("🔄 Bootstrap founder: founder already exists, skipping creation");
     }
   } catch (e) {
     console.error("Bootstrap founder failed (non-fatal):", e);
