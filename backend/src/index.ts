@@ -80,6 +80,7 @@ app.use(cookieParser());
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
+    message: "Neelakannu Educational Trust API is running",
     timestamp: new Date().toISOString(),
     service: "neelakannu-trust-platform-api"
   });
