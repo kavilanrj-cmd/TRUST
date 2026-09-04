@@ -7,6 +7,25 @@ import { notifyNewApplication } from "../admin/applications";
 
 const router = express.Router();
 
+// Normalize a client-supplied date (YYYY-MM-DD or full ISO string, or empty)
+// into a value Prisma can write to a DateTime column. Date-picker inputs send
+// date-only strings ("2026-01-01") which the driver rejects, so we coerce them
+// to a full ISO-8601 datetime (UTC midnight) before saving.
+function toDateTime(value: unknown): string | undefined {
+  if (value == null || value === "") return undefined;
+  const raw = String(value);
+  // Already has a time component (full ISO-8601) or is a valid Date string.
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw) || !isNaN(Date.parse(raw))) {
+    return new Date(raw).toISOString();
+  }
+  // Date-only "YYYY-MM-DD".
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (m) {
+    return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).toISOString();
+  }
+  return undefined;
+}
+
 // Create a new application (or draft)
 router.post("/", async (req: Request, res: Response) => {
   try {
@@ -65,8 +84,8 @@ router.post("/", async (req: Request, res: Response) => {
       personalDetails: personalDetails ? {
         create: {
           fullName: (personalDetails as any).fullName,
-          bankRecordName: (personalDetails as any).nameBankRecord,
-          dateOfBirth: (personalDetails as any).dateOfBirth,
+          bankRecordName: (personalDetails as any).nameBankRecord ?? (personalDetails as any).bankRecordName,
+          dateOfBirth: toDateTime((personalDetails as any).dateOfBirth),
           gender: (personalDetails as any).gender,
           phone: (personalDetails as any).phone,
         }
@@ -249,12 +268,13 @@ router.patch("/:id", async (req: Request, res: Response) => {
 
     // Update personal details if provided
     if (personalDetails) {
+      const dob = toDateTime((personalDetails as any).dateOfBirth);
       await prisma.personalDetails.update({
         where: { applicationId: id },
         data: {
           fullName: (personalDetails as any).fullName,
-          bankRecordName: (personalDetails as any).nameBankRecord,
-          dateOfBirth: (personalDetails as any).dateOfBirth,
+          bankRecordName: (personalDetails as any).nameBankRecord ?? (personalDetails as any).bankRecordName,
+          ...(dob !== undefined ? { dateOfBirth: dob } : {}),
           gender: (personalDetails as any).gender,
           phone: (personalDetails as any).phone,
         },
