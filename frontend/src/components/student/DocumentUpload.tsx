@@ -277,7 +277,13 @@ export function DocumentUpload({
                       </div>
                     </div>
                   ) : (
-                    <label className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border bg-white dark:bg-[#131a2e] px-3 py-2 text-xs font-medium text-navy dark:text-white hover:border-navy/40 hover:bg-muted">
+                    <label
+                      className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white dark:bg-[#131a2e] px-3 py-2 text-xs font-medium text-navy dark:text-white hover:border-navy/40 hover:bg-muted"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        inputRefs.current[doc.key]?.click();
+                      }}
+                    >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
