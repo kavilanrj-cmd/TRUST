@@ -100,8 +100,7 @@ app.get("/api/application-fee", async (_req: Request, res: Response) => {
 // API routes
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/scholarships", scholarshipRoutes);
-app.use("/api/applications", authenticate, applicationRoutes);
-app.use("/api/documents", authenticate, documentRoutes);
+app.use("/api/applications", authenticate, applicationRoutes, documentRoutes);
 app.use("/api/payments", authenticate, paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
