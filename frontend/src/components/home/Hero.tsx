@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { useHomeContent } from "@/lib/home-content";
-import { useAuth } from "@/lib/auth";
 
 interface DeadlineConfig {
   deadline: string | null;
@@ -15,9 +14,7 @@ interface DeadlineConfig {
 
 export function Hero() {
   const { t } = useHomeContent();
-  const { user, isLoading } = useAuth();
   const [deadline, setDeadline] = useState<DeadlineConfig | null>(null);
-  const isLoggedIn = !isLoading && !!user;
   const isClosed = !!deadline?.deadline && deadline.closed;
 
   useEffect(() => {
@@ -77,10 +74,6 @@ export function Hero() {
               <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-navy-50 px-6 py-3 text-sm font-semibold text-muted-foreground">
                 Applications Closed
               </span>
-            ) : isLoggedIn ? (
-              <Link href="/student/dashboard" className="btn-gold">
-                {t("home.hero.loggedInButton", "My Dashboard")}
-              </Link>
             ) : (
               <Link href="/login" className="btn-gold">
                 {t("home.hero.loginCta", "Login to Apply")}
