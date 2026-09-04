@@ -77,7 +77,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Health check endpoint
-app.get("/health", (_req: Request, res: Response) => {
+app.get("/api/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
@@ -131,12 +131,12 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Backend running at http://localhost:${PORT}`);
-    console.log(`📍 Health check: http://localhost:${PORT}/health`);
+    console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
   });
 }
 
 // Bootstrap a founder account if no staff exists yet (from env).
 // Run this after database connection is established.
-bootstrapFounder();
+bootstrapFounder().catch(() => {});
 
 export { app };
