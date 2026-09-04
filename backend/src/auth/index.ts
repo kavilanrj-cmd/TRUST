@@ -8,7 +8,14 @@ import jwt from "jsonwebtoken";
 import { Resend } from "resend";
 import { STUDENT_COOKIE, cookieOptions, loadUser } from "../utils/auth";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend(): Resend | null {
+  if (_resend) return _resend;
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  _resend = new Resend(key);
+  return _resend;
+}
 
 const router = express.Router();
 
@@ -74,12 +81,15 @@ router.post("/register", async (req: Request, res: Response) => {
     });
 
     // Send verification email
-    await resend.emails.send({
-      from: SENDER,
-      to: email,
-      subject: "Verify your email - Neelakannu Educational Trust",
-      html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`
-    });
+    const client = getResend();
+    if (client) {
+      await client.emails.send({
+        from: SENDER,
+        to: email,
+        subject: "Verify your email - Neelakannu Educational Trust",
+        html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`
+      });
+    }
 
     // Generate JWT token
     const token = jwt.sign(
@@ -276,12 +286,15 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
     });
 
     // Send password reset email
-    await resend.emails.send({
-      from: SENDER,
-      to: email,
-      subject: "Reset your password - Neelakannu Educational Trust",
-      html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/reset-password?token=${resetToken}">here</a> to reset your password.</p>`
-    });
+    const resetClient = getResend();
+    if (resetClient) {
+      await resetClient.emails.send({
+        from: SENDER,
+        to: email,
+        subject: "Reset your password - Neelakannu Educational Trust",
+        html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/reset-password?token=${resetToken}">here</a> to reset your password.</p>`
+      });
+    }
 
     return res.json({
       message: "If an account with that email exists, a password reset link has been sent."

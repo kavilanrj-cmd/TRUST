@@ -5,8 +5,16 @@
 import { Resend } from "resend";
 import type { Response } from "express";
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY || "re_sk_test");
+// Initialize Resend lazily — avoids crashing the serverless function at module
+// load time when the env var is not yet available.
+let _resend: Resend | null = null;
+function getResend(): Resend | null {
+  if (_resend) return _resend;
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  _resend = new Resend(key);
+  return _resend;
+}
 
 // Email sender address
 const SENDER = "neelakannu@edu.trust";
@@ -174,7 +182,12 @@ export const sendEmail = async (type: EmailType, data: any): Promise<{ success: 
     };
 
     // Send via Resend
-    const { data: sendData, error: sendError } = await resend.emails.send({
+    const client = getResend();
+    if (!client) {
+      console.error("RESEND_API_KEY not configured — email not sent");
+      return { success: false, error: "Email service not configured" };
+    }
+    const { data: sendData, error: sendError } = await client.emails.send({
       from: SENDER,
       to: data.email,
       subject,

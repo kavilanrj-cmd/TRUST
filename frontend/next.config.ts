@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const API_TARGET =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === "production"
-    ? "https://trust-backend.vercel.app"
+    ? "https://trust-puce-zeta.vercel.app"
     : "http://localhost:5000");
 
 if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_API_URL) {

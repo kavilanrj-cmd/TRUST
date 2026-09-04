@@ -7,7 +7,9 @@ interface Scholarship {
   applicationDeadline: string | null;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production" ? "" : "http://localhost:5000");
 
 export default function ScholarshipDetailsPage() {
   return <ScholarshipDetailsContent />;
