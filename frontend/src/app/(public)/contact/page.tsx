@@ -30,6 +30,7 @@ export default function ContactPage() {
 
   const email = t("contact.email", "neelakannueducationaltrust@gmail.com");
   const phone = t("contact.phone", "94443 27336");
+  const phone2 = t("contact.phone2", "9790930494");
   const address = t(
     "contact.address",
     "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India"
@@ -173,6 +174,12 @@ export default function ContactPage() {
                       className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600"
                     >
                       {phone}
+                    </a>
+                    <a
+                      href={`tel:${phone2.replace(/\s/g, "")}`}
+                      className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600"
+                    >
+                      {phone2}
                     </a>
                   </div>
                 </div>

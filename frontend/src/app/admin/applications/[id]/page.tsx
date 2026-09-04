@@ -371,6 +371,7 @@ export default function ApplicationDetailPage() {
             <FieldRow label="Phone" value={pg?.contactNumber} />
             <FieldRow label="Occupation" value={pg?.occupation} />
             <FieldRow label="Single Parent" value={pg?.isSingleParent ? "Yes" : "No"} />
+            {pg?.isSingleParent && <FieldRow label="Single Parent Type" value={pg?.singleParentType} />}
             <FieldRow label="Income" value={pg?.income != null ? `₹${pg.income.toLocaleString()}` : undefined} />
           </Section>
 

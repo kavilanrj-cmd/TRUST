@@ -166,6 +166,7 @@ model ParentGuardian {
   occupation      String
   contactNumber   String
   isSingleParent  Boolean?
+  singleParentType String?
   income          Decimal?
 }
 

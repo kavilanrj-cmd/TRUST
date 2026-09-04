@@ -20,6 +20,44 @@ const STEPS = [
 
 type AcademicType = "" | "school" | "college";
 
+// Convert DD/MM/YYYY to YYYY-MM-DD for API
+function toApiDate(ddMmYyyy: string): string {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(ddMmYyyy.trim());
+  if (!m) return "";
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) return "";
+  const d = new Date(year, month - 1, day);
+  if (d.getDate() !== day || d.getMonth() !== month - 1 || d.getFullYear() !== year) return "";
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+// Convert YYYY-MM-DD (API) to DD/MM/YYYY for display
+function toDisplayDate(yyyyMmDd: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(yyyyMmDd || "");
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+// Validate DD/MM/YYYY format and return error message or null
+function validateDob(ddMmYyyy: string): string | null {
+  if (!ddMmYyyy.trim()) return "Please enter your date of birth.";
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(ddMmYyyy.trim())) return "Enter date in DD/MM/YYYY format.";
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(ddMmYyyy.trim());
+  if (!m) return "Enter date in DD/MM/YYYY format.";
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  if (year < 1900 || year > currentYear) return "Enter a valid year between 1900 and " + currentYear + ".";
+  const d = new Date(year, month - 1, day);
+  if (d.getDate() !== day || d.getMonth() !== month - 1 || d.getFullYear() !== year) return "Invalid date (e.g., 31/02/2000).";
+  if (d > today) return "Date of birth cannot be in the future.";
+  return null;
+}
+
 type FormData = {
   certificateName: string;
   bankRecordName: string;
@@ -37,6 +75,7 @@ type FormData = {
   occupation: string;
   contactNumber: string;
   isSingleParent: boolean;
+  singleParentType: string;
   academicType: AcademicType;
   schoolName: string;
   className: string;
@@ -67,6 +106,7 @@ const EMPTY_FORM: FormData = {
   occupation: "",
   contactNumber: "",
   isSingleParent: false,
+  singleParentType: "",
   academicType: "",
   schoolName: "",
   className: "",
@@ -194,7 +234,7 @@ export function ApplicationForm() {
             ...f,
             certificateName: pd.fullName || "",
             bankRecordName: pd.bankRecordName || "",
-            dateOfBirth: pd.dateOfBirth ? String(pd.dateOfBirth).slice(0, 10) : "",
+            dateOfBirth: pd.dateOfBirth ? toDisplayDate(String(pd.dateOfBirth)) : "",
             gender: pd.gender || "",
             phone: pd.phone || "",
             doorNumber: ad.doorNumber || "",
@@ -208,6 +248,7 @@ export function ApplicationForm() {
             occupation: pg.occupation || "",
             contactNumber: pg.contactNumber || "",
             isSingleParent: pg.isSingleParent || false,
+            singleParentType: (pg as any).singleParentType || "",
             collegeName: ac.schoolCollege || "",
             schoolName: ac.schoolCollege || "",
             className: ac.className || "",
@@ -267,7 +308,8 @@ export function ApplicationForm() {
     const e: Errors = {};
     if (step === 0) {
       if (!data.certificateName.trim()) e.certificateName = "Please enter your name (as per the certificate).";
-      if (!data.dateOfBirth) e.dateOfBirth = "Please enter your date of birth.";
+      const dobErr = validateDob(data.dateOfBirth);
+      if (dobErr) e.dateOfBirth = dobErr;
       if (!data.gender) e.gender = "Please select your gender.";
       if (!data.phone.trim()) e.phone = "Please enter your phone number.";
       else if (!PHONE_RX.test(data.phone.trim())) e.phone = "Please enter a valid 10-digit mobile number.";
@@ -295,6 +337,7 @@ export function ApplicationForm() {
     if (step === 3) {
       if (!data.guardianName.trim()) e.guardianName = "Please enter your parent/guardian name.";
       if (!data.relationship) e.relationship = "Please select the relationship.";
+      if (data.isSingleParent && !data.singleParentType) e.singleParentType = "Please select Father or Mother.";
       if (!data.familyIncome.trim()) e.familyIncome = "Please enter the family annual income.";
       else if (Number(data.familyIncome) < 0) e.familyIncome = "Family annual income cannot be negative.";
       if (!data.incomeSource) e.incomeSource = "Please select the income source.";
@@ -343,7 +386,7 @@ export function ApplicationForm() {
         personalDetails: {
           fullName: form.certificateName,
           bankRecordName: form.bankRecordName,
-          dateOfBirth: form.dateOfBirth,
+          dateOfBirth: toApiDate(form.dateOfBirth),
           gender: form.gender,
           phone: form.phone,
         },
@@ -361,6 +404,7 @@ export function ApplicationForm() {
           occupation: form.occupation,
           contactNumber: form.contactNumber,
           isSingleParent: form.isSingleParent,
+          singleParentType: form.isSingleParent ? form.singleParentType : "",
         },
         academicDetails: buildAcademicPayload(form),
         financialDetails: {
@@ -752,10 +796,13 @@ export function ApplicationForm() {
                 <label htmlFor="dateOfBirth" className="field-label">Date of Birth *</label>
                 <input
                   id="dateOfBirth"
-                  type="date"
+                  type="text"
+                  placeholder="DD/MM/YYYY"
                   className="field-input"
                   value={form.dateOfBirth}
                   onChange={(e) => set("dateOfBirth", e.target.value)}
+                  maxLength={10}
+                  inputMode="numeric"
                 />
                 {errors.dateOfBirth && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.dateOfBirth}</p>}
               </div>
@@ -1034,6 +1081,35 @@ export function ApplicationForm() {
                   </label>
                 </div>
               </div>
+
+              {form.isSingleParent && (
+                <div className="md:col-span-2">
+                  <span className="field-label">Single Parent Type</span>
+                  <div className="flex flex-wrap gap-4" role="radiogroup" aria-label="Single Parent Type">
+                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.singleParentType === "Father" ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
+                      <input
+                        type="radio"
+                        name="singleParentType"
+                        className="h-4 w-4 accent-navy"
+                        checked={form.singleParentType === "Father"}
+                        onChange={() => set("singleParentType", "Father")}
+                      />
+                      Father
+                    </label>
+                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.singleParentType === "Mother" ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
+                      <input
+                        type="radio"
+                        name="singleParentType"
+                        className="h-4 w-4 accent-navy"
+                        checked={form.singleParentType === "Mother"}
+                        onChange={() => set("singleParentType", "Mother")}
+                      />
+                      Mother
+                    </label>
+                  </div>
+                  {errors.singleParentType && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.singleParentType}</p>}
+                </div>
+              )}
               <div>
                 <label htmlFor="guardianName" className="field-label">Parent/Guardian Name *</label>
                 <input
@@ -1312,6 +1388,7 @@ export function ApplicationForm() {
                 </ReviewBlock>
                 <ReviewBlock title="Family & Financial Information">
                   <ReviewRow label="Single Parent" value={form.isSingleParent ? "Yes" : "No"} />
+                  {form.isSingleParent && <ReviewRow label="Single Parent Type" value={form.singleParentType} />}
                   <ReviewRow label="Parent/Guardian" value={form.guardianName} />
                   <ReviewRow label="Relationship" value={form.relationship} />
                   <ReviewRow label="Family Annual Income" value={form.familyIncome ? `₹${Number(form.familyIncome).toLocaleString("en-IN")}` : ""} />

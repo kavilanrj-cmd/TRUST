@@ -177,7 +177,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   // Founder
   "about.founderTitle": "Founder",
   "about.founder":
-    "Prof. Dr. K. Chidambaram\nME., Ph. D.\nFounder and Settlor\nNeelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
+    "Prof. Dr. K. Chidambaram M.E., Ph.D.\nME., Ph. D.\nFounder and Settlor\nNeelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
   "about.founder.subheading": "Founder and Settlor",
   "about.founder.para1":
     "Neelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.",
@@ -226,6 +226,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "contact.email": "neelakannueducationaltrust@gmail.com",
   "contact.phoneLabel": "Phone",
   "contact.phone": "94443 27336",
+  "contact.phone2": "9790930494",
   "contact.messageTitle": "Send Us a Message",
 };
 

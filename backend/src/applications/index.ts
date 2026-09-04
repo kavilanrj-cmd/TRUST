@@ -151,6 +151,7 @@ router.post("/", async (req: Request, res: Response) => {
           occupation: strOr((parentGuardian as any).occupation),
           contactNumber: strOr((parentGuardian as any).contactNumber),
           isSingleParent: (parentGuardian as any).isSingleParent ?? false,
+          singleParentType: (parentGuardian as any).singleParentType || null,
           income: (parentGuardian as any).income != null ? numOr((parentGuardian as any).income) : undefined,
         }
       } : undefined,
@@ -383,6 +384,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
           occupation: (parentGuardian as any).occupation,
           contactNumber: (parentGuardian as any).contactNumber,
           isSingleParent: (parentGuardian as any).isSingleParent,
+          singleParentType: (parentGuardian as any).singleParentType || null,
           income: (parentGuardian as any).income,
         },
       });

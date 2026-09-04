@@ -46,7 +46,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-semibold mb-4 dark:text-white">{t("about.founderTitle", "Founder")}</h2>
           <div className="text-muted-foreground mb-4">
             <p className="font-serif text-xl font-bold leading-tight">
-              {t("about.founder", "Prof. Dr. K. Chidambaram")}
+              {t("about.founder", "Prof. Dr. K. Chidambaram M.E., Ph.D.")}
             </p>
             <p className="text-sm font-medium tracking-wider dark:text-gold">
               {t("about.founder.subheading", "Founder and Settlor")}
