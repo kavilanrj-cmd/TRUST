@@ -1,5 +1,4 @@
 import { Hero } from "@/components/home/Hero";
-import { ApplicationDeadline } from "@/components/home/ApplicationDeadline";
 import { TrustImpact } from "@/components/home/TrustImpact";
 import { About } from "@/components/home/About";
 import { WhatWeDo } from "@/components/home/WhatWeDo";
@@ -21,7 +20,6 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <ApplicationDeadline />
       <TrustImpact />
       <About />
       <WhatWeDo />

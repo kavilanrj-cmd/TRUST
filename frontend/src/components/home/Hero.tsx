@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { useHomeContent } from "@/lib/home-content";
+import { ApplicationDeadline } from "./ApplicationDeadline";
 
 interface DeadlineConfig {
   deadline: string | null;
@@ -89,6 +90,8 @@ export function Hero() {
               Applications Closed. The last date to apply was {deadline.formatted}.
             </p>
           )}
+
+          <ApplicationDeadline />
         </div>
 
         {/* Right visual */}
