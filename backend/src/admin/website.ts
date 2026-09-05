@@ -59,6 +59,9 @@ export async function seedSiteContentIfNeeded(): Promise<void> {
 
 // Build the published content map (value or default), merging with registry.
 export async function getPublishedContentMap(): Promise<Record<string, string>> {
+  // Ensure site content is seeded/updated before reading
+  await seedSiteContentIfNeeded();
+
   const rows = await prisma.siteContent.findMany({ select: { key: true, value: true } });
   const map: Record<string, string> = {};
   for (const r of rows) map[r.key] = r.value ?? defaultValueFor(r.key);
