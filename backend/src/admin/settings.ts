@@ -1,5 +1,6 @@
 // Website settings management: safe configurable values only.
 import { Router, Request, Response } from "express";
+import fs from "fs";
 import prisma from "../utils/db";
 import { authenticate, requirePermission } from "../utils/auth";
 import { PERMISSIONS } from "../utils/roles";
@@ -116,10 +117,15 @@ router.post(
       if (!file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
+      // imageUpload uses multer disk-storage, so the bytes live at file.path
+      // (file.buffer is undefined for disk storage). Read them into memory so
+      // they can be persisted via saveDocumentBuffer to S3/local storage.
+      const buffer = fs.readFileSync(file.path);
       const { storageKey, storageProvider } = await saveDocumentBuffer(
-        file.buffer,
+        buffer,
         file.mimetype,
-        getDocumentBucket()
+        getDocumentBucket(),
+        "upi-qr"
       );
 
       const mime = file.mimetype;

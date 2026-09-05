@@ -11,6 +11,7 @@ interface NavItem {
   label: string;
   icon: string;
   founderOnly?: boolean;
+  founderOrAdmin?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -27,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/notifications", label: "Notifications", icon: "bell" },
   { href: "/admin/users", label: "Staff", icon: "users", founderOnly: true },
   { href: "/admin/audit", label: "Audit Logs", icon: "list" },
-  { href: "/admin/settings", label: "Settings", icon: "settings", founderOnly: true },
+  { href: "/admin/settings", label: "Settings", icon: "settings", founderOrAdmin: true },
 ];
 
 const ICONS: Record<string, React.ReactNode> = {
@@ -182,7 +183,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const visibleNav = NAV_ITEMS.filter((n) => !n.founderOnly || user.role === "FOUNDER");
+  const visibleNav = NAV_ITEMS.filter((n) =>
+    n.founderOnly
+      ? user.role === "FOUNDER"
+      : n.founderOrAdmin
+        ? user.role === "FOUNDER" || user.role === "ADMIN"
+        : true
+  );
 
   const initials = (user.name || user.email || "U")
     .split(/\s+/)

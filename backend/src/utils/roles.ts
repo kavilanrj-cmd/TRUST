@@ -77,6 +77,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     PERMISSIONS.website_preview,
     PERMISSIONS.website_history,
     PERMISSIONS.media_manage,
+    PERMISSIONS.settings_manage,
     PERMISSIONS.audit_view,
     PERMISSIONS.notifications_view,
     PERMISSIONS.contact_manage,
@@ -88,7 +89,6 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
 // sensitive ones are reserved for founder).
 export const FOUNDER_ONLY_PERMISSIONS: Permission[] = [
   PERMISSIONS.website_publish,
-  PERMISSIONS.settings_manage,
   PERMISSIONS.users_manage,
 ];
 

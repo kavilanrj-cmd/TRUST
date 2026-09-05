@@ -132,9 +132,13 @@ export default function AdminSettingsPage() {
       const fd = new FormData();
       fd.append("qr", file);
       await adminApi.settings.uploadUpiQr(fd);
-      setQrMsg("QR code uploaded. Students will now see this QR code on the payment step.");
-      const rows = (await adminApi.settings.list()).settings || [];
-      setSettings(rows);
+      setQrMsg("QR code uploaded successfully. Students will now see this QR code on the payment step.");
+      try {
+        const rows = (await adminApi.settings.list()).settings || [];
+        setSettings(rows);
+      } catch {
+        // Refresh of the settings list is best-effort; the upload itself succeeded.
+      }
     } catch (err: any) {
       setQrErr(err.message || "Upload failed");
     } finally {
@@ -197,15 +201,20 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && (
         <div className="mb-6">
           <Card
             actions={
-              <Button variant="gold" disabled={saving} onClick={handleSave}>
+              <Button variant="gold" disabled={saving || !!error} onClick={handleSave}>
                 {saving ? "Saving…" : "Save Payment Settings"}
               </Button>
             }
           >
+            {error && (
+              <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+                Could not load current settings ({error}). You can still upload a new QR code below.
+              </div>
+            )}
             <div className="mb-3">
               <h3 className="text-base font-semibold text-navy dark:text-white">Payment Settings (UPI)</h3>
               <p className="mt-1 text-sm text-muted-foreground">
