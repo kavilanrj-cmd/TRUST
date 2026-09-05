@@ -125,13 +125,41 @@ router.post("/login", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
+    // TEST MODE flag (defaults to disabled). Only an explicit "true" value
+    // enables auto-creation of test applicant accounts, so deployed
+    // environments without the variable keep the normal "Invalid email or
+    // password" behavior.
+    const testApplicantLoginEnabled = process.env.ALLOW_TEST_APPLICANT_LOGIN === "true";
+
     // Find user
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email }
     });
 
+    let testAccountCreated = false;
+
     if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      // TEST MODE (disabled by default): a login with a NON-EXISTENT email
+      // only auto-creates an isolated STUDENT test account when
+      // ALLOW_TEST_APPLICANT_LOGIN is exactly "true". This is purely for QA
+      // testing. Existing accounts always fall through to the normal password
+      // check below, and privileged roles can never be created through this
+      // path (new accounts are always role=STUDENT).
+      if (!testApplicantLoginEnabled) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      const testPasswordHash = await bcrypt.hash(password, 10);
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: "Test Applicant",
+          password: testPasswordHash,
+          role: "STUDENT",
+        },
+      });
+      testAccountCreated = true;
+      console.log(`TEST MODE: created test applicant account for ${email}`);
     }
 
     // Check if password is correct
@@ -157,8 +185,10 @@ router.post("/login", async (req: Request, res: Response) => {
 
     res.cookie(STUDENT_COOKIE, token, cookieOptions(process.env.NODE_ENV === "production"));
 
-    return res.json({
-      message: "Login successful",
+    return res.status(testAccountCreated ? 201 : 200).json({
+      message: testAccountCreated
+        ? "Temporary test applicant account created and signed in"
+        : "Login successful",
       token,
       refreshToken,
       user: {
