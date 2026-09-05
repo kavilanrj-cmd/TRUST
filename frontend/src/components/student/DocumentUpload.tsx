@@ -16,6 +16,7 @@ const REQUIRED_DOCUMENTS = [
   { key: "bankPassbook", label: "Bank Passbook (Student Account)", desc: "Upload a copy of your bank passbook" },
   { key: "disability", label: "Disability Certificate", desc: "Upload a disability certificate if applicable" },
   { key: "sports", label: "Sports Certificate", desc: "Upload a sports certificate if applicable" },
+  { key: "deathCertificate", label: "Death Certificate of Parent", desc: "Upload the death certificate of the parent" },
 ];
 
 const ALLOWED_TYPES = [
@@ -65,14 +66,17 @@ const ICONS: Record<string, string> = {
   bankPassbook: "🏦",
   disability: "♿",
   sports: "🏆",
+  deathCertificate: "📜",
 };
 
 export function DocumentUpload({
   applicationId,
   onCountChange,
+  isSingleParent = false,
 }: {
   applicationId: string | null;
   onCountChange?: (count: number) => void;
+  isSingleParent?: boolean;
 }) {
   const [files, setFiles] = useState<Record<string, DocState | null>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -189,6 +193,11 @@ export function DocumentUpload({
     [files]
   );
 
+  const filteredDocuments = useMemo(
+    () => isSingleParent ? REQUIRED_DOCUMENTS : REQUIRED_DOCUMENTS.filter((d) => d.key !== "deathCertificate"),
+    [isSingleParent]
+  );
+
   return (
     <div>
       <div className="mb-5 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
@@ -200,7 +209,7 @@ export function DocumentUpload({
         </div>
         <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold-soft px-3 py-1 text-xs font-semibold text-navy-800">
           <span aria-hidden="true">📄</span>
-          {uploadedCount} of {REQUIRED_DOCUMENTS.length} uploaded
+          {uploadedCount} of {filteredDocuments.length} uploaded
         </span>
       </div>
 
@@ -209,7 +218,7 @@ export function DocumentUpload({
       </p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {REQUIRED_DOCUMENTS.map((doc) => {
+        {filteredDocuments.map((doc) => {
           const file = files[doc.key];
           const error = errors[doc.key];
           return (

@@ -1166,7 +1166,7 @@ export function ApplicationForm() {
           )}
 
           <div className={currentStep === 4 ? "" : "hidden"}>
-            <DocumentUpload applicationId={applicationId} onCountChange={setDocCount} />
+            <DocumentUpload applicationId={applicationId} onCountChange={setDocCount} isSingleParent={form.isSingleParent} />
           </div>
 
           {currentStep === 6 && (

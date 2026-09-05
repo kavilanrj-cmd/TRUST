@@ -25,7 +25,7 @@ const TRANSITIONS: Record<string, string[]> = {
 
 const DOC_STATUSES = ["VERIFIED", "REJECTED", "RE_UPLOAD_REQUESTED", "PENDING"];
 
-// The exact 12 required scholarship documents (order preserved from the app form).
+// The exact 13 required scholarship documents (order preserved from the app form).
 const REQUIRED_DOCUMENTS = [
   { key: "sslc", label: "SSLC" },
   { key: "hsc", label: "HSC" },
@@ -39,6 +39,7 @@ const REQUIRED_DOCUMENTS = [
   { key: "bankPassbook", label: "Bank Passbook (Student Account)" },
   { key: "disability", label: "Disability Certificate" },
   { key: "sports", label: "Sports Certificate" },
+  { key: "deathCertificate", label: "Death Certificate of Parent" },
 ];
 
 // Rejection reason options shown in the reject dialog.

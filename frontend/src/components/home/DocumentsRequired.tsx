@@ -15,6 +15,7 @@ const DOCUMENTS = [
   "Bank Passbook (Student Account)",
   "Disability Certificate",
   "Sports Certificate",
+  "Death Certificate of Parent",
 ];
 
 export function DocumentsRequired() {

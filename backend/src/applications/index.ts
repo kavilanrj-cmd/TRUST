@@ -23,6 +23,7 @@ export const REQUIRED_DOCUMENTS: Array<{ key: string; label: string }> = [
   { key: "bankPassbook", label: "Bank Passbook (Student Account)" },
   { key: "disability", label: "Disability Certificate" },
   { key: "sports", label: "Sports Certificate" },
+  { key: "deathCertificate", label: "Death Certificate of Parent" },
 ];
 
 // Normalize a client-supplied date (YYYY-MM-DD or full ISO string, or empty)
@@ -508,6 +509,17 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
 
     if (documentCount === 0) {
       return res.status(400).json({ error: "At least one required document must be uploaded before submitting" });
+    }
+
+    // Check for Death Certificate of Parent when Single Parent = Yes
+    const isSingleParent = application.parentGuardian?.isSingleParent;
+    if (isSingleParent) {
+      const deathCertificateExists = await prisma.applicationDocument.findFirst({
+        where: { applicationId: application.id, documentType: "deathCertificate" },
+      });
+      if (!deathCertificateExists) {
+        return res.status(400).json({ error: "Death Certificate of Parent is required for single parent applicants" });
+      }
     }
 
     // Generate/application ID (ensure unique)
