@@ -20,28 +20,6 @@ export default function AboutPage() {
           </p>
         </header>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">{t("about.registeredOfficeTitle", "Registered Office")}</h2>
-            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-              {t(
-                "about.address",
-                "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India"
-              )}
-            </p>
-          </div>
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">{t("about.contactTitle", "Contact Information")}</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              <a href={`mailto:${t("about.email", "neelakannueducationaltrust@gmail.com")}`} className="hover:text-primary">
-                {t("about.email", "neelakannueducationaltrust@gmail.com")}
-              </a>
-              <br/>
-              <span className="whitespace-pre-line">{t("about.phone", "94443 27336\n9790930494")}</span>
-            </p>
-          </div>
-        </div>
-
         <div className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 dark:text-white">{t("about.founderTitle", "Founder")}</h2>
           <div className="text-muted-foreground mb-4">
