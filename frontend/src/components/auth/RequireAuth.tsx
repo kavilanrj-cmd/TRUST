@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, refresh } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -24,9 +24,13 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Don't render children if not authenticated
+  // Redirecting to login if not authenticated
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-surface-muted flex items-center justify-center">
+        <p className="text-muted-foreground">Redirecting to login…</p>
+      </div>
+    );
   }
 
   return <>{children}</>;
