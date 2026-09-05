@@ -178,13 +178,13 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
 
   // ---- About page ----
   def("about.eyebrow", "about", "about", "text", "About Page · Eyebrow", "About Us", { maxLength: 80 }),
-  def("about.title", "about", "about", "text", "About Page · Title", "About Neelakannu Educational Trust", { maxLength: 120 }),
+  def("about.title", "about", "about", "text", "About Page · Title", "Neelakannu Educational Trust", { maxLength: 120 }),
   def("about.intro", "about", "about", "textarea", "About Page · Intro", "Established on 14th November 2018, Neelakannu Educational Trust is a charitable organization dedicated to empowering students through education and scholarship opportunities.", { maxLength: 500 }),
   def("about.registeredOfficeTitle", "about", "about", "text", "About Page · Registered Office Title", "Registered Office", { maxLength: 60 }),
   def("about.address", "about", "about", "textarea", "About Page · Address", "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India", { maxLength: 300 }),
   def("about.contactTitle", "about", "about", "text", "About Page · Contact Title", "Contact Information", { maxLength: 60 }),
   def("about.email", "about", "about", "text", "About Page · Email", "neelakannueducationaltrust@gmail.com", { maxLength: 120 }),
-  def("about.phone", "about", "about", "text", "About Page · Phone", "94443 27336", { maxLength: 40 }),
+  def("about.phone", "about", "about", "text", "About Page · Phone", "94443 27336\n9790930494", { maxLength: 80 }),
   def("about.founderTitle", "about", "about", "text", "About Page · Founder Title", "Founder", { maxLength: 60 }),
   def("about.founder", "about", "about", "text", "About Page · Founder", "Prof. Dr. K. Chidambaram", { maxLength: 120 }),
   def("about.missionTitle", "about", "about", "text", "About Page · Mission Title", "Our Mission", { maxLength: 60 }),
