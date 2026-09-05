@@ -315,10 +315,14 @@ export default function ApplicationDetailPage() {
     if (paymentLoading) return;
     const note = window.prompt("Reason for rejecting this payment verification:", "");
     if (note === null) return;
+    if (!note.trim()) {
+      setPaymentMsg("A rejection reason is required to reject the payment.");
+      return;
+    }
     setPaymentLoading(true);
     setPaymentMsg("");
     try {
-      await adminApi.payments.reject(paymentId, note.trim() || "Payment not verified");
+      await adminApi.payments.reject(paymentId, note.trim());
       setPaymentMsg("Payment verification rejected. The student will be asked to resubmit.");
       fetchDetail();
     } catch (e: any) {
@@ -342,6 +346,18 @@ export default function ApplicationDetailPage() {
   const docs = app.applicationDocuments || [];
   const notes = app.notes || [];
   const payments = app.payments || [];
+  const latestPayment = [...payments].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
+  const paymentStatusLabel: Record<string, string> = {
+    PENDING_VERIFICATION: "Awaiting Verification",
+    VERIFIED: "Verified",
+    REJECTED: "Rejected",
+    SUCCESS: "Verified",
+    FAILED: "Failed",
+    PENDING: "Pending",
+    REFUNDED: "Refunded",
+    NO_PAYMENT: "No Payment",
+  };
+  const paymentMethodLabel = (latestPayment?.paymentMethod || "MANUAL_UPI") === "RAZORPAY" ? "Razorpay" : "Manual UPI";
 
   const uploadedDocKeys = new Set(docs.map((d: any) => d.documentType).filter(Boolean));
   const requiredChecklist = (isNoParents ? REQUIRED_DOCUMENTS.filter((d) => d.key !== "income") : REQUIRED_DOCUMENTS).map((d) => ({
@@ -462,57 +478,124 @@ export default function ApplicationDetailPage() {
             <FieldRow label="Documents Count" value={app._count?.applicationDocuments} />
           </Section>
 
-          {payments.length > 0 && (
-            <Section title="Payments">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
-                      <th className="pb-2 pr-4 font-semibold">Amount</th>
-                      <th className="pb-2 pr-4 font-semibold">Status</th>
-                      <th className="pb-2 pr-4 font-semibold">Transaction Ref / UTR</th>
-                      <th className="pb-2 pr-4 font-semibold">Method</th>
-                      <th className="pb-2 pr-4 font-semibold">Date</th>
-                      <th className="pb-2 font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((p: any) => (
-                      <tr key={p.id} className="border-b border-border last:border-0">
-                        <td className="py-2 pr-4">₹{p.amount?.toLocaleString()}</td>
-                        <td className="py-2 pr-4"><Badge className={statusColor(p.status)}>{p.status.replace(/_/g, " ")}</Badge></td>
-                        <td className="py-2 pr-4 font-mono text-xs">{p.razorpayPaymentId || "—"}</td>
-                        <td className="py-2 pr-4 text-xs">{(p.paymentMethod || "MANUAL_UPI").replace(/_/g, " ")}</td>
-                        <td className="py-2 pr-4">{fmtDate(p.paymentDate || p.createdAt)}</td>
-                        <td className="py-2">
-                          {p.status === "PENDING_VERIFICATION" ? (
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                disabled={paymentLoading}
-                                onClick={() => handleVerifyPayment(p.id)}
-                                className="rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-                              >
-                                Verify
-                              </button>
-                              <button
-                                type="button"
-                                disabled={paymentLoading}
-                                onClick={() => handleRejectPayment(p.id)}
-                                className="rounded-md bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {payments.length > 0 && latestPayment && (
+            <Section title="Payment Information">
+              <div className="mb-4 rounded-lg border border-border bg-white p-4 dark:bg-[#0f1526]">
+                <div className="flex flex-col gap-2">
+                  <h4 className="text-sm font-bold uppercase tracking-wide text-navy dark:text-white">Payment Information</h4>
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                      <span className="min-w-[200px] text-xs font-medium text-muted-foreground">Application Fee</span>
+                      <span className="font-semibold text-navy dark:text-white">₹{Number(latestPayment.amount || 0).toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                      <span className="min-w-[200px] text-xs font-medium text-muted-foreground">Payment Method</span>
+                      <span className="text-navy dark:text-white">{paymentMethodLabel}</span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
+                      <span className="shrink-0 min-w-[200px] text-xs font-medium text-muted-foreground">Transaction ID / UTR</span>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="break-all font-mono text-sm leading-snug text-navy dark:text-white">{latestPayment.razorpayPaymentId || "—"}</span>
+                        {latestPayment.razorpayPaymentId && (
+                          <button
+                            type="button"
+                            onClick={() => navigator.clipboard?.writeText(latestPayment.razorpayPaymentId)}
+                            className="rounded-md border border-border px-2 py-0.5 text-xs font-semibold text-navy hover:bg-gold-soft dark:text-gold dark:hover:bg-white/10"
+                          >
+                            Copy
+                          </button>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                      <span className="min-w-[200px] text-xs font-medium text-muted-foreground">Payment Status</span>
+                      <Badge className={statusColor(latestPayment.status)}>{paymentStatusLabel[latestPayment.status] || latestPayment.status.replace(/_/g, " ")}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                      <span className="min-w-[200px] text-xs font-medium text-muted-foreground">Submitted</span>
+                      <span className="text-navy dark:text-white">{fmtDateTime(latestPayment.paymentDate || latestPayment.createdAt || app.submittedAt)}</span>
+                    </div>
+                  </div>
+
+                  {latestPayment.status === "PENDING_VERIFICATION" && (
+                    <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+                      <button
+                        type="button"
+                        disabled={paymentLoading}
+                        onClick={() => handleVerifyPayment(latestPayment.id)}
+                        className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                      >
+                        Verify Payment
+                      </button>
+                      <button
+                        type="button"
+                        disabled={paymentLoading}
+                        onClick={() => handleRejectPayment(latestPayment.id)}
+                        className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                      >
+                        Reject Payment
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {paymentMsg && <p className="mb-3 text-xs text-navy dark:text-gold">{paymentMsg}</p>}
+
+              {payments.length > 1 && (
+                <div className="mb-4">
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Payment History</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                          <th className="pb-2 pr-4 font-semibold">Amount</th>
+                          <th className="pb-2 pr-4 font-semibold">Status</th>
+                          <th className="pb-2 pr-4 font-semibold">Transaction ID / UTR</th>
+                          <th className="pb-2 pr-4 font-semibold">Method</th>
+                          <th className="pb-2 pr-4 font-semibold">Date</th>
+                          <th className="pb-2 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payments.map((p: any) => (
+                          <tr key={p.id} className="border-b border-border last:border-0">
+                            <td className="py-2 pr-4">₹{p.amount?.toLocaleString()}</td>
+                            <td className="py-2 pr-4"><Badge className={statusColor(p.status)}>{paymentStatusLabel[p.status] || p.status.replace(/_/g, " ")}</Badge></td>
+                            <td className="py-2 pr-4 break-all font-mono text-xs">{p.razorpayPaymentId || "—"}</td>
+                            <td className="py-2 pr-4 text-xs">{(p.paymentMethod || "MANUAL_UPI") === "RAZORPAY" ? "Razorpay" : "Manual UPI"}</td>
+                            <td className="py-2 pr-4">{fmtDate(p.paymentDate || p.createdAt)}</td>
+                            <td className="py-2">
+                              {p.status === "PENDING_VERIFICATION" ? (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={paymentLoading}
+                                    onClick={() => handleVerifyPayment(p.id)}
+                                    className="rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                                  >
+                                    Verify
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={paymentLoading}
+                                    onClick={() => handleRejectPayment(p.id)}
+                                    className="rounded-md bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
               {payments.some((p: any) => p.status === "REJECTED" && !!p.verificationNote) && (
                 <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-500/20 dark:bg-red-500/10">
@@ -531,8 +614,6 @@ export default function ApplicationDetailPage() {
                   </span>
                 </div>
               )}
-
-              {paymentMsg && <p className="mt-3 text-xs text-navy dark:text-gold">{paymentMsg}</p>}
             </Section>
           )}
 

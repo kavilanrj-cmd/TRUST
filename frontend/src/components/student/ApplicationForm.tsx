@@ -659,6 +659,9 @@ export function ApplicationForm() {
   const [upiTxnId, setUpiTxnId] = useState("");
 
 
+  const [txnError, setTxnError] = useState<string | null>(null);
+
+
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
 
 
@@ -1639,6 +1642,8 @@ export function ApplicationForm() {
         setPaymentNotice({ type: "error", text: "Please enter the UPI transaction reference (UTR) shown in your payment app before submitting your application." });
 
 
+        setTxnError("Transaction ID / UTR is required. Enter the ID shown in your UPI payment receipt.");
+
         document.getElementById("upi-txn-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
 
 
@@ -1653,6 +1658,8 @@ export function ApplicationForm() {
 
         setPaymentNotice({ type: "error", text: "The UPI transaction reference (UTR) you entered does not look valid. Please check and try again." });
 
+
+        setTxnError("This transaction ID does not look valid. Please check and try again.");
 
         document.getElementById("upi-txn-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
 
@@ -1682,6 +1689,9 @@ export function ApplicationForm() {
 
 
     setPaymentNotice(null);
+
+
+    setTxnError(null);
 
 
     setSubmitting(true);
@@ -1900,7 +1910,7 @@ export function ApplicationForm() {
                   </svg>
 
 
-                  Awaiting Verification
+                  Payment Verification Pending
 
 
                 </span>
@@ -1939,7 +1949,7 @@ export function ApplicationForm() {
               <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
 
 
-                <span className="text-sm text-muted-foreground">UPI Transaction Ref</span>
+                <span className="text-sm text-muted-foreground">Transaction ID / UTR</span>
 
 
                 <span className="font-mono text-sm font-medium text-navy dark:text-white">{submittedPayment?.txnId || paymentRef?.txnId}</span>
@@ -1975,7 +1985,7 @@ export function ApplicationForm() {
               <p className="border-t border-border pt-3 text-sm text-muted-foreground">
 
 
-                Our team will verify your payment. You will be notified once it is confirmed.
+                Your transaction ID has been submitted and is awaiting verification by the Trust.
 
 
               </p>
@@ -3726,10 +3736,8 @@ export function ApplicationForm() {
 
 
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
+<path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
 
-
-
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
 
 
 
@@ -3737,7 +3745,9 @@ export function ApplicationForm() {
 
 
 
+
                       Awaiting Verification
+
 
 
 
@@ -4063,7 +4073,9 @@ export function ApplicationForm() {
 
 
 
-                          <span className="field-label">UPI Transaction Reference (UTR)</span>
+                          <span className="field-label">
+                            Transaction ID / UTR <span className="text-destructive">*</span>
+                          </span>
 
 
 
@@ -4083,7 +4095,7 @@ export function ApplicationForm() {
 
 
 
-                            placeholder="e.g. 4152XXXXXXXX"
+                            placeholder="Enter your UPI Transaction ID / UTR"
 
 
 
@@ -4091,11 +4103,26 @@ export function ApplicationForm() {
 
 
 
-                            onChange={(e) => setUpiTxnId(e.target.value)}
+                            onChange={(e) => {
+                              setUpiTxnId(e.target.value);
+                              setTxnError(null);
+                            }}
 
 
 
                           />
+
+
+
+                          {txnError && (
+                            <p className="mt-1 text-sm font-medium text-destructive" id="upi-txn-error">{txnError}</p>
+                          )}
+
+
+
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Enter the Transaction ID / UTR shown in your UPI payment receipt.
+                          </p>
 
 
 
@@ -4135,7 +4162,7 @@ export function ApplicationForm() {
 
 
 
-                            I confirm that I have completed the payment of <strong>₹{Number(fee.amount).toLocaleString("en-IN")}</strong> and that the transaction reference above is correct.
+                            I confirm that I have completed the payment.
 
 
 
@@ -4243,7 +4270,7 @@ export function ApplicationForm() {
 
 
 
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">UPI Transaction Ref</p>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Transaction ID / UTR</p>
 
 
 

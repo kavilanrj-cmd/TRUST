@@ -115,7 +115,7 @@ router.get(
 
       const header = [
         "Application ID", "Applicant Name", "Email", "Amount", "Currency",
-        "Razorpay Order ID", "Razorpay Payment ID", "Status", "Payment Date", "Created At",
+        "Order Ref", "Transaction ID / UTR", "Status", "Payment Date", "Created At",
       ].join(",");
       const rows = payments.map((p: any) =>
         [
@@ -201,13 +201,18 @@ router.post(
         return res.status(404).json({ error: "Payment not found" });
       }
 
+      const reason = typeof note === "string" ? String(note).trim() : "";
+      if (!reason) {
+        return res.status(400).json({ error: "A rejection reason is required" });
+      }
+
       const updated = await prisma.payment.update({
         where: { id },
         data: {
           status: "REJECTED",
           verifiedById: authUser?.id || payment.verifiedById,
           verifiedAt: new Date(),
-          verificationNote: typeof note === "string" && note.trim() ? String(note).trim() : null,
+          verificationNote: reason,
         },
       });
 

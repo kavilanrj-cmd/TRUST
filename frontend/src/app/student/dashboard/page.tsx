@@ -139,12 +139,12 @@ function renderDashboard(
 
   const paymentStatusMap: Record<string, string> = {
     PENDING: "Pending",
-    PENDING_VERIFICATION: "Awaiting Verification",
-    SUCCESS: "Verified",
-    VERIFIED: "Verified",
+    PENDING_VERIFICATION: "⏳ Awaiting Verification",
+    SUCCESS: "✓ Payment Verified",
+    VERIFIED: "✓ Payment Verified",
     FAILED: "Failed",
     REFUNDED: "Refunded",
-    REJECTED: "Rejected",
+    REJECTED: "Payment Verification Rejected",
     NO_PAYMENT: "Not Paid",
   };
 
@@ -204,19 +204,24 @@ function renderDashboard(
               <p className="text-muted-foreground">
                 <strong>Payment Status:</strong> {displayPaymentStatus}
               </p>
+              {paymentVerified && (
+                <p className="mt-1 text-muted-foreground">
+                  Your payment has been verified successfully. Your application is now under review.
+                </p>
+              )}
               {payment?.txnId && (
                 <p className="text-muted-foreground">
-                  <strong>UPI Transaction Ref:</strong> {payment.txnId}
+                  <strong>Transaction ID / UTR:</strong> <span className="break-all font-mono">{payment.txnId}</span>
                 </p>
               )}
               {payment?.verifiedAt && (
                 <p className="text-muted-foreground">
-                  <strong>Verified On:</strong> {new Date(payment.verifiedAt).toLocaleDateString()}
+                  <strong>Verified On:</strong> {new Date(payment.verifiedAt).toLocaleString()}
                 </p>
               )}
               {payment?.status === "REJECTED" && (
                 <p className="text-muted-foreground">
-                  <strong>Rejection Note:</strong>{" "}
+                  <strong>Reason:</strong>{" "}
                   {payment.verificationNote || "Payment verification was not approved. Please contact the trust office."}
                 </p>
               )}

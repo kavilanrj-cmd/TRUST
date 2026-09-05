@@ -20,7 +20,16 @@ function PaymentStatusBadge({ status }: { status: string }) {
     REFUNDED: "bg-gray-100 text-gray-600",
     NO_PAYMENT: "bg-gray-100 text-gray-600",
   };
-  return <Badge className={map[status] || "bg-gray-100 text-gray-600"}>{status.replace(/_/g, " ")}</Badge>;
+  const labelMap: Record<string, string> = {
+    PENDING_VERIFICATION: "Awaiting Verification",
+    VERIFIED: "Verified",
+    REJECTED: "Rejected",
+    SUCCESS: "Success",
+    FAILED: "Failed",
+    PENDING: "Pending",
+    REFUNDED: "Refunded",
+  };
+  return <Badge className={map[status] || "bg-gray-100 text-gray-600"}>{labelMap[status] || status.replace(/_/g, " ")}</Badge>;
 }
 
 function PaymentsPage() {
@@ -169,9 +178,10 @@ function PaymentsPage() {
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="pb-2 pr-4 font-semibold">Application ID</th>
                   <th className="pb-2 pr-4 font-semibold">Applicant</th>
+                  <th className="pb-2 pr-4 font-semibold">Transaction ID / UTR</th>
                   <th className="pb-2 pr-4 font-semibold">Amount</th>
+                  <th className="pb-2 pr-4 font-semibold">Method</th>
                   <th className="pb-2 pr-4 font-semibold">Order Ref</th>
-                  <th className="pb-2 pr-4 font-semibold">Transaction Ref</th>
                   <th className="pb-2 pr-4 font-semibold">Status</th>
                   <th className="pb-2 pr-4 font-semibold">Date</th>
                   <th className="pb-2 font-semibold">Action</th>
@@ -193,9 +203,12 @@ function PaymentsPage() {
                         {p.application?.personalDetails?.fullName || p.application?.student?.name || "—"}
                       </p>
                     </td>
+                    <td className="py-2.5 pr-4">
+                      <span className="break-all font-mono text-xs text-navy dark:text-white">{p.razorpayPaymentId || "—"}</span>
+                    </td>
                     <td className="py-2.5 pr-4 text-navy dark:text-white">{fmt(p.amount, p.currency)}</td>
+                    <td className="py-2.5 pr-4 text-xs text-muted-foreground">{(p.paymentMethod || "MANUAL_UPI") === "RAZORPAY" ? "Razorpay" : "Manual UPI"}</td>
                     <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{p.razorpayOrderId || "—"}</td>
-                    <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{p.razorpayPaymentId || "—"}</td>
                     <td className="py-2.5 pr-4"><PaymentStatusBadge status={p.status} /></td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{fmtDateTime(p.paymentDate || p.createdAt)}</td>
                     <td className="py-2.5">
