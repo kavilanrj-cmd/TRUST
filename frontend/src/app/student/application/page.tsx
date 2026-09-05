@@ -12,18 +12,18 @@ export default function StudentApplicationPage() {
         <div className="container-trust py-10 sm:py-14">
           {/* Application page header */}
           <header className="mb-10 text-center">
-            <div className="mx-auto mb-6 flex w-fit items-center gap-3 rounded-2xl border border-border bg-white p-3 shadow-sm">
+            <div className="mx-auto mb-6 flex w-fit items-center justify-center gap-3">
               <Image
                 src="/assets/neelakannu-trust-logo.png"
                 alt="Neelakannu Educational Trust logo"
-                width={56}
-                height={56}
-                className="h-14 w-14"
+                width={64}
+                height={64}
+                className="h-16 w-16 sm:h-20 sm:w-20"
                 priority
               />
-              <span className="border-l border-border pl-3 pr-1 text-left">
-                <span className="block text-sm font-semibold tracking-wide text-navy dark:text-white">Neelakannu Educational Trust</span>
-                <span className="block text-xs text-muted-foreground">Empowering education</span>
+              <span className="text-left">
+                <span className="block text-base font-bold tracking-wide text-navy dark:text-white">Neelakannu Educational Trust</span>
+                <span className="block text-sm text-muted-foreground dark:text-slate-400">Empowering education</span>
               </span>
             </div>
             <h1 className="font-serif text-3xl font-bold tracking-tight text-navy dark:text-white sm:text-4xl">
