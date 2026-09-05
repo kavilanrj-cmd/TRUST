@@ -523,7 +523,10 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       },
       include: {
         scholarshipProgram: true,
+        personalDetails: true,
+        address: true,
         parentGuardian: true,
+        academicDetails: true,
         financialDetails: true,
       },
     });
