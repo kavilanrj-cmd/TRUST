@@ -10,25 +10,48 @@ const router = Router();
 const routerPublic = Router();
 
 // Ensure SiteContent rows exist for all registry keys (seed on demand, non-destructive).
+// Also updates existing rows that still have the old registry default values.
 export async function seedSiteContentIfNeeded(): Promise<void> {
   try {
-    const existing = await prisma.siteContent.findMany({ select: { key: true } });
-    const existingKeys = new Set(existing.map((c: any) => c.key));
-    const toCreate = CONTENT_REGISTRY.filter((c) => !existingKeys.has(c.key));
-    if (toCreate.length === 0) return;
-    await prisma.siteContent.createMany({
-      data: toCreate.map((c) => ({
-        key: c.key,
-        page: c.page,
-        section: c.section,
-        label: c.label,
-        type: c.type === "image" ? "image" : c.type === "rich" ? "rich" : "text",
-        value: c.defaultValue,
-        draftValue: null,
-        maxLength: c.maxLength ?? null,
-        editable: c.editable,
-      })),
-    });
+    const existing = await prisma.siteContent.findMany({ select: { key: true, value: true } });
+    const existingMap = new Map(existing.map((c: any) => [c.key, c.value]));
+
+    // Create missing keys
+    const missingKeys = CONTENT_REGISTRY.filter((c) => !existingMap.has(c.key));
+    if (missingKeys.length > 0) {
+      await prisma.siteContent.createMany({
+        data: missingKeys.map((c) => ({
+          key: c.key,
+          page: c.page,
+          section: c.section,
+          label: c.label,
+          type: c.type === "image" ? "image" : c.type === "rich" ? "rich" : "text",
+          value: c.defaultValue,
+          draftValue: null,
+          maxLength: c.maxLength ?? null,
+          editable: c.editable,
+        })),
+      });
+    }
+
+    // Update existing keys that still have the OLD default value (from previous registry versions)
+    // This fixes stale content in production without requiring manual DB updates
+    const oldDefaults: Record<string, string> = {
+      "about.title": "About Neelakannu Educational Trust",
+      "about.phone": "94443 27336",
+      "about.founder": "Prof. Dr. K. Chidambaram",
+    };
+
+    for (const [key, oldDefault] of Object.entries(oldDefaults)) {
+      const currentValue = existingMap.get(key);
+      const newDefault = CONTENT_REGISTRY.find((c) => c.key === key)?.defaultValue;
+      if (currentValue === oldDefault && newDefault && newDefault !== oldDefault) {
+        await prisma.siteContent.update({
+          where: { key },
+          data: { value: newDefault },
+        });
+      }
+    }
   } catch (e) {
     console.error("Seed site content failed (non-fatal):", e);
   }
