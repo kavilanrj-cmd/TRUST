@@ -169,18 +169,20 @@ export default function ContactPage() {
                   </span>
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-wide text-navy dark:text-white">Phone</p>
-                    <a
-                      href={`tel:${phone.replace(/\s/g, "")}`}
-                      className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600"
-                    >
-                      {phone}
-                    </a>
-                    <a
-                      href={`tel:${phone2.replace(/\s/g, "")}`}
-                      className="mt-1 inline-block text-sm text-muted-foreground transition-colors hover:text-gold-600"
-                    >
-                      {phone2}
-                    </a>
+                    <div className="space-y-1">
+                      <a
+                        href={`tel:${phone.replace(/\s/g, "")}`}
+                        className="block text-sm text-muted-foreground transition-colors hover:text-gold-600"
+                      >
+                        {phone}
+                      </a>
+                      <a
+                        href={`tel:${phone2.replace(/\s/g, "")}`}
+                        className="block text-sm text-muted-foreground transition-colors hover:text-gold-600"
+                      >
+                        {phone2}
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
