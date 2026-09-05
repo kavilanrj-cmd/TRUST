@@ -223,8 +223,12 @@ model Payment {
   razorpayPaymentId String?
   amount           Decimal
   currency         String   @default("INR")
+  paymentMethod    PaymentMethod @default(MANUAL_UPI)
   status           PaymentStatus  @default(PENDING)
   paymentDate      DateTime?
+  verifiedById     String?
+  verifiedAt       DateTime?
+  verificationNote String?
   createdAt        DateTime @default(now())
 }
 
@@ -233,6 +237,14 @@ enum PaymentStatus {
   FAILED
   PENDING
   REFUNDED
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
+enum PaymentMethod {
+  MANUAL_UPI
+  RAZORPAY
 }
 
 model Receipt {

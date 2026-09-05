@@ -4,6 +4,8 @@ import prisma from "../utils/db";
 import { authenticate, requirePermission } from "../utils/auth";
 import { PERMISSIONS } from "../utils/roles";
 import { auditContextFromRequest, logAudit } from "../utils/audit";
+import { imageUpload, getDocumentBucket, saveDocumentBuffer } from "../utils/storage";
+import { UPI_QR_KEY, UPI_QR_MIME_KEY, UPI_QR_PROVIDER_KEY } from "../utils/applicationFee";
 
 const router = Router();
 
@@ -21,9 +23,13 @@ export const SAFE_SETTINGS: Record<string, { label: string; type: string }> = {
   "app.applicationFeeNotice": { label: "Application Fee Notice", type: "textarea" },
   "app.applicationFee": { label: "Application Fee (₹)", type: "number" },
   "app.applicationFeeEnabled": { label: "Enable Application Fee", type: "boolean" },
-  "app.upiQrUrl": { label: "UPI QR Image URL", type: "url" },
+  "app.upiQrUrl": { label: "UPI QR Image URL", type: "text" },
   "app.upiVpa": { label: "UPI ID / VPA (e.g. trust@upi)", type: "text" },
   "app.upiInstructions": { label: "UPI Scan & Pay Instructions", type: "textarea" },
+  "app.paymentMethod": { label: "Payment Method", type: "text" },
+  "app.upiQrKey": { label: "UPI QR Storage Key", type: "text" },
+  "app.upiQrMime": { label: "UPI QR MIME", type: "text" },
+  "app.upiQrProvider": { label: "UPI QR Provider", type: "text" },
   "app.applicationDeadline": { label: "Scholarship Application Deadline (datetime)", type: "datetime" },
   "app.supportEmail": { label: "Support Email", type: "text" },
 };
@@ -90,6 +96,59 @@ router.patch(
     } catch (error) {
       console.error("Admin update settings error:", error);
       return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// POST /api/admin/settings/upi-qr
+// Upload a new UPI QR image. Persists the binary to the configured storage
+// backend (S3 in production, local disk in dev) and records the storageKey +
+// mime + provider as WebsiteSetting rows that the authenticated QR endpoint
+// (/api/payments/upi-qr) serves. Only authenticated staff can replace the QR.
+router.post(
+  "/settings/upi-qr",
+  authenticate,
+  requirePermission(PERMISSIONS.settings_manage),
+  imageUpload.single("qr"),
+  async (req: Request, res: Response) => {
+    try {
+      const file = (req as any).file;
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      const { storageKey, storageProvider } = await saveDocumentBuffer(
+        file.buffer,
+        file.mimetype,
+        getDocumentBucket()
+      );
+
+      const mime = file.mimetype;
+      const provider = storageProvider;
+
+      const setRow = async (key: string, value: string, label: string, type: string) => {
+        await prisma.websiteSetting.upsert({
+          where: { key },
+          create: { key, value, label, type },
+          update: { value, updatedAt: new Date() },
+        });
+      };
+
+      await setRow(UPI_QR_KEY, storageKey, "UPI QR Storage Key", "text");
+      await setRow(UPI_QR_MIME_KEY, mime, "UPI QR MIME", "text");
+      await setRow(UPI_QR_PROVIDER_KEY, provider, "UPI QR Provider", "text");
+
+      const user = (req as any).authUser;
+      logAudit(auditContextFromRequest(req), "settings.upi_qr_upload", undefined, undefined, {
+        storageKey,
+      });
+
+      return res.status(201).json({
+        message: "UPI QR code uploaded successfully",
+        qrUrl: "/api/payments/upi-qr",
+      });
+    } catch (error: any) {
+      console.error("Admin UPI QR upload error:", error);
+      return res.status(400).json({ error: error.message || "Upload failed" });
     }
   }
 );

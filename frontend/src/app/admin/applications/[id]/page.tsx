@@ -95,6 +95,9 @@ export default function ApplicationDetailPage() {
   const [docNote, setDocNote] = useState<Record<string, string>>({});
   const [verifyLoading, setVerifyLoading] = useState<Record<string, boolean>>({});
 
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentMsg, setPaymentMsg] = useState("");
+
   // Decision dialog state
   const [decisionDialog, setDecisionDialog] = useState<"" | "ACCEPT" | "REJECT">("");
   const [decisionMsg, setDecisionMsg] = useState("");
@@ -163,7 +166,7 @@ export default function ApplicationDetailPage() {
     const missing = applicableDocs.filter((d) => !uploaded.has(d.key)).map((d) => d.label);
     const reasons = new Set<string>();
     if (missing.length > 0) reasons.add("Missing required documents");
-    const paymentDone = (app.payments || []).some((p: any) => p.status === "SUCCESS");
+    const paymentDone = (app.payments || []).some((p: any) => p.status === "SUCCESS" || p.status === "VERIFIED");
     if (!paymentDone) reasons.add("Payment not completed");
 
     setDecisionDialog("REJECT");
@@ -293,6 +296,38 @@ export default function ApplicationDetailPage() {
     }
   };
 
+  const handleVerifyPayment = async (paymentId: string) => {
+    if (paymentLoading) return;
+    setPaymentLoading(true);
+    setPaymentMsg("");
+    try {
+      await adminApi.payments.verify(paymentId);
+      setPaymentMsg("Payment verified successfully.");
+      fetchDetail();
+    } catch (e: any) {
+      setPaymentMsg(e.message || "Payment verification failed");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleRejectPayment = async (paymentId: string) => {
+    if (paymentLoading) return;
+    const note = window.prompt("Reason for rejecting this payment verification:", "");
+    if (note === null) return;
+    setPaymentLoading(true);
+    setPaymentMsg("");
+    try {
+      await adminApi.payments.reject(paymentId, note.trim() || "Payment not verified");
+      setPaymentMsg("Payment verification rejected. The student will be asked to resubmit.");
+      fetchDetail();
+    } catch (e: any) {
+      setPaymentMsg(e.message || "Failed to reject payment");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
   const allowedTransitions = app ? (TRANSITIONS[app.status] || []) : [];
 
   if (error) return <AdminLayout><ErrorState message={error} /></AdminLayout>;
@@ -393,7 +428,6 @@ export default function ApplicationDetailPage() {
                 <FieldRow label="Phone" value={pg?.contactNumber} />
                 <FieldRow label="Occupation" value={pg?.occupation} />
                 <FieldRow label="Single Parent" value={pg?.isSingleParent ? "Yes" : "No"} />
-                {pg?.isSingleParent && <FieldRow label="Single Parent Type" value={pg?.singleParentType} />}
                 <FieldRow label="Income" value={pg?.income != null ? `₹${pg.income.toLocaleString()}` : undefined} />
               </>
             )}
@@ -436,24 +470,69 @@ export default function ApplicationDetailPage() {
                     <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                       <th className="pb-2 pr-4 font-semibold">Amount</th>
                       <th className="pb-2 pr-4 font-semibold">Status</th>
-                      <th className="pb-2 pr-4 font-semibold">Payment ID</th>
-                      <th className="pb-2 pr-4 font-semibold">Order ID</th>
-                      <th className="pb-2 font-semibold">Date</th>
+                      <th className="pb-2 pr-4 font-semibold">Transaction Ref / UTR</th>
+                      <th className="pb-2 pr-4 font-semibold">Method</th>
+                      <th className="pb-2 pr-4 font-semibold">Date</th>
+                      <th className="pb-2 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {payments.map((p: any) => (
                       <tr key={p.id} className="border-b border-border last:border-0">
                         <td className="py-2 pr-4">₹{p.amount?.toLocaleString()}</td>
-                        <td className="py-2 pr-4"><Badge className={statusColor(p.status)}>{p.status}</Badge></td>
+                        <td className="py-2 pr-4"><Badge className={statusColor(p.status)}>{p.status.replace(/_/g, " ")}</Badge></td>
                         <td className="py-2 pr-4 font-mono text-xs">{p.razorpayPaymentId || "—"}</td>
-                        <td className="py-2 pr-4 font-mono text-xs">{p.razorpayOrderId || "—"}</td>
-                        <td className="py-2">{fmtDate(p.paymentDate || p.createdAt)}</td>
+                        <td className="py-2 pr-4 text-xs">{(p.paymentMethod || "MANUAL_UPI").replace(/_/g, " ")}</td>
+                        <td className="py-2 pr-4">{fmtDate(p.paymentDate || p.createdAt)}</td>
+                        <td className="py-2">
+                          {p.status === "PENDING_VERIFICATION" ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                disabled={paymentLoading}
+                                onClick={() => handleVerifyPayment(p.id)}
+                                className="rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                              >
+                                Verify
+                              </button>
+                              <button
+                                type="button"
+                                disabled={paymentLoading}
+                                onClick={() => handleRejectPayment(p.id)}
+                                className="rounded-md bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+
+              {payments.some((p: any) => p.status === "REJECTED" && !!p.verificationNote) && (
+                <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm dark:border-red-500/20 dark:bg-red-500/10">
+                  <strong className="text-red-700 dark:text-red-300">Rejection note:</strong>{" "}
+                  <span className="text-muted-foreground">
+                    {payments.filter((p: any) => p.status === "REJECTED" && !!p.verificationNote).map((p: any) => p.verificationNote).join(" ")}
+                  </span>
+                </div>
+              )}
+
+              {payments.some((p: any) => p.status === "VERIFIED") && (
+                <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm dark:border-green-500/20 dark:bg-green-500/10">
+                  <strong className="text-green-700 dark:text-green-300">Verified:</strong>{" "}
+                  <span className="text-muted-foreground">
+                    {payments.filter((p: any) => p.status === "VERIFIED").map((p: any) => `UTR ${p.razorpayPaymentId || "—"} verified on ${fmtDateTime(p.verifiedAt)}`).join("; ")}
+                  </span>
+                </div>
+              )}
+
+              {paymentMsg && <p className="mt-3 text-xs text-navy dark:text-gold">{paymentMsg}</p>}
             </Section>
           )}
 

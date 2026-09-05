@@ -171,6 +171,8 @@ export const adminApi = {
     list: () => adminJSON<any>(`${ADMIN_BASE}/settings`),
     update: (updates: Array<{ key: string; value: string }>) =>
       adminJSON<any>(`${ADMIN_BASE}/settings`, "PATCH", { updates }),
+    uploadUpiQr: (formData: FormData) =>
+      request<any>(`${ADMIN_BASE}/settings/upi-qr`, { method: "POST", body: formData }),
   },
 
   // --- Audit ---
@@ -237,6 +239,8 @@ export const adminApi = {
       return `${ADMIN_BASE}/payments/export${s ? `?${s}` : ""}`;
     },
     verify: (paymentId: string) => adminJSON<any>(`${ADMIN_BASE}/payments/${paymentId}/verify`, "POST"),
+    reject: (paymentId: string, note: string) =>
+      adminJSON<any>(`${ADMIN_BASE}/payments/${paymentId}/reject`, "POST", { note }),
   },
 };
 
@@ -251,6 +255,13 @@ export function statusColor(status: string): string {
     REJECTED: "bg-red-50 text-red-700",
     WAITLISTED: "bg-yellow-50 text-yellow-700",
     WITHDRAWN: "bg-gray-100 text-gray-600",
+    NO_PAYMENT: "bg-gray-100 text-gray-600",
+    PENDING: "bg-blue-50 text-blue-700",
+    PENDING_VERIFICATION: "bg-amber-50 text-amber-700",
+    VERIFIED: "bg-green-50 text-green-700",
+    SUCCESS: "bg-green-50 text-green-700",
+    FAILED: "bg-red-50 text-red-700",
+    REFUNDED: "bg-purple-50 text-purple-700",
   };
   return map[status] || "bg-gray-100 text-gray-700";
 }

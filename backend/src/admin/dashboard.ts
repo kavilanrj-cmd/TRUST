@@ -36,6 +36,7 @@ router.get(
         totalScholarships,
         staffCount,
         successPayments,
+        verifiedPayments,
         totalStudents,
       ] = await prisma.$transaction([
         prisma.application.count(),
@@ -55,6 +56,7 @@ router.get(
         prisma.scholarshipProgram.count(),
         prisma.user.count({ where: { role: { in: ["FOUNDER", "ADMIN", "REVIEWER"] } } }),
         prisma.payment.count({ where: { status: "SUCCESS" } }),
+        prisma.payment.count({ where: { status: "VERIFIED" } }),
         prisma.user.count({ where: { role: "STUDENT" } }),
       ]);
 
@@ -177,7 +179,7 @@ router.get(
           applicationsThisMonth: thisMonth,
           totalScholarships,
           staffCount,
-          successfulPayments: successPayments,
+          successfulPayments: successPayments + verifiedPayments,
           totalStudents,
         },
         charts: {

@@ -5,7 +5,9 @@
 import express, { Request, Response } from "express";
 import prisma from "../utils/db";
 import crypto from "crypto";
-import { getApplicationFeeConfig } from "../utils/applicationFee";
+import path from "path";
+import { getApplicationFeeConfig, UPI_QR_KEY, UPI_QR_MIME_KEY, UPI_QR_PROVIDER_KEY } from "../utils/applicationFee";
+import { getDocumentBuffer } from "../utils/storage";
 
 const router = express.Router();
 
@@ -52,30 +54,37 @@ router.post("/create-order", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Application fee has not been configured" });
     }
 
-    // Return an already-successful payment if one exists for this application.
+    // Return an already-final payment if one exists for this application, so a
+    // returning applicant sees their actual lifecycle status (pending
+    // verification, verified, rejected) and is never auto-marked successful.
     const existingPayment = await prisma.payment.findFirst({
       where: { applicationId: application.id },
       orderBy: { createdAt: "desc" },
     });
 
-    if (existingPayment && existingPayment.status === "SUCCESS") {
+    if (existingPayment) {
       return res.json({
         id: existingPayment.razorpayOrderId,
         orderId: existingPayment.razorpayOrderId,
         paymentId: existingPayment.razorpayPaymentId,
-        amount: Math.round(Number(existingPayment.amount) * 100),
-        currency: existingPayment.currency,
-        status: "SUCCESS",
+        amount: existingPayment.amount,
+        currency: existingPayment.currency || "INR",
+        status: existingPayment.status,
+        txnId: existingPayment.razorpayPaymentId,
+        paymentMethod: "manual_upi",
+        upi: feeConfig.upi || { vpa: "", instructions: "", qrConfigured: false, qrUrl: "" },
+        feeNotice: "Review the QR code and pay the application fee, then submit your UPI transaction reference.",
       });
     }
 
     // --- Temporary UPI QR payment method ---
-    // When paymentMethod is "upi" we do not call Razorpay. We create a PENDING
-    // payment row and return the UPI QR details for the applicant to scan & pay.
-    // The fee amount is always the admin-controlled app.applicationFee value.
-    // When Razorpay is added later, paymentMethod becomes "razorpay" and this
-    // branch is skipped in favour of the existing order-creation flow below.
-    if (feeConfig.paymentMethod === "upi") {
+    // When paymentMethod is "manual_upi" (or legacy "upi") we do not call
+    // Razorpay. We create a PENDING payment row and return the UPI QR details
+    // for the applicant to scan & pay. The fee amount is always the
+    // admin-controlled app.applicationFee value. When Razorpay is added later,
+    // paymentMethod becomes "razorpay" and this branch is skipped in favour of
+    // the existing order-creation flow below.
+    if (feeConfig.paymentMethod === "manual_upi") {
       const upiRef = `upi_${crypto.randomUUID()}`;
       let payment;
       if (existingPayment) {
@@ -87,7 +96,11 @@ router.post("/create-order", async (req: Request, res: Response) => {
             amount: feeConfig.amount,
             currency: "INR",
             status: "PENDING",
+            paymentMethod: "MANUAL_UPI",
             paymentDate: null,
+            verifiedById: null,
+            verifiedAt: null,
+            verificationNote: null,
           },
         });
       } else {
@@ -98,6 +111,7 @@ router.post("/create-order", async (req: Request, res: Response) => {
             amount: feeConfig.amount,
             currency: "INR",
             status: "PENDING",
+            paymentMethod: "MANUAL_UPI",
           },
         });
       }
@@ -105,12 +119,12 @@ router.post("/create-order", async (req: Request, res: Response) => {
       return res.json({
         id: upiRef,
         orderId: upiRef,
-        paymentId: payment.id,
+        paymentId: payment.razorpayPaymentId || null,
         amount: feeConfig.amount,
         currency: "INR",
         status: "PENDING",
-        paymentMethod: "upi",
-        upi: feeConfig.upi || { qrUrl: "", vpa: "", instructions: "" },
+        paymentMethod: "manual_upi",
+        upi: feeConfig.upi || { vpa: "", instructions: "", qrConfigured: false, qrUrl: "" },
         feeNotice: "Scan the UPI QR code and pay the application fee, then enter your UPI transaction reference below.",
       });
     }
@@ -157,7 +171,11 @@ router.post("/create-order", async (req: Request, res: Response) => {
           amount: feeConfig.amount,
           currency: "INR",
           status: "PENDING",
+          paymentMethod: "RAZORPAY",
           paymentDate: null,
+          verifiedById: null,
+          verifiedAt: null,
+          verificationNote: null,
         },
       });
     } else {
@@ -168,6 +186,7 @@ router.post("/create-order", async (req: Request, res: Response) => {
           amount: feeConfig.amount,
           currency: "INR",
           status: "PENDING",
+          paymentMethod: "RAZORPAY",
         },
       });
     }
@@ -191,8 +210,8 @@ router.post("/create-order", async (req: Request, res: Response) => {
 });
 
 // Confirm that an applicant has paid via UPI and submitted their transaction
-// reference. The payment is recorded as PENDING and must be verified by an admin
-// before the application can be submitted.
+// reference. The payment is recorded as PENDING_VERIFICATION and must be
+// verified by an admin before the application is fully processed.
 router.post("/confirm", async (req: Request, res: Response) => {
   try {
     const { applicationId, upiTransactionId } = req.body;
@@ -200,6 +219,15 @@ router.post("/confirm", async (req: Request, res: Response) => {
 
     if (!applicationId || !upiTransactionId) {
       return res.status(400).json({ error: "Application ID and UPI transaction reference are required" });
+    }
+
+    const txn = String(upiTransactionId).trim();
+    if (!txn) {
+      return res.status(400).json({ error: "UPI transaction reference is required" });
+    }
+    // Sensible length/looks validation for a transaction reference / UTR.
+    if (txn.length < 6 || txn.length > 64) {
+      return res.status(400).json({ error: "Please enter a valid UPI transaction reference (UTR)." });
     }
 
     const application = await prisma.application.findFirst({
@@ -221,26 +249,68 @@ router.post("/confirm", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Please create a payment order first." });
     }
 
-    if (payment.status === "SUCCESS") {
-      return res.json({ status: "SUCCESS", message: "Payment already verified." });
+    // Idempotent: an already-verified (or pending) payment keeps its state.
+    if (payment.status === "VERIFIED" || payment.status === "SUCCESS") {
+      return res.json({
+        status: payment.status,
+        message: "Payment already verified. You can proceed.",
+        paymentId: payment.id,
+        txnId: payment.razorpayPaymentId,
+      });
     }
 
     const updated = await prisma.payment.update({
       where: { id: payment.id },
       data: {
-        razorpayPaymentId: String(upiTransactionId).trim(),
-        status: "PENDING",
+        razorpayPaymentId: txn,
+        status: "PENDING_VERIFICATION",
+        paymentMethod: "MANUAL_UPI",
+        verifiedById: null,
+        verifiedAt: null,
+        verificationNote: null,
       },
     });
 
     return res.json({
-      status: "PENDING",
-      message: "Payment details submitted. It will be verified by the trust before submission.",
+      status: "PENDING_VERIFICATION",
+      message: "Payment details submitted. Our team will verify your transaction.",
       paymentId: updated.id,
       txnId: updated.razorpayPaymentId,
     });
   } catch (error) {
     console.error("Confirm UPI payment error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/payments/upi-qr
+// Securely stream the admin-uploaded UPI QR image for the authenticated
+// applicant. Mirrors the document file-serving pattern (never served publicly).
+router.get("/upi-qr", async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const keys = await prisma.websiteSetting.findMany({ where: { key: { in: [UPI_QR_KEY, UPI_QR_MIME_KEY, UPI_QR_PROVIDER_KEY] } } });
+    const map: Record<string, string> = {};
+    for (const k of keys) map[k.key] = k.value || "";
+
+    const storageKey = map[UPI_QR_KEY]?.trim();
+    if (!storageKey) {
+      return res.status(404).json({ error: "UPI QR code has not been configured" });
+    }
+
+    const provider = map[UPI_QR_PROVIDER_KEY]?.trim() || "local";
+    const mime = map[UPI_QR_MIME_KEY]?.trim() || "image/png";
+    const { data } = await getDocumentBuffer(storageKey, provider);
+    res.setHeader("Content-Type", mime);
+    res.setHeader("Content-Disposition", `inline; filename="${path.basename(storageKey)}"`);
+    res.setHeader("Cache-Control", "private, max-age=3600");
+    return res.send(data);
+  } catch (error) {
+    console.error("Serve UPI QR error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -404,9 +474,12 @@ router.get("/application/:applicationId", async (req: Request, res: Response) =>
       amount: payment.amount,
       currency: payment.currency,
       status: payment.status,
+      paymentMethod: payment.paymentMethod,
       razorpayOrderId: payment.razorpayOrderId,
       razorpayPaymentId: payment.razorpayPaymentId,
       paymentDate: payment.paymentDate,
+      verifiedAt: payment.verifiedAt,
+      verificationNote: payment.verificationNote,
       application: {
         applicationId: payment.application?.applicationId,
         status: payment.application?.status,

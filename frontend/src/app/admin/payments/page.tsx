@@ -7,16 +7,20 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, Badge, Button, Spinner, ErrorState, EmptyState } from "@/components/admin/ui";
 import { adminApi, fmtDateTime } from "@/lib/admin-api";
 
-const PAYMENT_STATUSES = ["SUCCESS", "FAILED", "PENDING", "REFUNDED"];
+const PAYMENT_STATUSES = ["SUCCESS", "VERIFIED", "PENDING", "PENDING_VERIFICATION", "REJECTED", "FAILED", "REFUNDED"];
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     SUCCESS: "bg-green-100 text-green-700",
+    VERIFIED: "bg-green-100 text-green-700",
     FAILED: "bg-red-100 text-red-700",
     PENDING: "bg-amber-100 text-amber-700",
+    PENDING_VERIFICATION: "bg-amber-100 text-amber-700",
+    REJECTED: "bg-red-100 text-red-700",
     REFUNDED: "bg-gray-100 text-gray-600",
+    NO_PAYMENT: "bg-gray-100 text-gray-600",
   };
-  return <Badge className={map[status] || "bg-gray-100 text-gray-600"}>{status}</Badge>;
+  return <Badge className={map[status] || "bg-gray-100 text-gray-600"}>{status.replace(/_/g, " ")}</Badge>;
 }
 
 function PaymentsPage() {
@@ -67,7 +71,7 @@ function PaymentsPage() {
   };
 
   const handleVerify = async (id: string) => {
-    if (!window.confirm("Mark this payment as verified (SUCCESS)?")) return;
+    if (!window.confirm("Verify this payment? The application's payment status will be set to VERIFIED.")) return;
     const label = payments.find((p) => p.id === id)?.razorpayPaymentId || id;
     setError("");
     try {
@@ -76,6 +80,19 @@ function PaymentsPage() {
       fetchPayments();
     } catch (e: any) {
       setError(e.message || "Could not verify payment");
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const note = window.prompt("Reason for rejecting this payment verification:", "");
+    if (note === null) return;
+    setError("");
+    try {
+      const res = await adminApi.payments.reject(id, note.trim() || "Payment not verified");
+      window.alert(res?.message || "Payment verification rejected.");
+      fetchPayments();
+    } catch (e: any) {
+      setError(e.message || "Could not reject payment");
     }
   };
 
@@ -182,10 +199,17 @@ function PaymentsPage() {
                     <td className="py-2.5 pr-4"><PaymentStatusBadge status={p.status} /></td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{fmtDateTime(p.paymentDate || p.createdAt)}</td>
                     <td className="py-2.5">
-                      {p.status === "PENDING" ? (
-                        <Button variant="outline" size="sm" onClick={() => handleVerify(p.id)}>
-                          Verify
-                        </Button>
+                      {p.status === "PENDING" || p.status === "PENDING_VERIFICATION" ? (
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleVerify(p.id)}>
+                            Verify
+                          </Button>
+                          {p.status === "PENDING_VERIFICATION" && (
+                            <Button variant="outline" size="sm" onClick={() => handleReject(p.id)}>
+                              Reject
+                            </Button>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}

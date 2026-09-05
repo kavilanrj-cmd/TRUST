@@ -242,9 +242,6 @@ type FormData = {
   isSingleParent: boolean;
 
 
-  singleParentType: string;
-
-
   academicType: AcademicType;
 
 
@@ -342,9 +339,6 @@ const EMPTY_FORM: FormData = {
 
 
   isSingleParent: false,
-
-
-  singleParentType: "",
 
 
   academicType: "",
@@ -644,34 +638,31 @@ export function ApplicationForm() {
     currency: string;
 
 
-    paymentMethod?: "upi" | "razorpay";
+    paymentMethod?: "manual_upi" | "razorpay";
 
 
-    upi?: { qrUrl: string; vpa: string; instructions: string };
+    upi?: { qrUrl: string; vpa: string; instructions: string; qrConfigured?: boolean };
 
 
   } | null>(null);
 
 
-  const [paymentStatus, setPaymentStatus] = useState<"NO_PAYMENT" | "PENDING" | "SUCCESS" | "FAILED">("NO_PAYMENT");
-
-
-  const [paying, setPaying] = useState(false);
-
-
-  const [verifying, setVerifying] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"NO_PAYMENT" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "SUCCESS" | "REJECTED" | "FAILED">("NO_PAYMENT");
 
 
   const [paymentNotice, setPaymentNotice] = useState<{ type: "error" | "success" | "info"; text: string } | null>(null);
 
 
-  const [paymentRef, setPaymentRef] = useState<{ paymentId?: string | null; amount?: number | null; txnId?: string | null } | null>(null);
-
-
-  const [upiQrOpen, setUpiQrOpen] = useState(false);
+  const [paymentRef, setPaymentRef] = useState<{ paymentId?: string | null; amount?: number | null; txnId?: string | null; verifiedNote?: string | null; verifiedAt?: string | null } | null>(null);
 
 
   const [upiTxnId, setUpiTxnId] = useState("");
+
+
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+
+
+  const [submittedPayment, setSubmittedPayment] = useState<{ status: string; txnId?: string; amount?: number | null } | null>(null);
 
 
 
@@ -777,9 +768,6 @@ export function ApplicationForm() {
 
 
             isSingleParent: pg.isSingleParent || false,
-
-
-            singleParentType: (pg as any).singleParentType || "",
 
 
             parent2Name: (pg as any).parent2Name || "",
@@ -896,7 +884,31 @@ export function ApplicationForm() {
           setPaymentStatus(d.status);
 
 
-          setPaymentRef({ paymentId: d.paymentId, amount: d.amount, txnId: d.razorpayPaymentId });
+          setPaymentRef({
+
+
+            paymentId: d.paymentId,
+
+
+            amount: d.amount != null ? Number(d.amount) : null,
+
+
+            txnId: d.razorpayPaymentId,
+
+
+            verifiedNote: d.verificationNote,
+
+
+            verifiedAt: d.verifiedAt,
+
+
+          });
+
+
+          if (d.razorpayPaymentId) setUpiTxnId(String(d.razorpayPaymentId));
+
+
+          if (d.status === "VERIFIED" || d.status === "SUCCESS") setShowPaymentConfirm(true);
 
 
         }
@@ -969,9 +981,6 @@ export function ApplicationForm() {
 
 
       isSingleParent: status === "SINGLE_PARENT",
-
-
-      singleParentType: status === "SINGLE_PARENT" ? f.singleParentType : "",
 
 
       familyIncome: status === "NO_PARENTS" ? "" : f.familyIncome,
@@ -1107,9 +1116,6 @@ export function ApplicationForm() {
 
 
         if (!data.relationship) e.relationship = "Please select the relationship.";
-
-
-        if (data.familyStatus === "SINGLE_PARENT" && !data.singleParentType) e.singleParentType = "Please select Father or Mother.";
 
 
         if (!data.familyIncome.trim()) e.familyIncome = "Please enter the family annual income.";
@@ -1311,9 +1317,6 @@ export function ApplicationForm() {
 
 
           isSingleParent: form.familyStatus === "SINGLE_PARENT",
-
-
-          singleParentType: form.familyStatus === "SINGLE_PARENT" ? form.singleParentType : "",
 
 
           parent2Name: form.familyStatus === "NO_PARENTS" ? form.parent2Name : "",
@@ -1534,263 +1537,58 @@ export function ApplicationForm() {
 
 
 
-
-  // Temporary UPI QR payment flow. Opens the "Pay" panel showing the fee, the
-
-
-  // admin-configured UPI QR code, and scan-and-pay instructions. The applicant
+// Payment flow. The fee, UPI QR code and scan-and-pay instructions are shown
+  // directly on the payment step from the admin-configured application fee. The
+  // applicant enters their UPI transaction reference (UTR) and confirms before
 
 
-  // then enters their UPI transaction reference which is stored as PENDING and
+  // submitting; the backend then stores the reference with status
+  // PENDING_VERIFICATION for admin review.
 
 
-  // must be verified by an admin before the application can be submitted.
+  // When Razorpay is added (paymentMethod === "razorpay"), the same step switches
+  // to the checkout flow while the fee stays admin-controlled.
 
 
-  // When Razorpay is added (paymentMethod === "razorpay"), this path is replaced
+  const paymentVerified = paymentStatus === "VERIFIED" || paymentStatus === "SUCCESS";
 
 
-  // by the checkout flow while the fee stays admin-controlled.
+  const effectivePaymentStatus = submittedPayment?.status || paymentStatus;
 
 
-  const payApplication = useCallback(async () => {
+  const paymentLabel = (status: string): string => {
 
 
-    if (!applicationId) {
+    switch (status) {
 
 
-      setPaymentNotice({ type: "error", text: "Please save your application before paying." });
+      case "PENDING_VERIFICATION":
+        return "Awaiting Verification";
 
 
-      return;
+      case "VERIFIED":
+
+
+      case "SUCCESS":
+        return "Payment Verified";
+
+
+      case "REJECTED":
+        return "Payment Verification Rejected";
+
+
+      case "FAILED":
+        return "Payment Failed";
+
+
+      default:
+        return "Payment Not Yet Submitted";
 
 
     }
 
 
-    setPaying(true);
-
-
-    setPaymentNotice(null);
-
-
-    try {
-
-
-      const orderRes = await fetch(`${API_BASE_URL}/api/payments/create-order`, {
-
-
-        method: "POST",
-
-
-        headers: { "Content-Type": "application/json" },
-
-
-        credentials: "include",
-
-
-        body: JSON.stringify({ applicationId }),
-
-
-      });
-
-
-      const order = await orderRes.json().catch(() => ({}));
-
-
-      if (!orderRes.ok) {
-
-
-        throw new Error(order.error || "Could not create payment order.");
-
-
-      }
-
-
-      if (order.status === "SUCCESS") {
-
-
-        setPaymentStatus("SUCCESS");
-
-
-        setPaymentRef({ paymentId: order.paymentId, amount: order.amount / 100 });
-
-
-        setPaymentNotice({ type: "success", text: "Payment already completed." });
-
-
-        return;
-
-
-      }
-
-
-      if (order.paymentMethod === "upi") {
-
-
-        setFee((f) => f && { ...f, upi: order.upi || f.upi, paymentMethod: "upi" });
-
-
-        setUpiQrOpen(true);
-
-
-        setPaymentNotice(null);
-
-
-        return;
-
-
-      }
-
-
-      // Future Razorpay path
-
-
-      setPaymentNotice({ type: "info", text: "Online payment gateway is being configured. Please check back shortly." });
-
-
-    } catch (err) {
-
-
-      setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Payment could not be started." });
-
-
-    } finally {
-
-
-      setPaying(false);
-
-
-    }
-
-
-  }, [applicationId]);
-
-
-
-
-
-  const confirmUpiPayment = useCallback(async () => {
-
-
-    const txn = upiTxnId.trim();
-
-
-    if (!applicationId) {
-
-
-      setPaymentNotice({ type: "error", text: "Please save your application before confirming payment." });
-
-
-      return;
-
-
-    }
-
-
-    if (!txn) {
-
-
-      setPaymentNotice({ type: "error", text: "Please enter the UPI transaction reference (UTR) shown in your payment app." });
-
-
-      return;
-
-
-    }
-
-
-    setVerifying(true);
-
-
-    setPaymentNotice(null);
-
-
-    try {
-
-
-      const res = await fetch(`${API_BASE_URL}/api/payments/confirm`, {
-
-
-        method: "POST",
-
-
-        headers: { "Content-Type": "application/json" },
-
-
-        credentials: "include",
-
-
-        body: JSON.stringify({ applicationId, upiTransactionId: txn }),
-
-
-      });
-
-
-      const data = await res.json().catch(() => ({}));
-
-
-      if (!res.ok) {
-
-
-        throw new Error(data.error || "Could not confirm your payment. Please try again.");
-
-
-      }
-
-
-      if (data.status === "SUCCESS") {
-
-
-        setPaymentStatus("SUCCESS");
-
-
-        setPaymentNotice({ type: "success", text: "Payment already verified. You can now submit your application." });
-
-
-      } else {
-
-
-        setPaymentStatus("PENDING");
-
-
-        setPaymentRef({ paymentId: data.paymentId, txnId: data.txnId, amount: fee?.amount });
-
-
-        setPaymentNotice({
-
-
-          type: "info",
-
-
-          text: "Payment details submitted. Our team will verify your transaction. Once verified, you can submit your application.",
-
-
-        });
-
-
-      }
-
-
-      setUpiQrOpen(false);
-
-
-    } catch (err) {
-
-
-      setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Could not confirm your payment." });
-
-
-    } finally {
-
-
-      setVerifying(false);
-
-
-    }
-
-
-  }, [applicationId, upiTxnId, fee]);
+  };
 
 
 
@@ -1826,6 +1624,66 @@ export function ApplicationForm() {
     }
 
 
+    const txn = upiTxnId.trim();
+
+
+    const isPreVerified = paymentStatus === "VERIFIED" || paymentStatus === "SUCCESS";
+
+
+    if (fee?.enabled && Number(fee.amount || 0) > 0 && fee.paymentMethod !== "razorpay" && !isPreVerified) {
+
+
+      if (!txn) {
+
+
+        setPaymentNotice({ type: "error", text: "Please enter the UPI transaction reference (UTR) shown in your payment app before submitting your application." });
+
+
+        document.getElementById("upi-txn-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+
+        return;
+
+
+      }
+
+
+      if (txn.length < 6 || txn.length > 64) {
+
+
+        setPaymentNotice({ type: "error", text: "The UPI transaction reference (UTR) you entered does not look valid. Please check and try again." });
+
+
+        document.getElementById("upi-txn-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+
+        return;
+
+
+      }
+
+
+      if (!showPaymentConfirm) {
+
+
+        setPaymentNotice({ type: "error", text: "Please confirm that you have made the payment before submitting your application." });
+
+
+        document.getElementById("upi-txn-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+
+        return;
+
+
+      }
+
+
+    }
+
+
+    setPaymentNotice(null);
+
+
     setSubmitting(true);
 
 
@@ -1841,7 +1699,13 @@ export function ApplicationForm() {
         method: "POST",
 
 
+        headers: { "Content-Type": "application/json" },
+
+
         credentials: "include",
+
+
+        body: JSON.stringify({ transactionId: txn || undefined, paymentConfirmed: !!showPaymentConfirm }),
 
 
       });
@@ -1862,6 +1726,21 @@ export function ApplicationForm() {
       setSubmittedRef(data.applicationId || applicationId || null);
 
 
+      if (isPreVerified) {
+
+
+        setSubmittedPayment({ status: paymentStatus, txnId: txn || paymentRef?.txnId || undefined, amount: fee?.amount });
+
+
+      } else if (fee?.enabled && Number(fee.amount || 0) > 0) {
+
+
+        setSubmittedPayment({ status: "PENDING_VERIFICATION", txnId: txn || undefined, amount: fee?.amount });
+
+
+      }
+
+
     } catch (err) {
 
 
@@ -1874,7 +1753,7 @@ export function ApplicationForm() {
     }
 
 
-  }, [showDeclaration, appEditingId, applicationId]);
+  }, [showDeclaration, appEditingId, applicationId, upiTxnId, showPaymentConfirm, paymentStatus, fee, paymentRef]);
 
 
 
@@ -1985,7 +1864,13 @@ export function ApplicationForm() {
         )}
 
 
-        {paymentStatus === "SUCCESS" && (
+        {(effectivePaymentStatus === "SUCCESS" ||
+
+
+          effectivePaymentStatus === "VERIFIED" ||
+
+
+          effectivePaymentStatus === "PENDING_VERIFICATION") && (
 
 
           <div className="mx-auto mt-6 max-w-md space-y-3 rounded-xl border border-border bg-white dark:bg-[#131a2e] p-5 text-left">
@@ -1997,46 +1882,58 @@ export function ApplicationForm() {
               <span className="text-sm text-muted-foreground">Payment status</span>
 
 
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-success">
+              {effectivePaymentStatus === "PENDING_VERIFICATION" ? (
 
 
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4" aria-hidden="true">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-gold-dark dark:text-gold">
 
 
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4" aria-hidden="true">
 
 
-                </svg>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5" />
 
 
-                Paid
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a9 9 0 1 0 9 9" />
 
 
-              </span>
+                  </svg>
+
+
+                  Awaiting Verification
+
+
+                </span>
+
+
+              ) : (
+
+
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-success">
+
+
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4" aria-hidden="true">
+
+
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+
+
+                  </svg>
+
+
+                  Payment Verified
+
+
+                </span>
+
+
+              )}
 
 
             </div>
 
 
-            {paymentRef?.paymentId && (
-
-
-              <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
-
-
-                <span className="text-sm text-muted-foreground">Payment ID</span>
-
-
-                <span className="font-mono text-sm font-medium text-navy dark:text-white">{paymentRef.paymentId}</span>
-
-
-              </div>
-
-
-            )}
-
-
-            {paymentRef?.txnId && (
+            {(submittedPayment?.txnId || paymentRef?.txnId) && (
 
 
               <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
@@ -2045,7 +1942,7 @@ export function ApplicationForm() {
                 <span className="text-sm text-muted-foreground">UPI Transaction Ref</span>
 
 
-                <span className="font-mono text-sm font-medium text-navy dark:text-white">{paymentRef.txnId}</span>
+                <span className="font-mono text-sm font-medium text-navy dark:text-white">{submittedPayment?.txnId || paymentRef?.txnId}</span>
 
 
               </div>
@@ -2054,19 +1951,34 @@ export function ApplicationForm() {
             )}
 
 
-            {paymentRef?.amount != null && (
+            {(submittedPayment?.amount != null || paymentRef?.amount != null) && (
 
 
               <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
 
 
-                <span className="text-sm text-muted-foreground">Amount Paid</span>
+                <span className="text-sm text-muted-foreground">Amount</span>
 
 
-                <span className="text-sm font-semibold text-navy dark:text-white">₹{Number(paymentRef.amount).toLocaleString("en-IN")}</span>
+                <span className="text-sm font-semibold text-navy dark:text-white">₹{Number(submittedPayment?.amount ?? paymentRef?.amount).toLocaleString("en-IN")}</span>
 
 
               </div>
+
+
+            )}
+
+
+            {effectivePaymentStatus === "PENDING_VERIFICATION" && (
+
+
+              <p className="border-t border-border pt-3 text-sm text-muted-foreground">
+
+
+                Our team will verify your payment. You will be notified once it is confirmed.
+
+
+              </p>
 
 
             )}
@@ -3387,92 +3299,6 @@ export function ApplicationForm() {
 
 
 
-
-
-              {form.familyStatus === "SINGLE_PARENT" && (
-
-
-                <div className="md:col-span-2">
-
-
-                  <span className="field-label">Single Parent Type</span>
-
-
-                  <div className="flex flex-wrap gap-4" role="radiogroup" aria-label="Single Parent Type">
-
-
-                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.singleParentType === "Father" ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
-
-
-                      <input
-
-
-                        type="radio"
-
-
-                        name="singleParentType"
-
-
-                        className="h-4 w-4 accent-navy"
-
-
-                        checked={form.singleParentType === "Father"}
-
-
-                        onChange={() => set("singleParentType", "Father")}
-
-
-                      />
-
-
-                      Father
-
-
-                    </label>
-
-
-                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${form.singleParentType === "Mother" ? "border-navy bg-navy-50 text-navy dark:border-gold dark:bg-[#1d2740] dark:text-gold" : "border-border bg-white text-muted-foreground dark:border-white/15 dark:bg-[#131a2e] dark:text-slate-300"}`}>
-
-
-                      <input
-
-
-                        type="radio"
-
-
-                        name="singleParentType"
-
-
-                        className="h-4 w-4 accent-navy"
-
-
-                        checked={form.singleParentType === "Mother"}
-
-
-                        onChange={() => set("singleParentType", "Mother")}
-
-
-                      />
-
-
-                      Mother
-
-
-                    </label>
-
-
-                  </div>
-
-
-                  {errors.singleParentType && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.singleParentType}</p>}
-
-
-                </div>
-
-
-              )}
-
-
               <div>
 
 
@@ -3891,99 +3717,107 @@ export function ApplicationForm() {
 
 
 
-                    {paymentStatus === "SUCCESS" ? (
+{paymentStatus === "PENDING_VERIFICATION" || paymentStatus === "PENDING" ? (
 
 
 
-                      <span className="inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-semibold text-success">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
 
 
 
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
 
 
 
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
 
 
 
-                        </svg>
+                      </svg>
 
 
 
-                        Payment Successful
+                      Awaiting Verification
 
 
 
-                      </span>
+                    </span>
 
 
 
-                    ) : paymentStatus === "PENDING" ? (
+                  ) : paymentStatus === "REJECTED" ? (
 
 
 
-                      <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive">
 
 
 
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
 
 
 
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
 
 
 
-                        </svg>
+                      </svg>
 
 
 
-                        Awaiting Verification
+                      Payment Verification Rejected
 
 
 
-                      </span>
+                    </span>
 
 
 
-                    ) : (
+                  ) : paymentVerified ? (
 
 
 
-                      <button
+                    <span className="inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-semibold text-success">
 
 
 
-                        type="button"
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5" aria-hidden="true">
 
 
 
-                        onClick={payApplication}
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
 
 
 
-                        disabled={paying || verifying}
+                      </svg>
 
 
 
-                        className="btn-gold disabled:cursor-not-allowed disabled:opacity-60"
+                      Payment Verified
 
 
 
-                      >
+                    </span>
 
 
 
-                        {paying ? "Preparing payment…" : "Pay Application Fee"}
+                  ) : (
 
 
 
-                      </button>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground">
 
 
 
-                    )}
+                      Payment Not Yet Submitted
+
+
+
+                    </span>
+
+
+
+                  )}
 
 
 
@@ -3993,15 +3827,47 @@ export function ApplicationForm() {
 
                 )}
 
+{/* UPI QR + UTR entry */}
 
 
-                {/* UPI QR Code - Always visible on Payment step */}
 
-                {fee && fee.enabled && fee.amount > 0 && paymentStatus !== "SUCCESS" && (
+                {fee && fee.enabled && fee.amount > 0 && fee.paymentMethod !== "razorpay" && !paymentVerified && (
 
 
 
                   <div className="mt-6 rounded-xl border border-gold/30 bg-white p-6 dark:border-gold/20 dark:bg-[#131a2e]">
+
+
+
+                    {paymentStatus === "REJECTED" && (
+
+
+
+                      <div className="mb-5 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+
+
+
+                        <p className="text-sm font-semibold text-destructive">Payment verification was rejected</p>
+
+
+
+                        <p className="mt-1 text-sm text-muted-foreground">
+
+
+
+                          {paymentRef?.verifiedNote ? `Reason: ${paymentRef.verifiedNote} ` : ""}Please enter the correct transaction reference below and submit your application again.
+
+
+
+                        </p>
+
+
+
+                      </div>
+
+
+
+                    )}
 
 
 
@@ -4037,27 +3903,63 @@ export function ApplicationForm() {
 
 
 
-                        <img
+                        {fee.upi?.qrConfigured && fee.upi.qrUrl ? (
 
 
 
-                          src="/assets/upi-qr-code.jpeg"
+                          <img
 
 
 
-                          alt="UPI payment QR code"
+                            src={`${API_BASE_URL}${fee.upi.qrUrl}`}
 
 
 
-                          className="h-64 w-64 max-w-full object-contain"
+                            alt="UPI payment QR code"
 
 
 
-                          referrerPolicy="no-referrer"
+                            className="h-64 w-64 max-w-full object-contain"
 
 
 
-                        />
+                            referrerPolicy="no-referrer"
+
+
+
+                          />
+
+
+
+                        ) : (
+
+
+
+                          <div className="flex h-64 w-64 max-w-full flex-col items-center justify-center gap-2 rounded-lg bg-muted text-center">
+
+
+
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-10 w-10 text-muted-foreground" aria-hidden="true">
+
+
+
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+
+
+
+                            </svg>
+
+
+
+                            <p className="px-4 text-sm text-muted-foreground">QR code not available yet. Please contact the trust office for payment instructions.</p>
+
+
+
+                          </div>
+
+
+
+                        )}
 
 
 
@@ -4069,15 +3971,23 @@ export function ApplicationForm() {
 
 
 
-                        <p className="text-sm font-mono text-navy dark:text-gold bg-gold-soft px-3 py-2 rounded-lg">
+                        {fee.upi?.vpa && (
 
 
 
-                          UPI ID: kavilan.rj@oksbi
+                          <p className="text-sm font-mono text-navy dark:text-gold bg-gold-soft px-3 py-2 rounded-lg">
 
 
 
-                        </p>
+                            UPI ID: {fee.upi.vpa}
+
+
+
+                          </p>
+
+
+
+                        )}
 
 
 
@@ -4085,7 +3995,7 @@ export function ApplicationForm() {
 
 
 
-                          After completing the payment, submit your application.
+                          After completing the payment, enter the transaction reference below and submit your application.
 
 
 
@@ -4101,10 +4011,6 @@ export function ApplicationForm() {
 
 
 
-                    {/* Payment instructions and UTR entry */}
-
-
-
                     <div className="mt-6 pt-6 border-t border-border">
 
 
@@ -4113,27 +4019,43 @@ export function ApplicationForm() {
 
 
 
-                        <ol className="list-decimal space-y-1.5 pl-5">
+                        {fee.upi?.instructions ? (
 
 
 
-                          <li>Open any UPI app (GPay, PhonePe, Paytm, etc.)</li>
+                          <p className="whitespace-pre-line text-muted-foreground">{fee.upi.instructions}</p>
 
 
 
-                          <li>Choose "Scan & Pay" and scan the QR code above</li>
+                        ) : (
 
 
 
-                          <li>Enter the application fee amount and complete the payment</li>
+                          <ol className="list-decimal space-y-1.5 pl-5">
 
 
 
-                          <li>Copy the UPI transaction reference (UTR) and enter it below</li>
+                            <li>Open any UPI app (GPay, PhonePe, Paytm, etc.)</li>
 
 
 
-                        </ol>
+                            <li>Choose "Scan & Pay" and scan the QR code above</li>
+
+
+
+                            <li>Enter the application fee amount and complete the payment</li>
+
+
+
+                            <li>Copy the UPI transaction reference (UTR) and enter it below</li>
+
+
+
+                          </ol>
+
+
+
+                        )}
 
 
 
@@ -4146,6 +4068,10 @@ export function ApplicationForm() {
 
 
                           <input
+
+
+
+                            id="upi-txn-input"
 
 
 
@@ -4177,35 +4103,59 @@ export function ApplicationForm() {
 
 
 
-                        <button
+                        <label className="flex items-start gap-3 rounded-lg border border-border bg-surface-muted p-3 cursor-pointer">
 
 
 
-                          type="button"
+                          <input
 
 
 
-                          onClick={confirmUpiPayment}
+                            type="checkbox"
 
 
 
-                          disabled={verifying || !upiTxnId.trim()}
+                            checked={showPaymentConfirm}
 
 
 
-                          className="btn-gold w-full disabled:cursor-not-allowed disabled:opacity-60"
+                            onChange={(e) => setShowPaymentConfirm(e.target.checked)}
 
 
 
-                        >
+                            className="mt-1 h-4 w-4 accent-[#d4af37]"
 
 
 
-                          {verifying ? "Submitting…" : "I Have Paid — Submit for Verification"}
+                          />
 
 
 
-                        </button>
+                          <span className="text-sm text-navy-800 dark:text-muted-foreground">
+
+
+
+                            I confirm that I have completed the payment of <strong>₹{Number(fee.amount).toLocaleString("en-IN")}</strong> and that the transaction reference above is correct.
+
+
+
+                          </span>
+
+
+
+                        </label>
+
+
+
+                        <p className="text-xs text-muted-foreground">
+
+
+
+                          After you submit, our team will verify your transaction. Your application will be marked as paid once it is confirmed.
+
+
+
+                        </p>
 
 
 
@@ -4225,43 +4175,59 @@ export function ApplicationForm() {
 
 
 
-                {paymentStatus === "PENDING" && fee && fee.enabled && fee.amount > 0 && (
+                {fee && fee.enabled && fee.amount > 0 && fee.paymentMethod === "razorpay" && !paymentVerified && (
 
 
 
-                  <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
+                  <div className="mt-6 rounded-xl border border-gold/30 bg-white p-6 dark:border-gold/20 dark:bg-[#131a2e]">
 
 
 
-                    <div className="flex items-center gap-3">
+                    <p className="text-sm text-muted-foreground">Online payment gateway is being configured. Please check back shortly.</p>
 
 
 
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 text-amber-600" aria-hidden="true">
+                  </div>
 
 
 
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                )}
 
 
 
-                      </svg>
+                {paymentVerified && (
 
 
 
-                      <div>
+                  <div className="mt-5 grid gap-3 rounded-xl border border-border bg-white dark:bg-[#131a2e] p-5 sm:grid-cols-2">
 
 
 
-                        <p className="font-semibold text-amber-800 dark:text-amber-200">Awaiting Verification</p>
+                    <div>
 
 
 
-                        <p className="text-sm text-amber-700 dark:text-amber-300">Your payment details have been submitted. Our team will verify your transaction. Once verified, you can submit your application.</p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Payment Status</p>
 
 
 
-                      </div>
+                      <p className="mt-1 text-sm font-semibold text-success">Payment Verified</p>
+
+
+
+                    </div>
+
+
+
+                    <div>
+
+
+
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Amount Paid</p>
+
+
+
+                      <p className="mt-1 text-sm font-semibold text-navy dark:text-white">₹{Number(paymentRef?.amount ?? fee?.amount ?? 0).toLocaleString("en-IN")}</p>
 
 
 
@@ -4273,7 +4239,51 @@ export function ApplicationForm() {
 
 
 
-                      <p className="mt-3 text-sm font-mono text-navy dark:text-white">UTR: {paymentRef.txnId}</p>
+                      <div>
+
+
+
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">UPI Transaction Ref</p>
+
+
+
+                        <p className="mt-1 font-mono text-sm text-navy dark:text-white">{paymentRef.txnId}</p>
+
+
+
+                      </div>
+
+
+
+                    )}
+
+
+
+                    {paymentRef?.verifiedAt && (
+
+
+
+                      <div>
+
+
+
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Verified On</p>
+
+
+
+                        <p className="mt-1 text-sm text-navy dark:text-white">
+
+
+
+                          {new Date(paymentRef.verifiedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+
+
+
+                        </p>
+
+
+
+                      </div>
 
 
 
@@ -4368,88 +4378,7 @@ export function ApplicationForm() {
 
 
 
-
-                {paymentStatus === "SUCCESS" && paymentRef?.paymentId && (
-
-
-
-                  <div className="mt-5 grid gap-3 rounded-xl border border-border bg-white dark:bg-[#131a2e] p-5 sm:grid-cols-2">
-
-
-
-                    <div>
-
-
-
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Payment ID</p>
-
-
-
-                      <p className="mt-1 font-mono text-sm text-navy dark:text-white">{paymentRef.paymentId}</p>
-
-
-
-                    </div>
-
-
-
-                    <div>
-
-
-
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Amount Paid</p>
-
-
-
-                      <p className="mt-1 text-sm font-semibold text-navy dark:text-white">
-
-
-
-                        ₹{paymentRef.amount != null ? Number(paymentRef.amount).toLocaleString("en-IN") : ""}
-
-
-
-                      </p>
-
-
-
-                    </div>
-
-
-
-                    {paymentRef?.txnId && (
-
-
-
-                      <div>
-
-
-
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">UPI Transaction Ref</p>
-
-
-
-                        <p className="mt-1 font-mono text-sm text-navy dark:text-white">{paymentRef.txnId}</p>
-
-
-
-                      </div>
-
-
-
-                    )}
-
-
-
-                  </div>
-
-
-
-                )}
-
-
-
-              </div>
+</div>
 
 
 
@@ -4623,9 +4552,6 @@ export function ApplicationForm() {
 
 
                     <ReviewRow label="Family Status" value={form.familyStatus === "SINGLE_PARENT" ? "Single Parent" : "Parents"} />
-
-
-                    {form.familyStatus === "SINGLE_PARENT" && <ReviewRow label="Single Parent Type" value={form.singleParentType} />}
 
 
                     <ReviewRow label="Parent/Guardian" value={form.guardianName} />
@@ -4880,7 +4806,7 @@ export function ApplicationForm() {
               onClick={submitApplication}
 
 
-              disabled={submitting || (paymentStatus !== "SUCCESS" && fee?.enabled !== false)}
+              disabled={submitting || (fee?.paymentMethod === "razorpay" && fee?.enabled !== false && paymentStatus !== "SUCCESS")}
 
 
               className="btn-gold disabled:cursor-not-allowed disabled:opacity-60"

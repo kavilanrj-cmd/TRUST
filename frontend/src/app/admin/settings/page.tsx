@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, Button, Field, Spinner, ErrorState, pageHeading, inputCls } from "@/components/admin/ui";
 import { adminApi } from "@/lib/admin-api";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Setting {
   key: string;
@@ -11,6 +12,19 @@ interface Setting {
   type: string;
   value: string;
 }
+
+const PAYMENT_SETTING_KEYS = [
+  "app.applicationFeeNotice",
+  "app.applicationFee",
+  "app.applicationFeeEnabled",
+  "app.upiQrUrl",
+  "app.upiVpa",
+  "app.upiInstructions",
+  "app.paymentMethod",
+  "app.upiQrKey",
+  "app.upiQrMime",
+  "app.upiQrProvider",
+];
 
 // Convert a stored UTC ISO string into a value a <input type="datetime-local">
 // accepts (browser-local "YYYY-MM-DDTHH:mm"). Empty/invalid -> "".
@@ -43,6 +57,9 @@ export default function AdminSettingsPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [qrUploading, setQrUploading] = useState(false);
+  const [qrMsg, setQrMsg] = useState("");
+  const [qrErr, setQrErr] = useState("");
 
   // Scholarship application deadline (dedicated section)
   const [deadlineDraft, setDeadlineDraft] = useState("");
@@ -104,6 +121,31 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setQrUploading(true);
+    setQrMsg("");
+    setQrErr("");
+    try {
+      const fd = new FormData();
+      fd.append("qr", file);
+      await adminApi.settings.uploadUpiQr(fd);
+      setQrMsg("QR code uploaded. Students will now see this QR code on the payment step.");
+      const rows = (await adminApi.settings.list()).settings || [];
+      setSettings(rows);
+    } catch (err: any) {
+      setQrErr(err.message || "Upload failed");
+    } finally {
+      setQrUploading(false);
+    }
+  };
+
+  const getSetting = (key: string) => settings.find((s) => s.key === key)?.value || "";
+  const paymentSettings = settings.filter((s) => PAYMENT_SETTING_KEYS.includes(s.key));
+  const upiQrConfigured = getSetting("app.upiQrKey") !== "";
+
   return (
     <AdminLayout>
       {pageHeading("Website Settings", "Configure public-facing site details. Secrets are not displayed here.")}
@@ -155,6 +197,140 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
+      {!loading && !error && (
+        <div className="mb-6">
+          <Card
+            actions={
+              <Button variant="gold" disabled={saving} onClick={handleSave}>
+                {saving ? "Saving…" : "Save Payment Settings"}
+              </Button>
+            }
+          >
+            <div className="mb-3">
+              <h3 className="text-base font-semibold text-navy dark:text-white">Payment Settings (UPI)</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Configure the application fee and the UPI options shown to students on the payment step. Upload the QR code that students scan to pay.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {paymentSettings
+                .filter((s) => s.key === "app.applicationFee" || s.key === "app.applicationFeeEnabled" || s.key === "app.applicationFeeNotice")
+                .map((s) => (
+                  <Field key={s.key} label={s.label} hint={s.key}>
+                    {s.type === "boolean" ? (
+                      <label className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 rounded border-border text-navy focus:ring-2 focus:ring-navy/30 dark:text-white"
+                          checked={s.value === "true"}
+                          onChange={() => handleToggle(s.key)}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {s.value === "true" ? "Enabled" : "Disabled"}
+                        </span>
+                      </label>
+                    ) : s.type === "number" ? (
+                      <input
+                        type="number"
+                        className={inputCls}
+                        min={0}
+                        step={1}
+                        value={s.value}
+                        onChange={(e) => handleChange(s.key, e.target.value)}
+                      />
+                    ) : (
+                      <textarea
+                        className={inputCls}
+                        rows={3}
+                        value={s.value}
+                        onChange={(e) => handleChange(s.key, e.target.value)}
+                      />
+                    )}
+                  </Field>
+                ))}
+
+              <Field label="Payment Method" hint="app.paymentMethod">
+                <select
+                  className={inputCls}
+                  value={getSetting("app.paymentMethod") || "manual_upi"}
+                  onChange={(e) => handleChange("app.paymentMethod", e.target.value)}
+                >
+                  <option value="manual_upi">Manual UPI (scan &amp; pay + verification)</option>
+                  <option value="razorpay">Razorpay (online gateway — future)</option>
+                </select>
+              </Field>
+
+              <Field label="UPI ID / VPA" hint="app.upiVpa">
+                <input
+                  type="text"
+                  className={inputCls}
+                  value={getSetting("app.upiVpa")}
+                  onChange={(e) => handleChange("app.upiVpa", e.target.value)}
+                />
+              </Field>
+
+              <Field label="UPI Scan &amp; Pay Instructions" hint="app.upiInstructions">
+                <textarea
+                  className={inputCls}
+                  rows={4}
+                  value={getSetting("app.upiInstructions")}
+                  onChange={(e) => handleChange("app.upiInstructions", e.target.value)}
+                />
+              </Field>
+
+              <Field label="UPI QR Image URL (legacy fallback)" hint="app.upiQrUrl">
+                <input
+                  type="url"
+                  className={inputCls}
+                  value={getSetting("app.upiQrUrl")}
+                  onChange={(e) => handleChange("app.upiQrUrl", e.target.value)}
+                />
+              </Field>
+
+              <div className="rounded-lg border border-border p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-navy dark:text-white">UPI QR Code</h4>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {upiQrConfigured
+                        ? "QR code uploaded — students scan this to pay. Uploading a new one replaces it."
+                        : "No QR code uploaded yet. Students will see a notice until you upload one."}
+                    </p>
+                  </div>
+                  <label className="cursor-pointer">
+                    <span className="btn-gold inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60">
+                      {qrUploading ? "Uploading…" : "Upload QR Code"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={qrUploading}
+                      onChange={handleQrUpload}
+                    />
+                  </label>
+                </div>
+
+                {upiQrConfigured && (
+                  <div className="inline-block rounded-lg border border-border bg-white p-3">
+                    <img
+                      src={`${API_BASE_URL}/api/payments/upi-qr`}
+                      alt="UPI QR code preview"
+                      className="h-40 w-40 object-contain"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+
+                {qrMsg && <p className="mt-3 text-xs text-green-600">{qrMsg}</p>}
+                {qrErr && <p className="mt-3 text-xs text-red-600">{qrErr}</p>}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {msg && (
         <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{msg}</div>
       )}
@@ -171,7 +347,7 @@ export default function AdminSettingsPage() {
         >
           <div className="space-y-4">
             {settings
-              .filter((s) => s.key !== "app.applicationDeadline")
+              .filter((s) => s.key !== "app.applicationDeadline" && !PAYMENT_SETTING_KEYS.includes(s.key))
               .map((s) => (
               <Field key={s.key} label={s.label} hint={s.key}>
                 {s.type === "textarea" ? (

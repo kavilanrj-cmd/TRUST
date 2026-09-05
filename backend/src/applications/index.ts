@@ -2,6 +2,7 @@
 // Handles: Create application, Get own application, Get application by ID, Update application
 
 import express, { Request, Response } from "express";
+import crypto from "crypto";
 import prisma from "../utils/db";
 import { notifyNewApplication } from "../admin/applications";
 import { getApplicationDeadlineConfig, deadlineClosedMessage } from "../utils/applicationDeadline";
@@ -245,7 +246,6 @@ router.get("/me", async (req: Request, res: Response) => {
     const paymentStatus = latestPayment
       ? latestPayment.status
       : "NO_PAYMENT";
-
     // Compute upload status for each required document (based on whether a row
     // exists for that documentType). A student only sees their own application.
     const docRows = (application.applicationDocuments || []) as Array<{ documentType: string | null }>;
@@ -267,6 +267,18 @@ router.get("/me", async (req: Request, res: Response) => {
         ...safeApplication,
         submissionStatus: application.status,
         paymentStatus,
+        payment: latestPayment
+          ? {
+              id: latestPayment.id,
+              status: latestPayment.status,
+              method: latestPayment.paymentMethod,
+              amount: latestPayment.amount,
+              txnId: latestPayment.razorpayPaymentId,
+              paymentDate: latestPayment.paymentDate,
+              verifiedAt: latestPayment.verifiedAt,
+              verificationNote: latestPayment.verificationNote,
+            }
+          : null,
         documents,
         decision: {
           reviewedAt: application.reviewedAt,
@@ -511,6 +523,8 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       },
       include: {
         scholarshipProgram: true,
+        parentGuardian: true,
+        financialDetails: true,
       },
     });
 
@@ -528,13 +542,66 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Scholarship program is not currently active" });
     }
 
-    // Check payment is successful (Payment.applicationId is a FK to Application.id)
-    const payment = await prisma.payment.findFirst({
+    // --- Payment validation ---
+    const { getApplicationFeeConfig } = await import("../utils/applicationFee");
+    const feeConfig = await getApplicationFeeConfig();
+    const existingPayment = await prisma.payment.findFirst({
       where: { applicationId: application.id },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!payment || payment.status !== "SUCCESS") {
-      return res.status(400).json({ error: "Payment must be completed before submitting application" });
+    if (feeConfig.enabled && feeConfig.amount > 0) {
+      if (feeConfig.paymentMethod === "manual_upi") {
+        const paymentVerified = ["SUCCESS", "VERIFIED"].includes(existingPayment?.status || "");
+
+        if (!paymentVerified) {
+          const body = (req.body || {}) as { transactionId?: string; paymentConfirmed?: boolean };
+          const submittedTxn = String(body.transactionId || "").trim();
+          const currentTxn = String(existingPayment?.razorpayPaymentId || "").trim();
+          const txn = submittedTxn || currentTxn;
+
+          if (!txn) {
+            return res.status(400).json({
+              error: "Please enter your UPI transaction reference (UTR) before submitting. Complete the payment step first.",
+            });
+          }
+
+          if (txn.length < 6 || txn.length > 64) {
+            return res.status(400).json({
+              error: "The UPI transaction reference (UTR) you entered is invalid. Please check and try again.",
+            });
+          }
+
+          const paymentData: Record<string, unknown> = {
+            razorpayPaymentId: txn,
+            paymentMethod: "MANUAL_UPI",
+            status: "PENDING_VERIFICATION",
+            amount: feeConfig.amount,
+            currency: "INR",
+            verifiedById: null,
+            verifiedAt: null,
+            verificationNote: null,
+          };
+
+          if (existingPayment) {
+            await prisma.payment.update({ where: { id: existingPayment.id }, data: paymentData });
+          } else {
+            const upiRef = `upi_${crypto.randomUUID()}`;
+            await prisma.payment.create({
+              data: {
+                applicationId: application.id,
+                razorpayOrderId: upiRef,
+                ...paymentData,
+              },
+            });
+          }
+        }
+      } else if (feeConfig.paymentMethod === "razorpay") {
+        // Future Razorpay path: require a captured successful payment.
+        if (!existingPayment || existingPayment.status !== "SUCCESS") {
+          return res.status(400).json({ error: "Payment must be completed before submitting application" });
+        }
+      }
     }
 
     // Check required fields are complete
@@ -542,9 +609,14 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
     const hasAddress = application.address ? true : false;
     const hasParentGuardian = application.parentGuardian ? true : false;
     const hasAcademicDetails = application.academicDetails ? true : false;
+    const isNoParents = !!application.parentGuardian?.parent2Name && !application.parentGuardian?.isSingleParent;
     const hasFinancialDetails = application.financialDetails ? true : false;
 
-    if (!hasPersonalDetails || !hasAddress || !hasParentGuardian || !hasAcademicDetails || !hasFinancialDetails) {
+    if (!hasPersonalDetails || !hasAddress || !hasParentGuardian || !hasAcademicDetails) {
+      return res.status(400).json({ error: "All required fields must be completed before submitting" });
+    }
+    // Financial details are required for all applicants except "No Parents" (No Parents does not declare income).
+    if (!isNoParents && !hasFinancialDetails) {
       return res.status(400).json({ error: "All required fields must be completed before submitting" });
     }
 

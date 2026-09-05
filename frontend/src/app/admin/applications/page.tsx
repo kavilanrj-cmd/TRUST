@@ -244,10 +244,15 @@ function ApplicationsPage() {
                     </td>
                     <td className="py-2.5 pr-4">
                       {(() => {
-                        const paid = (a.payments || []).some((p: any) => p.status === "SUCCESS");
-                        return paid ? (
+                        const paid = (a.payments || []).some((p: any) => p.status === "SUCCESS" || p.status === "VERIFIED");
+                        const awaiting = (a.payments || []).some((p: any) => p.status === "PENDING_VERIFICATION");
+                        if (paid) return (
                           <Badge className="bg-green-100 text-green-700">Paid</Badge>
-                        ) : (
+                        );
+                        if (awaiting) return (
+                          <Badge className="bg-amber-100 text-amber-700">Awaiting Verification</Badge>
+                        );
+                        return (
                           <Badge className="bg-gray-100 text-gray-600">Unpaid</Badge>
                         );
                       })()}

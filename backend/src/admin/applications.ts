@@ -68,9 +68,9 @@ router.get(
       const where: any = {};
 
       if (paymentStatus === "paid") {
-        where.payments = { some: { status: "SUCCESS" } };
+        where.payments = { some: { status: { in: ["SUCCESS", "VERIFIED"] } } };
       } else if (paymentStatus === "unpaid") {
-        where.payments = { none: { status: "SUCCESS" } };
+        where.payments = { none: { status: { in: ["SUCCESS", "VERIFIED"] } } };
       }
       if (status) {
         const list = (status as string).split(",");

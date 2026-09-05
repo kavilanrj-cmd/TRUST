@@ -6,7 +6,7 @@ import { PERMISSIONS } from "../utils/roles";
 
 const router = Router();
 
-const VALID_STATUSES = ["SUCCESS", "FAILED", "PENDING", "REFUNDED"];
+const VALID_STATUSES = ["SUCCESS", "FAILED", "PENDING", "REFUNDED", "PENDING_VERIFICATION", "VERIFIED", "REJECTED"];
 
 // GET /api/admin/payments — list payments with filters + pagination
 router.get(
@@ -143,7 +143,9 @@ router.get(
 );
 
 // POST /api/admin/payments/:id/verify — admin manually verifies a UPI payment,
-// marking it SUCCESS so the applicant can submit their application.
+// recording it as VERIFIED so the applicant's payment step reflects a verified
+// state. Separation of concerns: verifying the payment does not itself approve
+// the scholarship application (that is a separate APPOVED/REJECTED decision).
 router.post(
   "/payments/:id/verify",
   authenticate,
@@ -151,6 +153,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const authUser = (req as any).authUser as { id: string } | undefined;
 
       const payment = await prisma.payment.findUnique({ where: { id } });
       if (!payment) {
@@ -159,16 +162,63 @@ router.post(
 
       const updated = await prisma.payment.update({
         where: { id },
-        data: { status: "SUCCESS", paymentDate: new Date() },
+        data: {
+          status: "VERIFIED",
+          paymentDate: payment.paymentDate || new Date(),
+          verifiedById: authUser?.id || payment.verifiedById,
+          verifiedAt: new Date(),
+          verificationNote: null,
+        },
       });
 
       return res.json({
         message: "Payment verified successfully",
         id: updated.id,
         status: updated.status,
+        verifiedAt: updated.verifiedAt,
       });
     } catch (error) {
       console.error("Admin verify payment error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// POST /api/admin/payments/:id/reject — admin rejects a UPI payment submission,
+// returning it to a state where the applicant can re-enter a correct UTR.
+router.post(
+  "/payments/:id/reject",
+  authenticate,
+  requirePermission(PERMISSIONS.applications_status),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { note } = req.body || {};
+      const authUser = (req as any).authUser as { id: string } | undefined;
+
+      const payment = await prisma.payment.findUnique({ where: { id } });
+      if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+
+      const updated = await prisma.payment.update({
+        where: { id },
+        data: {
+          status: "REJECTED",
+          verifiedById: authUser?.id || payment.verifiedById,
+          verifiedAt: new Date(),
+          verificationNote: typeof note === "string" && note.trim() ? String(note).trim() : null,
+        },
+      });
+
+      return res.json({
+        message: "Payment rejected",
+        id: updated.id,
+        status: updated.status,
+        verificationNote: updated.verificationNote,
+      });
+    } catch (error) {
+      console.error("Admin reject payment error:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   }

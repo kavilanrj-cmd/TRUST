@@ -13,6 +13,16 @@ function StudentDashboardInner() {
     applicationId: string;
     status: string;
     paymentStatus?: string;
+    payment?: {
+      id: string | null;
+      status: string;
+      method?: string | null;
+      amount?: number | null;
+      txnId?: string | null;
+      paymentDate?: string | null;
+      verifiedAt?: string | null;
+      verificationNote?: string | null;
+    } | null;
     documents?: Array<{ key: string; label: string; uploaded: boolean }>;
     decision?: {
       decisionMessage?: string | null;
@@ -70,6 +80,16 @@ function renderDashboard(
     applicationId: string;
     status: string;
     paymentStatus?: string;
+    payment?: {
+      id: string | null;
+      status: string;
+      method?: string | null;
+      amount?: number | null;
+      txnId?: string | null;
+      paymentDate?: string | null;
+      verifiedAt?: string | null;
+      verificationNote?: string | null;
+    } | null;
     documents?: Array<{ key: string; label: string; uploaded: boolean }>;
     decision?: {
       decisionMessage?: string | null;
@@ -106,6 +126,7 @@ function renderDashboard(
     applicationId,
     status,
     paymentStatus,
+    payment,
     documents,
     decision,
     scholarshipProgram,
@@ -118,9 +139,12 @@ function renderDashboard(
 
   const paymentStatusMap: Record<string, string> = {
     PENDING: "Pending",
-    SUCCESS: "Success",
+    PENDING_VERIFICATION: "Awaiting Verification",
+    SUCCESS: "Verified",
+    VERIFIED: "Verified",
     FAILED: "Failed",
     REFUNDED: "Refunded",
+    REJECTED: "Rejected",
     NO_PAYMENT: "Not Paid",
   };
 
@@ -134,9 +158,9 @@ function renderDashboard(
     CORRECTION_REQUESTED: "Correction Requested",
   };
 
-  const displayPaymentStatus = paymentStatus
-    ? paymentStatusMap[paymentStatus] || paymentStatus
-    : paymentStatusMap[status] || "Pending";
+  const effectivePaymentStatus = payment?.status || paymentStatus || "NO_PAYMENT";
+  const displayPaymentStatus = paymentStatusMap[effectivePaymentStatus] || "Pending";
+  const paymentVerified = payment?.status === "VERIFIED" || payment?.status === "SUCCESS";
   const appStatus = applicationStatusMap[status] || "Draft";
   const decisionDate = decision?.reviewedAt ? new Date(decision.reviewedAt).toLocaleDateString() : null;
   const submissionDate = submittedAt ? new Date(submittedAt).toLocaleDateString() : createdAt ? new Date(createdAt).toLocaleDateString() : "N/A";
@@ -180,6 +204,22 @@ function renderDashboard(
               <p className="text-muted-foreground">
                 <strong>Payment Status:</strong> {displayPaymentStatus}
               </p>
+              {payment?.txnId && (
+                <p className="text-muted-foreground">
+                  <strong>UPI Transaction Ref:</strong> {payment.txnId}
+                </p>
+              )}
+              {payment?.verifiedAt && (
+                <p className="text-muted-foreground">
+                  <strong>Verified On:</strong> {new Date(payment.verifiedAt).toLocaleDateString()}
+                </p>
+              )}
+              {payment?.status === "REJECTED" && (
+                <p className="text-muted-foreground">
+                  <strong>Rejection Note:</strong>{" "}
+                  {payment.verificationNote || "Payment verification was not approved. Please contact the trust office."}
+                </p>
+              )}
               <p className="text-muted-foreground">
                 <strong>Submission Date:</strong> {submissionDate}
               </p>
@@ -241,8 +281,8 @@ function renderDashboard(
                 },
                 {
                   label: "Payment Completed",
-                  passed: true,
-                  current: false,
+                  passed: paymentVerified,
+                  current: !paymentVerified && payment?.status === "PENDING_VERIFICATION",
                 },
                 {
                   label: "Application Submitted",
