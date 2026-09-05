@@ -11,6 +11,7 @@ import documentRoutes from "./documents/index";
 import paymentRoutes from "./payments/index";
 import contactRoutes from "./contact/index";
 import adminRoutes, { routerPublic, bootstrapFounder } from "./admin/index";
+import certificatesRoutes from "./certificates/index";
 import db from "./utils/db";
 import { authenticate } from "./utils/auth";
 import { getApplicationFeeConfig } from "./utils/applicationFee";
@@ -122,6 +123,7 @@ app.use("/api/payments", authenticate, paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/content", routerPublic);
+app.use("/api/certificates", certificatesRoutes);
 
 // Serve uploaded media files through an authenticated route (see admin router).
 // Never serve the raw uploads directory publicly.

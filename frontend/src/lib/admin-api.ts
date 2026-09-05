@@ -241,6 +241,22 @@ export const adminApi = {
     verify: (paymentId: string) => adminJSON<any>(`${ADMIN_BASE}/payments/${paymentId}/verify`, "POST"),
     reject: (paymentId: string, note: string) =>
       adminJSON<any>(`${ADMIN_BASE}/payments/${paymentId}/reject`, "POST", { note }),
+    paymentScreenshot: (paymentId: string, download = false) =>
+      `${ADMIN_BASE}/payments/${paymentId}/screenshot${download ? "?download=1" : ""}`,
+  },
+
+  // --- Certificates ---
+  certificates: {
+    list: () => adminJSON<any>(`${ADMIN_BASE}/certificates`),
+    create: (formData: FormData) =>
+      request<any>(`${ADMIN_BASE}/certificates`, { method: "POST", body: formData }),
+    update: (id: string, data: { title: string; isPublished?: boolean }) =>
+      adminJSON<any>(`${ADMIN_BASE}/certificates/${id}`, "PATCH", data),
+    replaceFile: (id: string, formData: FormData) =>
+      request<any>(`${ADMIN_BASE}/certificates/${id}`, { method: "PATCH", body: formData }),
+    remove: (id: string) => adminJSON<any>(`${ADMIN_BASE}/certificates/${id}`, "DELETE"),
+    serve: (id: string, download = false) =>
+      `${ADMIN_BASE}/certificates/${id}/file${download ? "?download=1" : ""}`,
   },
 };
 
@@ -252,10 +268,12 @@ export function statusColor(status: string): string {
     DOCUMENT_VERIFICATION: "bg-purple-50 text-purple-700",
     CORRECTION_REQUESTED: "bg-orange-50 text-orange-700",
     APPROVED: "bg-green-50 text-green-700",
+    ACCEPTED: "bg-green-50 text-green-700",
     REJECTED: "bg-red-50 text-red-700",
     WAITLISTED: "bg-yellow-50 text-yellow-700",
     WITHDRAWN: "bg-gray-100 text-gray-600",
     NO_PAYMENT: "bg-gray-100 text-gray-600",
+    NOT_SUBMITTED: "bg-gray-100 text-gray-600",
     PENDING: "bg-blue-50 text-blue-700",
     PENDING_VERIFICATION: "bg-amber-50 text-amber-700",
     VERIFIED: "bg-green-50 text-green-700",

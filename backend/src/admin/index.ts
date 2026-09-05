@@ -23,6 +23,7 @@ import notificationsRouter from "./notifications";
 import searchRouter from "./search";
 import contactRouter from "./contact";
 import paymentsRouter from "./payments";
+import certificatesRouter from "./certificates";
 
 const router = Router();
 const staffRoles = ["FOUNDER", "ADMIN", "REVIEWER"];
@@ -170,6 +171,7 @@ router.use(notificationsRouter);
 router.use(searchRouter);
 router.use(contactRouter);
 router.use(paymentsRouter);
+router.use(certificatesRouter);
 
 export { routerPublic };
 export default router;

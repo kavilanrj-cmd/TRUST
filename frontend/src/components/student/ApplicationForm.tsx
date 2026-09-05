@@ -11,6 +11,7 @@ import Link from "next/link";
 
 
 import { useCallback, useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
 
 
 import { API_BASE_URL } from "@/lib/api";
@@ -647,7 +648,7 @@ export function ApplicationForm() {
   } | null>(null);
 
 
-  const [paymentStatus, setPaymentStatus] = useState<"NO_PAYMENT" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "SUCCESS" | "REJECTED" | "FAILED">("NO_PAYMENT");
+  const [paymentStatus, setPaymentStatus] = useState<"NO_PAYMENT" | "NOT_SUBMITTED" | "PENDING" | "PENDING_VERIFICATION" | "VERIFIED" | "SUCCESS" | "REJECTED" | "FAILED">("NO_PAYMENT");
 
 
   const [paymentNotice, setPaymentNotice] = useState<{ type: "error" | "success" | "info"; text: string } | null>(null);
@@ -666,6 +667,18 @@ export function ApplicationForm() {
 
 
   const [submittedPayment, setSubmittedPayment] = useState<{ status: string; txnId?: string; amount?: number | null } | null>(null);
+
+
+  const [paymentScreenshot, setPaymentScreenshot] = useState<{ name: string; mime: string; uploadedAt?: string | null } | null>(null);
+
+
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+
+
+  const [screenshotUploading, setScreenshotUploading] = useState(false);
+
+
+  const [screenshotError, setScreenshotError] = useState<string | null>(null);
 
 
 
@@ -909,6 +922,9 @@ export function ApplicationForm() {
 
 
           if (d.razorpayPaymentId) setUpiTxnId(String(d.razorpayPaymentId));
+
+
+          setPaymentScreenshot(d.screenshot || null);
 
 
           if (d.status === "VERIFIED" || d.status === "SUCCESS") setShowPaymentConfirm(true);
@@ -1559,6 +1575,18 @@ export function ApplicationForm() {
   const effectivePaymentStatus = submittedPayment?.status || paymentStatus;
 
 
+  // Automatically send applicants to the dashboard shortly after submitting with
+  // a payment that is awaiting verification.
+  useEffect(() => {
+    if (submittedRef && effectivePaymentStatus === "PENDING_VERIFICATION") {
+      const timer = window.setTimeout(() => {
+        window.location.href = "/student/dashboard";
+      }, 3000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [submittedRef, effectivePaymentStatus]);
+
+
   const paymentLabel = (status: string): string => {
 
 
@@ -1597,6 +1625,63 @@ export function ApplicationForm() {
 
 
 
+  const handleScreenshotSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setScreenshotFile(file);
+    setScreenshotError(null);
+    if (!file) return;
+    const allowed =
+      file.type === "application/pdf" ||
+      file.type === "image/jpeg" ||
+      file.type === "image/png";
+    if (!allowed) {
+      setScreenshotError("Unsupported file type. Allowed: JPEG, PNG, PDF");
+      setScreenshotFile(null);
+    }
+  };
+
+
+  const handleScreenshotUpload = async () => {
+    if (!screenshotFile) {
+      setScreenshotError("Please choose a payment screenshot first.");
+      return;
+    }
+    if (!applicationId) {
+      setScreenshotError("Application reference is missing. Please refresh and try again.");
+      return;
+    }
+    setScreenshotUploading(true);
+    setScreenshotError(null);
+    setPaymentNotice(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", screenshotFile);
+      const res = await fetch(
+        `${API_BASE_URL}/api/payments/application/${encodeURIComponent(applicationId)}/screenshot`,
+        { method: "POST", body: fd, credentials: "include" }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Could not upload the payment screenshot. Please try again.");
+      }
+      setPaymentScreenshot({
+        name: data.payment?.screenshotName || screenshotFile.name,
+        mime: data.payment?.screenshotMime || screenshotFile.type,
+        uploadedAt: data.payment?.uploadedAt || undefined,
+      });
+      setScreenshotFile(null);
+      setPaymentStatus((s) => (s === "NO_PAYMENT" ? "NOT_SUBMITTED" : s));
+      setShowPaymentConfirm(false);
+      setPaymentNotice({ type: "success", text: "Payment screenshot uploaded successfully." });
+    } catch (err) {
+      setPaymentNotice({ type: "error", text: err instanceof Error ? err.message : "Could not upload the payment screenshot." });
+      setScreenshotError(err instanceof Error ? err.message : "Could not upload the payment screenshot.");
+    } finally {
+      setScreenshotUploading(false);
+    }
+  };
+
+
   const submitApplication = useCallback(async () => {
 
 
@@ -1632,8 +1717,28 @@ export function ApplicationForm() {
 
     const isPreVerified = paymentStatus === "VERIFIED" || paymentStatus === "SUCCESS";
 
+if (fee?.enabled && Number(fee.amount || 0) > 0 && fee.paymentMethod !== "razorpay" && !isPreVerified) {
 
-    if (fee?.enabled && Number(fee.amount || 0) > 0 && fee.paymentMethod !== "razorpay" && !isPreVerified) {
+
+
+      if (!paymentScreenshot) {
+
+
+
+        setPaymentNotice({ type: "error", text: "Please upload your payment screenshot." });
+
+
+
+        setScreenshotError("Please upload your payment screenshot.");
+
+        document.getElementById("upi-screenshot-input-block")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+
+
+        return;
+
+      }
+
 
 
       if (!txn) {
@@ -1719,19 +1824,61 @@ export function ApplicationForm() {
 
 
       });
+const data = await res.json().catch(() => ({}));
 
-
-      const data = await res.json().catch(() => ({}));
 
 
       if (!res.ok) {
 
 
-        throw new Error(data.error || "Could not submit your application. Please try again.");
+
+        const code = (data as any).code as string | undefined;
+
+        if (code === "UPI_QR_NOT_CONFIGURED") {
+
+          setPaymentNotice({ type: "error", text: (data as any).error || "The payment QR code has not been configured yet. Please contact the trust office." });
+
+        } else if (code === "PAYMENT_SCREENSHOT_REQUIRED") {
+
+          setPaymentNotice({ type: "error", text: (data as any).error || "Please upload your payment screenshot." });
+
+          setScreenshotError("Please upload your payment screenshot.");
+
+          document.getElementById("upi-screenshot-input-block")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        } else if (code === "UTR_REQUIRED") {
+
+          setPaymentNotice({ type: "error", text: (data as any).error || "Please enter your transaction ID / UTR first." });
+
+          setTxnError("Transaction ID / UTR is required. Enter the ID shown in your UPI payment receipt.");
+
+          document.getElementById("upi-txn-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        } else if (code === "UTR_INVALID") {
+
+          setPaymentNotice({ type: "error", text: (data as any).error || "The UPI transaction reference (UTR) you entered is invalid. Please check and try again." });
+
+          setTxnError((data as any).error || "Invalid transaction ID.");
+
+          document.getElementById("upi-txn-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        } else if (code === "PAYMENT_CONFIRMATION_REQUIRED") {
+
+          setPaymentNotice({ type: "error", text: (data as any).error || "Please confirm that you have completed the payment." });
+
+        } else {
+
+          setPaymentNotice({ type: "error", text: (data as any).error || "Could not submit your application. Please try again." });
+
+        }
+
+        setSubmitting(false);
+
+        return;
+
 
 
       }
-
 
       setSubmittedRef(data.applicationId || applicationId || null);
 
@@ -1763,7 +1910,7 @@ export function ApplicationForm() {
     }
 
 
-  }, [showDeclaration, appEditingId, applicationId, upiTxnId, showPaymentConfirm, paymentStatus, fee, paymentRef]);
+  }, [showDeclaration, appEditingId, applicationId, upiTxnId, showPaymentConfirm, paymentStatus, fee, paymentRef, paymentScreenshot]);
 
 
 
@@ -2008,19 +2155,41 @@ export function ApplicationForm() {
 
           <Link href="/" className="btn-gold">Back to Home</Link>
 
+</div>
 
-        </div>
+
+
+        {effectivePaymentStatus === "PENDING_VERIFICATION" && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="pending-verification-title">
+            <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl dark:bg-[#0e1424]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-7 w-7 animate-spin text-amber-600 dark:text-amber-300" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+              </div>
+              <h3 id="pending-verification-title" className="mt-5 text-xl font-bold text-navy dark:text-white">
+                Payment verification pending, please wait.
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                The Trust will verify your payment before your scholarship application is reviewed. We are taking you to your dashboard.
+              </p>
+              <Link href="/student/dashboard" className="btn-gold mt-6 w-full sm:w-auto">
+                Go to Dashboard
+              </Link>
+            </div>
+          </div>
+        )}
 
 
       </div>
 
 
+
     );
 
 
+
   }
-
-
 
 
 
@@ -4171,6 +4340,101 @@ export function ApplicationForm() {
 
 
                         </label>
+
+
+
+                        <div id="upi-screenshot-input-block" className="mt-5 rounded-xl border border-border bg-surface-muted p-4">
+
+
+
+                          <span className="field-label">
+                            Payment Screenshot <span className="text-destructive">*</span>
+                          </span>
+
+
+
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Upload a screenshot of your successful UPI payment.
+                          </p>
+
+
+
+                          {paymentScreenshot || screenshotFile ? (
+                            <div className="mt-3 space-y-3">
+                              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-success/30 bg-success/5 px-4 py-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5 shrink-0 text-success" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                  </svg>
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium text-success">
+                                      {screenshotFile ? screenshotFile.name : paymentScreenshot?.name || "Payment screenshot"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {screenshotUploading
+                                        ? "Uploading…"
+                                        : paymentScreenshot
+                                          ? "Screenshot uploaded. You can replace it if needed."
+                                          : "Click Upload to attach your screenshot."}
+                                    </p>
+                                  </div>
+                                </div>
+                                {!screenshotUploading && (
+                                  <div className="flex items-center gap-2">
+                                    {paymentScreenshot && !screenshotFile && applicationId ? (
+                                      <a
+                                        href={`${API_BASE_URL}/api/payments/application/${encodeURIComponent(applicationId)}/screenshot`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        referrerPolicy="no-referrer"
+                                        className="btn-outline px-3 py-1.5 text-xs"
+                                      >
+                                        View
+                                      </a>
+                                    ) : null}
+                                    <label className="btn-outline cursor-pointer px-3 py-1.5 text-xs">
+                                      {screenshotFile ? "Change" : "Replace"}
+                                      <input type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" className="hidden" onChange={handleScreenshotSelect} />
+                                    </label>
+                                  </div>
+                                )}
+                              </div>
+                              {screenshotFile && !screenshotUploading && (
+                                <button type="button" onClick={handleScreenshotUpload} className="btn-gold w-full sm:w-auto">
+                                  {paymentScreenshot ? "Replace screenshot" : "Upload screenshot"}
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <label className="mt-3 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-muted-foreground/40 px-4 py-8 text-center transition hover:border-gold/60 hover:bg-gold-soft/40">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-8 w-8 text-muted-foreground" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                              </svg>
+                              <span className="text-sm font-medium text-navy dark:text-white">
+                                Click to upload your payment screenshot
+                              </span>
+                              <span className="text-xs text-muted-foreground">JPEG, PNG or PDF — show the successful payment receipt</span>
+                              <input type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" className="hidden" onChange={handleScreenshotSelect} />
+                            </label>
+                          )}
+
+
+
+                          {paymentScreenshot?.uploadedAt && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              Uploaded on {new Date(paymentScreenshot.uploadedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          )}
+
+
+
+                          {screenshotError && (
+                            <p className="mt-2 text-sm font-medium text-destructive" role="alert">{screenshotError}</p>
+                          )}
+
+
+
+                        </div>
 
 
 

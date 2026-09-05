@@ -277,6 +277,13 @@ router.get("/me", async (req: Request, res: Response) => {
               paymentDate: latestPayment.paymentDate,
               verifiedAt: latestPayment.verifiedAt,
               verificationNote: latestPayment.verificationNote,
+              screenshot: latestPayment.paymentScreenshotKey
+                ? {
+                    name: latestPayment.paymentScreenshotName,
+                    mime: latestPayment.paymentScreenshotMime,
+                    uploadedAt: latestPayment.paymentScreenshotUploadedAt,
+                  }
+                : null,
             }
           : null,
         documents,
@@ -535,9 +542,20 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    // Check application is still in draft status
+    // Check application is in draft status (or a submitted application whose
+    // payment was rejected and is being re-submitted with corrected details).
     if (application.status !== "DRAFT") {
-      return res.status(400).json({ error: "Application has already been submitted or is not in draft status" });
+      const latestPayment = await prisma.payment.findFirst({
+        where: { applicationId: application.id },
+        orderBy: { createdAt: "desc" },
+      });
+      const resubmittingRejectedPayment =
+        application.status === "SUBMITTED" &&
+        latestPayment &&
+        ["REJECTED", "NOT_SUBMITTED"].includes(latestPayment.status);
+      if (!resubmittingRejectedPayment) {
+        return res.status(400).json({ error: "Application has already been submitted or is not in draft status" });
+      }
     }
 
     // Check scholarship is active (only when a scholarship program is associated)
@@ -563,15 +581,41 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
           const currentTxn = String(existingPayment?.razorpayPaymentId || "").trim();
           const txn = submittedTxn || currentTxn;
 
+          // The admin must have configured the UPI QR / payment details before
+          // any manual payment can be submitted.
+          if (!feeConfig.upi?.qrConfigured && !feeConfig.upi?.qrUrl && !feeConfig.upi?.vpa) {
+            return res.status(400).json({
+              error: "The payment QR code has not been configured yet. Please contact the trust office.",
+              code: "UPI_QR_NOT_CONFIGURED",
+            });
+          }
+
+          // The applicant must attach a screenshot of the successful payment.
+          if (!existingPayment?.paymentScreenshotKey) {
+            return res.status(400).json({
+              error: "Please upload your payment screenshot first.",
+              code: "PAYMENT_SCREENSHOT_REQUIRED",
+            });
+          }
+
           if (!txn) {
             return res.status(400).json({
               error: "Please enter your UPI transaction reference (UTR) before submitting. Complete the payment step first.",
+              code: "UTR_REQUIRED",
             });
           }
 
           if (txn.length < 6 || txn.length > 64) {
             return res.status(400).json({
               error: "The UPI transaction reference (UTR) you entered is invalid. Please check and try again.",
+              code: "UTR_INVALID",
+            });
+          }
+
+          if (body.paymentConfirmed !== true) {
+            return res.status(400).json({
+              error: "Please confirm that you have completed the payment before submitting.",
+              code: "PAYMENT_CONFIRMATION_REQUIRED",
             });
           }
 

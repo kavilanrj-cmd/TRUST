@@ -22,6 +22,7 @@ function StudentDashboardInner() {
       paymentDate?: string | null;
       verifiedAt?: string | null;
       verificationNote?: string | null;
+      screenshot?: { name?: string | null; mime?: string | null; uploadedAt?: string | null } | null;
     } | null;
     documents?: Array<{ key: string; label: string; uploaded: boolean }>;
     decision?: {
@@ -89,6 +90,7 @@ function renderDashboard(
       paymentDate?: string | null;
       verifiedAt?: string | null;
       verificationNote?: string | null;
+      screenshot?: { name?: string | null; mime?: string | null; uploadedAt?: string | null } | null;
     } | null;
     documents?: Array<{ key: string; label: string; uploaded: boolean }>;
     decision?: {
@@ -145,6 +147,7 @@ function renderDashboard(
     FAILED: "Failed",
     REFUNDED: "Refunded",
     REJECTED: "Payment Verification Rejected",
+    NOT_SUBMITTED: "Not Yet Submitted",
     NO_PAYMENT: "Not Paid",
   };
 
@@ -153,6 +156,7 @@ function renderDashboard(
     SUBMITTED: "Submitted",
     UNDER_REVIEW: "Under Review",
     APPROVED: "Accepted",
+    ACCEPTED: "Accepted",
     REJECTED: "Rejected",
     WAITLISTED: "Waitlisted",
     CORRECTION_REQUESTED: "Correction Requested",
@@ -206,13 +210,28 @@ function renderDashboard(
               </p>
               {paymentVerified && (
                 <p className="mt-1 text-muted-foreground">
-                  Your payment has been verified successfully. Your application is now under review.
+                  Your payment has been verified successfully.
+                </p>
+              )}
+              {payment?.status === "PENDING_VERIFICATION" && (
+                <p className="mt-1 text-muted-foreground">
+                  Your payment details have been submitted successfully. The Trust will verify your payment before your scholarship application is reviewed.
                 </p>
               )}
               {payment?.txnId && (
                 <p className="text-muted-foreground">
                   <strong>Transaction ID / UTR:</strong> <span className="break-all font-mono">{payment.txnId}</span>
                 </p>
+              )}
+              {payment?.screenshot && (
+                <a
+                  href={`${API_BASE_URL}/api/payments/application/${encodeURIComponent(applicationId)}/screenshot`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  referrerPolicy="no-referrer"
+                  className="text-primary underline underline-offset-2 hover:text-primary/90 inline-block mt-1">
+                  View payment screenshot
+                </a>
               )}
               {payment?.verifiedAt && (
                 <p className="text-muted-foreground">
@@ -293,13 +312,17 @@ function renderDashboard(
                   label: "Application Submitted",
                   passed:
                     status === "SUBMITTED" ||
+                    status === "UNDER_REVIEW" ||
                     status === "APPROVED" ||
+                    status === "ACCEPTED" ||
                     status === "REJECTED" ||
                     status === "WAITLISTED" ||
                     status === "CORRECTION_REQUESTED",
                   current:
                     status !== "SUBMITTED" &&
+                    status !== "UNDER_REVIEW" &&
                     status !== "APPROVED" &&
+                    status !== "ACCEPTED" &&
                     status !== "REJECTED" &&
                     status !== "WAITLISTED" &&
                     status !== "CORRECTION_REQUESTED",
@@ -309,6 +332,7 @@ function renderDashboard(
                   passed:
                     status === "UNDER_REVIEW" ||
                     status === "APPROVED" ||
+                    status === "ACCEPTED" ||
                     status === "REJECTED" ||
                     status === "WAITLISTED" ||
                     status === "CORRECTION_REQUESTED",
@@ -318,10 +342,12 @@ function renderDashboard(
                   label: "Decision",
                   passed:
                     status === "APPROVED" ||
+                    status === "ACCEPTED" ||
                     status === "REJECTED" ||
                     status === "WAITLISTED" ||
                     status === "CORRECTION_REQUESTED",
                   current: status !== "APPROVED" &&
+                    status !== "ACCEPTED" &&
                     status !== "REJECTED" &&
                     status !== "WAITLISTED" &&
                     status !== "CORRECTION_REQUESTED",
@@ -386,7 +412,7 @@ function renderDashboard(
                 </ul>
               ) : (
                 <p className="text-muted-foreground">
-                  {status === "SUBMITTED" || status === "APPROVED" ? (
+                  {status === "SUBMITTED" || status === "APPROVED" || status === "ACCEPTED" ? (
                     "Documents have been uploaded and verified"
                   ) : (
                     <a
@@ -426,6 +452,12 @@ function renderDashboard(
                 <p className="text-green-700 mt-1">Your application has been accepted for the scholarship!</p>
               </div>
             )}
+            {status === "ACCEPTED" && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
+                <p className="text-green-800 font-medium">Congratulations!</p>
+                <p className="text-green-700 mt-1">Your application has been accepted for the scholarship!</p>
+              </div>
+            )}
             {status === "REJECTED" && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
                 <p className="text-red-800 font-medium">Application Rejected</p>
@@ -454,6 +486,26 @@ function renderDashboard(
                   </Link>
               </div>
             )}
+
+            {payment?.status === "REJECTED" &&
+              status !== "APPROVED" &&
+              status !== "ACCEPTED" &&
+              status !== "REJECTED" &&
+              status !== "WITHDRAWN" && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+                <p className="text-red-800 font-medium">Fix Payment Details</p>
+                <p className="text-red-700 mt-1 text-sm">
+                  {payment.verificationNote
+                    ? `Reason: ${payment.verificationNote} `
+                    : ""}The payment details you provided were not approved. Please re-upload your payment screenshot and the correct transaction reference, then submit again.
+                </p>
+                <Link
+                  href="/student/application"
+                  className="text-primary underline hover:text-primary/90 mt-2 inline-block">
+                  Re-upload screenshot & resubmit
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Quick links */}
@@ -468,14 +520,14 @@ function renderDashboard(
               <a href="/contact" className="group py-2 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-primary/5 transition-colors">
                 <span className="group-hover text-primary">Contact</span>
               </a>
-              {status !== "SUBMITTED" && (
+              {status !== "SUBMITTED" && status !== "APPROVED" && status !== "ACCEPTED" && (
                 <a
                   href="/student/application"
                   className="group py-2 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-primary/5 transition-colors">
                   <span className="group-hover text-primary">Continue Application</span>
                 </a>
               )}
-              {status === "SUBMITTED" && (
+              {(status === "SUBMITTED" || status === "APPROVED" || status === "ACCEPTED") && (
                 <Link href="/" className="group py-2 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-primary/5 transition-colors">
                   <span className="group-hover text-primary">Home</span>
                 </Link>

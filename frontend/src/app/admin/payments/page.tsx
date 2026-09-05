@@ -7,7 +7,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, Badge, Button, Spinner, ErrorState, EmptyState } from "@/components/admin/ui";
 import { adminApi, fmtDateTime } from "@/lib/admin-api";
 
-const PAYMENT_STATUSES = ["SUCCESS", "VERIFIED", "PENDING", "PENDING_VERIFICATION", "REJECTED", "FAILED", "REFUNDED"];
+const PAYMENT_STATUSES = ["NOT_SUBMITTED", "SUCCESS", "VERIFIED", "PENDING", "PENDING_VERIFICATION", "REJECTED", "FAILED", "REFUNDED"];
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
@@ -18,6 +18,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
     PENDING_VERIFICATION: "bg-amber-100 text-amber-700",
     REJECTED: "bg-red-100 text-red-700",
     REFUNDED: "bg-gray-100 text-gray-600",
+    NOT_SUBMITTED: "bg-gray-100 text-gray-600",
     NO_PAYMENT: "bg-gray-100 text-gray-600",
   };
   const labelMap: Record<string, string> = {
@@ -28,6 +29,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
     FAILED: "Failed",
     PENDING: "Pending",
     REFUNDED: "Refunded",
+    NOT_SUBMITTED: "Not Yet Submitted",
   };
   return <Badge className={map[status] || "bg-gray-100 text-gray-600"}>{labelMap[status] || status.replace(/_/g, " ")}</Badge>;
 }
@@ -212,6 +214,17 @@ function PaymentsPage() {
                     <td className="py-2.5 pr-4"><PaymentStatusBadge status={p.status} /></td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{fmtDateTime(p.paymentDate || p.createdAt)}</td>
                     <td className="py-2.5">
+                      {p.paymentScreenshotKey ? (
+                        <a
+                          href={adminApi.payments.paymentScreenshot(p.id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          referrerPolicy="no-referrer"
+                          className="mr-2 inline-block rounded-md border border-border px-2 py-1 text-xs font-semibold text-navy hover:bg-gold-soft dark:text-gold dark:hover:bg-white/10"
+                        >
+                          Screenshot
+                        </a>
+                      ) : null}
                       {p.status === "PENDING" || p.status === "PENDING_VERIFICATION" ? (
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm" onClick={() => handleVerify(p.id)}>

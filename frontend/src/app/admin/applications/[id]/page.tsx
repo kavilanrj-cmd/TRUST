@@ -8,17 +8,18 @@ import { adminApi, statusColor, fmtDate, fmtDateTime } from "@/lib/admin-api";
 
 const VALID_STATUSES = [
   "DRAFT", "SUBMITTED", "UNDER_REVIEW", "DOCUMENT_VERIFICATION",
-  "APPROVED", "REJECTED", "WAITLISTED", "WITHDRAWN", "CORRECTION_REQUESTED",
+  "APPROVED", "ACCEPTED", "REJECTED", "WAITLISTED", "WITHDRAWN", "CORRECTION_REQUESTED",
 ];
 
 const TRANSITIONS: Record<string, string[]> = {
   DRAFT: ["SUBMITTED", "WITHDRAWN"],
-  SUBMITTED: ["UNDER_REVIEW", "REJECTED", "WITHDRAWN", "CORRECTION_REQUESTED"],
-  UNDER_REVIEW: ["DOCUMENT_VERIFICATION", "APPROVED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "WITHDRAWN"],
-  DOCUMENT_VERIFICATION: ["APPROVED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "UNDER_REVIEW", "WITHDRAWN"],
-  APPROVED: ["REJECTED", "WITHDRAWN"],
-  REJECTED: ["UNDER_REVIEW", "APPROVED", "WITHDRAWN"],
-  WAITLISTED: ["APPROVED", "REJECTED", "WITHDRAWN"],
+  SUBMITTED: ["UNDER_REVIEW", "APPROVED", "ACCEPTED", "REJECTED", "WITHDRAWN", "CORRECTION_REQUESTED"],
+  UNDER_REVIEW: ["DOCUMENT_VERIFICATION", "APPROVED", "ACCEPTED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "WITHDRAWN"],
+  DOCUMENT_VERIFICATION: ["APPROVED", "ACCEPTED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "UNDER_REVIEW", "WITHDRAWN"],
+  APPROVED: ["ACCEPTED", "REJECTED", "WITHDRAWN"],
+  ACCEPTED: ["REJECTED", "WITHDRAWN"],
+  REJECTED: ["UNDER_REVIEW", "APPROVED", "ACCEPTED", "WITHDRAWN"],
+  WAITLISTED: ["APPROVED", "ACCEPTED", "REJECTED", "WITHDRAWN"],
   WITHDRAWN: [],
   CORRECTION_REQUESTED: ["SUBMITTED", "UNDER_REVIEW", "DRAFT", "WITHDRAWN"],
 };
@@ -220,7 +221,7 @@ export default function ApplicationDetailPage() {
     try {
       if (decisionDialog === "ACCEPT") {
         await adminApi.applications.changeStatus(id, {
-          status: "APPROVED",
+          status: "ACCEPTED",
           message: decisionMsg.trim() || undefined,
         });
       } else {
@@ -355,6 +356,7 @@ export default function ApplicationDetailPage() {
     FAILED: "Failed",
     PENDING: "Pending",
     REFUNDED: "Refunded",
+    NOT_SUBMITTED: "Not Yet Submitted",
     NO_PAYMENT: "No Payment",
   };
   const paymentMethodLabel = (latestPayment?.paymentMethod || "MANUAL_UPI") === "RAZORPAY" ? "Razorpay" : "Manual UPI";
@@ -510,6 +512,24 @@ export default function ApplicationDetailPage() {
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
                       <span className="min-w-[200px] text-xs font-medium text-muted-foreground">Payment Status</span>
                       <Badge className={statusColor(latestPayment.status)}>{paymentStatusLabel[latestPayment.status] || latestPayment.status.replace(/_/g, " ")}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                      <span className="min-w-[200px] text-xs font-medium text-muted-foreground">Payment Screenshot</span>
+                      <span className="text-navy dark:text-white">
+                        {latestPayment.paymentScreenshotKey ? (
+                          <a
+                            href={adminApi.payments.paymentScreenshot(latestPayment.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            referrerPolicy="no-referrer"
+                            className="rounded-md border border-border px-2 py-0.5 text-xs font-semibold text-navy hover:bg-gold-soft dark:text-gold dark:hover:bg-white/10"
+                          >
+                            View screenshot
+                          </a>
+                        ) : (
+                          "Not yet uploaded"
+                        )}
+                      </span>
                     </div>
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
                       <span className="min-w-[200px] text-xs font-medium text-muted-foreground">Submitted</span>
@@ -711,7 +731,7 @@ export default function ApplicationDetailPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                disabled={!allowedTransitions.includes("APPROVED")}
+                disabled={!allowedTransitions.includes("APPROVED") && !allowedTransitions.includes("ACCEPTED")}
                 onClick={openAcceptDialog}
                 className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
               >

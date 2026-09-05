@@ -7,7 +7,14 @@ import prisma from "../utils/db";
 import crypto from "crypto";
 import path from "path";
 import { getApplicationFeeConfig, UPI_QR_KEY, UPI_QR_MIME_KEY, UPI_QR_PROVIDER_KEY } from "../utils/applicationFee";
-import { getDocumentBuffer } from "../utils/storage";
+import {
+  getDocumentBuffer,
+  deleteDocumentObject,
+  safeFileName,
+  saveDocumentBuffer,
+  getDocumentBucket,
+  screenshotUpload,
+} from "../utils/storage";
 
 const router = express.Router();
 
@@ -236,16 +243,27 @@ router.post("/confirm", async (req: Request, res: Response) => {
     if (!application) {
       return res.status(404).json({ error: "Application not found" });
     }
-    if (application.status !== "DRAFT") {
-      return res.status(400).json({ error: "Payment can only be confirmed for draft applications" });
-    }
 
     const payment = await prisma.payment.findFirst({
       where: { applicationId: application.id },
       orderBy: { createdAt: "desc" },
     });
 
+    // Initial submissions only come from draft applications. A rejected payment
+    // can be re-confirmed from a submitted application so the applicant can fix
+    // the screenshot / UTR without losing their already-submitted application.
+    const resubmittingRejected =
+      application.status !== "DRAFT" &&
+      payment &&
+      ["REJECTED", "NOT_SUBMITTED"].includes(payment.status);
+    if (application.status !== "DRAFT" && !resubmittingRejected) {
+      return res.status(400).json({ error: "Payment can only be confirmed for draft applications" });
+    }
+
     if (!payment) {
+      if (application.status !== "DRAFT") {
+        return res.status(400).json({ error: "No payment found for this application" });
+      }
       return res.status(400).json({ error: "Please create a payment order first." });
     }
 
@@ -259,6 +277,15 @@ router.post("/confirm", async (req: Request, res: Response) => {
       });
     }
 
+    // The applicant must attach a payment screenshot before a manual UPI
+    // payment can be marked as pending verification.
+    if (!payment.paymentScreenshotKey) {
+      return res.status(400).json({
+        error: "Please upload your payment screenshot first.",
+        code: "PAYMENT_SCREENSHOT_REQUIRED",
+      });
+    }
+
     const updated = await prisma.payment.update({
       where: { id: payment.id },
       data: {
@@ -268,6 +295,8 @@ router.post("/confirm", async (req: Request, res: Response) => {
         verifiedById: null,
         verifiedAt: null,
         verificationNote: null,
+        amount: payment.amount,
+        currency: payment.currency || "INR",
       },
     });
 
@@ -279,6 +308,151 @@ router.post("/confirm", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Confirm UPI payment error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /api/payments/application/:applicationId/screenshot
+// Applicant uploads (or replaces) the payment screenshot used as proof of the
+// manual UPI transaction. Attaches to the latest payment row for their
+// application (creating a NOT_SUBMITTED payment row if none exists yet). Only
+// the application owner can upload; only the owner or staff can retrieve it.
+router.post(
+  "/application/:applicationId/screenshot",
+  screenshotUpload.single("file"),
+  async (req: Request, res: Response) => {
+    try {
+      const { applicationId } = req.params;
+      const userId = (req as any).user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const application = await prisma.application.findFirst({
+        where: { applicationId, studentId: userId },
+      });
+      if (!application) {
+        return res.status(404).json({ error: "Application not found or access denied" });
+      }
+
+      // Once an application has reached a final state, its payment details are frozen.
+      const FINAL = ["APPROVED", "ACCEPTED", "REJECTED", "WITHDRAWN"];
+      if (FINAL.includes(application.status)) {
+        return res.status(403).json({ error: "Payment details are locked for this application" });
+      }
+
+      const file = (req as any).file;
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const { storageKey, storageProvider } = await saveDocumentBuffer(
+        file.buffer,
+        file.mimetype,
+        getDocumentBucket(),
+        "payment-screenshots"
+      );
+
+      const existingPayment = await prisma.payment.findFirst({
+        where: { applicationId: application.id },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Replace: delete the previous screenshot object from storage.
+      if (existingPayment && existingPayment.paymentScreenshotKey && existingPayment.paymentScreenshotKey !== storageKey) {
+        await deleteDocumentObject(
+          existingPayment.paymentScreenshotKey,
+          existingPayment.paymentScreenshotProvider || "s3"
+        ).catch(() => {});
+      }
+
+      const screenshotData = {
+        paymentScreenshotKey: storageKey,
+        paymentScreenshotProvider: storageProvider,
+        paymentScreenshotMime: file.mimetype,
+        paymentScreenshotName: safeFileName(file.originalname) || path.basename(storageKey),
+        paymentScreenshotSize: file.size,
+        paymentScreenshotUploadedAt: new Date(),
+      };
+
+      let payment;
+      if (existingPayment) {
+        payment = await prisma.payment.update({
+          where: { id: existingPayment.id },
+          data: screenshotData,
+        });
+      } else {
+        const feeConfig = await getApplicationFeeConfig();
+        payment = await prisma.payment.create({
+          data: {
+            applicationId: application.id,
+            razorpayOrderId: `upi_${crypto.randomUUID()}`,
+            amount: feeConfig.enabled && feeConfig.amount > 0 ? feeConfig.amount : 0,
+            currency: "INR",
+            status: "NOT_SUBMITTED",
+            paymentMethod: "MANUAL_UPI",
+            ...screenshotData,
+          },
+        });
+      }
+
+      return res.json({
+        message: existingPayment ? "Payment screenshot updated" : "Payment screenshot uploaded",
+        payment: {
+          id: payment.id,
+          status: payment.status,
+          hasScreenshot: true,
+          screenshotName: payment.paymentScreenshotName,
+          screenshotMime: payment.paymentScreenshotMime,
+        },
+      });
+    } catch (error: any) {
+      console.error("Payment screenshot upload error:", error);
+      return res.status(400).json({ error: error.message || "Screenshot upload failed" });
+    }
+  }
+);
+
+// GET /api/payments/application/:applicationId/screenshot
+// Securely stream the applicant's payment screenshot. Only the application
+// owner or admin/reviewer staff may view it (never served publicly).
+router.get("/application/:applicationId/screenshot", async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).authUser as { id: string; userId?: string; role?: string } | undefined;
+    const userId = (req as any).user?.userId || authUser?.userId || authUser?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const { applicationId } = req.params;
+    const application = await prisma.application.findFirst({ where: { applicationId } });
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const STAFF_ROLES = ["FOUNDER", "ADMIN", "REVIEWER"];
+    const isOwner = application.studentId === userId;
+    const isStaff = !!authUser?.role && STAFF_ROLES.includes(authUser.role);
+    if (!isOwner && !isStaff) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: { applicationId: application.id },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!payment || !payment.paymentScreenshotKey) {
+      return res.status(404).json({ error: "Payment screenshot not found" });
+    }
+
+    const { data } = await getDocumentBuffer(payment.paymentScreenshotKey, payment.paymentScreenshotProvider || "s3");
+    const mime = payment.paymentScreenshotMime || "image/jpeg";
+    res.setHeader("Content-Type", mime);
+    res.setHeader("Content-Disposition", `inline; filename="${payment.paymentScreenshotName || path.basename(payment.paymentScreenshotKey)}"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    return res.send(data);
+  } catch (error) {
+    console.error("Payment screenshot serve error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -480,6 +654,14 @@ router.get("/application/:applicationId", async (req: Request, res: Response) =>
       paymentDate: payment.paymentDate,
       verifiedAt: payment.verifiedAt,
       verificationNote: payment.verificationNote,
+      screenshot: payment.paymentScreenshotKey
+        ? {
+            name: payment.paymentScreenshotName,
+            mime: payment.paymentScreenshotMime,
+            size: payment.paymentScreenshotSize,
+            uploadedAt: payment.paymentScreenshotUploadedAt,
+          }
+        : null,
       application: {
         applicationId: payment.application?.applicationId,
         status: payment.application?.status,

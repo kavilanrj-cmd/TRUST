@@ -56,13 +56,16 @@ export function isS3Mode(): boolean {
 
 // Persist a document buffer to the current storage backend.
 // Returns the object key and the provider name stored in the database.
+// The folder prefix (default "documents") keeps unrelated object types
+// (certificates, payment screenshots, etc.) separated in the storage backend.
 export async function saveDocumentBuffer(
   buffer: Buffer,
   contentType: string,
-  bucket: string
+  bucket: string,
+  folder = "documents"
 ): Promise<{ storageKey: string; storageProvider: string }> {
   if (isS3Mode()) {
-    const key = `documents/${crypto.randomBytes(16).toString("hex")}`;
+    const key = `${folder}/${crypto.randomBytes(16).toString("hex")}`;
     await getS3Client().send(
       new PutObjectCommand({
         Bucket: bucket,
@@ -74,7 +77,7 @@ export async function saveDocumentBuffer(
     return { storageKey: key, storageProvider: "s3" };
   }
   // Local disk (development only).
-  const key = `documents/${crypto.randomBytes(16).toString("hex")}`;
+  const key = `${folder}/${crypto.randomBytes(16).toString("hex")}`;
   const absPath = storageKeyToAbsolutePath(key);
   ensureDir(path.dirname(absPath));
   fs.writeFileSync(absPath, buffer);
@@ -210,6 +213,27 @@ export const documentUpload = multer({
       cb(null, true);
     } else {
       cb(new Error("Unsupported document type"));
+    }
+  },
+});
+
+// Payment screenshot uploads (UPI payment proof). Accepts a tighter set of
+// file types than general documents and shares the memory-storage approach so
+// the binary is persisted to S3/local storage via saveDocumentBuffer.
+export const SCREENSHOT_ALLOWED_MIMES = [
+  "image/jpeg",
+  "image/png",
+  "application/pdf",
+];
+
+export const screenshotUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_DOC_SIZE, files: 1 },
+  fileFilter: (_req: Request, file: Express.Multer.File, cb) => {
+    if (SCREENSHOT_ALLOWED_MIMES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Unsupported file type. Allowed: jpeg, png, pdf"));
     }
   },
 });

@@ -12,6 +12,7 @@ const STAFF_ROLES = ["FOUNDER", "ADMIN", "REVIEWER"];
 const NAV_LINKS = [
   { key: "nav.home", href: "/", label: "Home" },
   { key: "nav.about", href: "/about", label: "About Us" },
+  { key: "nav.certificates", href: "/certificates", label: "Certificates" },
   { key: "nav.whatWeDo", href: "/what-we-do", label: "What We Do" },
   { key: "nav.howToApply", href: "/how-to-apply", label: "How to Apply" },
   { key: "nav.successStories", href: "/success-stories", label: "Success Stories" },

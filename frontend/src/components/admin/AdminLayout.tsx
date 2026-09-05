@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/applications", label: "Applications", icon: "document" },
   { href: "/admin/students", label: "Students", icon: "users" },
   { href: "/admin/scholarships", label: "Scholarships", icon: "award" },
+  { href: "/admin/certificates", label: "Certificates", icon: "certificate" },
   { href: "/admin/announcements", label: "Announcements", icon: "megaphone" },
   { href: "/admin/contact-messages", label: "Contact Messages", icon: "mail" },
   { href: "/admin/payments", label: "Payments", icon: "card" },
@@ -41,6 +42,12 @@ const ICONS: Record<string, React.ReactNode> = {
     <>
       <circle cx="12" cy="8" r="6" />
       <path d="M15.5 13 17 22l-5-3-5 3 1.5-9" />
+    </>
+  ),
+  certificate: (
+    <>
+      <path d="M9 12h6M9 16h6M6 2h12a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" />
+      <path d="M8 14.5 10 17l6-7" />
     </>
   ),
   megaphone: (

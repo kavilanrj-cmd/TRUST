@@ -1,12 +1,15 @@
 // Admin payment management: list all payments across applications.
 import { Router, Request, Response } from "express";
+import path from "path";
 import prisma from "../utils/db";
 import { authenticate, requirePermission } from "../utils/auth";
 import { PERMISSIONS } from "../utils/roles";
+import { auditContextFromRequest, logAudit } from "../utils/audit";
+import { getDocumentBuffer } from "../utils/storage";
 
 const router = Router();
 
-const VALID_STATUSES = ["SUCCESS", "FAILED", "PENDING", "REFUNDED", "PENDING_VERIFICATION", "VERIFIED", "REJECTED"];
+const VALID_STATUSES = ["NOT_SUBMITTED", "SUCCESS", "FAILED", "PENDING", "REFUNDED", "PENDING_VERIFICATION", "VERIFIED", "REJECTED"];
 
 // GET /api/admin/payments — list payments with filters + pagination
 router.get(
@@ -160,6 +163,13 @@ router.post(
         return res.status(404).json({ error: "Payment not found" });
       }
 
+      // Verifying the payment is a separate action from approving the
+      // application. After verification, move a SUBMITTED application to
+      // UNDER_REVIEW so the reviewer flow continues, but NEVER auto-approve.
+      const application = await prisma.application.findUnique({
+        where: { id: payment.applicationId },
+      });
+
       const updated = await prisma.payment.update({
         where: { id },
         data: {
@@ -170,6 +180,16 @@ router.post(
           verificationNote: null,
         },
       });
+
+      if (application && application.status === "SUBMITTED") {
+        await prisma.application.update({
+          where: { id: application.id },
+          data: { status: "UNDER_REVIEW" },
+        });
+        await logAudit(auditContextFromRequest(req), "application.status_changed", "Application", application.id, {
+          from: "SUBMITTED", to: "UNDER_REVIEW",
+        });
+      }
 
       return res.json({
         message: "Payment verified successfully",
@@ -224,6 +244,44 @@ router.post(
       });
     } catch (error) {
       console.error("Admin reject payment error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// GET /api/admin/payments/:id/screenshot — secure view of the applicant's
+// payment screenshot (admin/reviewer only). ?download=1 forces attachment.
+router.get(
+  "/payments/:id/screenshot",
+  authenticate,
+  requirePermission(PERMISSIONS.documents_download),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const payment = await prisma.payment.findUnique({ where: { id } });
+      if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+      if (!payment.paymentScreenshotKey) {
+        return res.status(404).json({ error: "No payment screenshot uploaded yet" });
+      }
+
+      const { data } = await getDocumentBuffer(
+        payment.paymentScreenshotKey,
+        payment.paymentScreenshotProvider || "s3"
+      );
+
+      logAudit(auditContextFromRequest(req), "payment.screenshot_viewed", "Payment", id);
+
+      const mime = payment.paymentScreenshotMime || "image/jpeg";
+      const filename = payment.paymentScreenshotName || path.basename(payment.paymentScreenshotKey);
+      const disposition = req.query.download === "1" ? "attachment" : "inline";
+      res.setHeader("Content-Type", mime);
+      res.setHeader("Content-Disposition", `${disposition}; filename="${filename}"`);
+      res.setHeader("Cache-Control", "private, no-store");
+      return res.send(data);
+    } catch (error) {
+      console.error("Admin payment screenshot serve error:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   }

@@ -14,6 +14,7 @@ const VALID_STATUSES = [
   "UNDER_REVIEW",
   "DOCUMENT_VERIFICATION",
   "APPROVED",
+  "ACCEPTED",
   "REJECTED",
   "WAITLISTED",
   "WITHDRAWN",
@@ -23,12 +24,13 @@ const VALID_STATUSES = [
 // Allowed transitions for each status.
 const TRANSITIONS: Record<string, string[]> = {
   DRAFT: ["SUBMITTED", "WITHDRAWN"],
-  SUBMITTED: ["UNDER_REVIEW", "REJECTED", "WITHDRAWN", "CORRECTION_REQUESTED"],
-  UNDER_REVIEW: ["DOCUMENT_VERIFICATION", "APPROVED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "WITHDRAWN"],
-  DOCUMENT_VERIFICATION: ["APPROVED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "UNDER_REVIEW", "WITHDRAWN"],
-  APPROVED: ["REJECTED", "WITHDRAWN"], // long-lived; final but reversible by founder
-  REJECTED: ["UNDER_REVIEW", "APPROVED", "WITHDRAWN"],
-  WAITLISTED: ["APPROVED", "REJECTED", "WITHDRAWN"],
+  SUBMITTED: ["UNDER_REVIEW", "APPROVED", "ACCEPTED", "REJECTED", "WITHDRAWN", "CORRECTION_REQUESTED"],
+  UNDER_REVIEW: ["DOCUMENT_VERIFICATION", "APPROVED", "ACCEPTED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "WITHDRAWN"],
+  DOCUMENT_VERIFICATION: ["APPROVED", "ACCEPTED", "REJECTED", "WAITLISTED", "CORRECTION_REQUESTED", "UNDER_REVIEW", "WITHDRAWN"],
+  APPROVED: ["ACCEPTED", "REJECTED", "WITHDRAWN"], // long-lived; final but reversible by founder
+  ACCEPTED: ["REJECTED", "WITHDRAWN"], // long-lived; final but reversible by founder
+  REJECTED: ["UNDER_REVIEW", "APPROVED", "ACCEPTED", "WITHDRAWN"],
+  WAITLISTED: ["APPROVED", "ACCEPTED", "REJECTED", "WITHDRAWN"],
   WITHDRAWN: [],
   CORRECTION_REQUESTED: ["SUBMITTED", "UNDER_REVIEW", "DRAFT", "WITHDRAWN"],
 };
@@ -266,8 +268,8 @@ router.patch(
 
       const reasonText = reason || note || message || null;
 
-      // Decision metadata: persisted when an application is accepted (APPROVED) or rejected.
-      const isDecision = status === "APPROVED" || status === "REJECTED";
+      // Decision metadata: persisted when an application is accepted (APPROVED/ACCEPTED) or rejected.
+      const isDecision = status === "APPROVED" || status === "ACCEPTED" || status === "REJECTED";
       const user = (req as any).authUser;
       const cleanMissing = Array.isArray(missingDocuments)
         ? missingDocuments.filter((d: unknown) => typeof d === "string" && d.trim())
@@ -331,7 +333,7 @@ router.patch(
           const email = full.student.email;
           const appId = full.applicationId;
           const sName = full.scholarshipProgram.name;
-          if (status === "APPROVED") await sendEmail("application-approved", { email, name: studentName, applicationId: appId, scholarshipName: sName });
+          if (status === "APPROVED" || status === "ACCEPTED") await sendEmail("application-approved", { email, name: studentName, applicationId: appId, scholarshipName: sName });
           else if (status === "REJECTED") await sendEmail("application-rejected", { email, name: studentName, applicationId: appId, scholarshipName: sName });
           else if (status === "WAITLISTED") await sendEmail("application-waitlisted", { email, name: studentName, applicationId: appId, scholarshipName: sName });
           else if (status === "UNDER_REVIEW") await sendEmail("under-review", { email, name: studentName, applicationId: appId, scholarshipName: sName });
