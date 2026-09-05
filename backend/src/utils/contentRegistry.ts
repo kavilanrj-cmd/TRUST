@@ -186,7 +186,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("about.email", "about", "about", "text", "About Page · Email", "neelakannueducationaltrust@gmail.com", { maxLength: 120 }),
   def("about.phone", "about", "about", "text", "About Page · Phone", "94443 27336\n9790930494", { maxLength: 80 }),
   def("about.founderTitle", "about", "about", "text", "About Page · Founder Title", "Founder", { maxLength: 60 }),
-  def("about.founder", "about", "about", "text", "About Page · Founder", "Prof. Dr. K. Chidambaram", { maxLength: 120 }),
+  def("about.founder", "about", "about", "text", "About Page · Founder", "Prof. Dr. K. Chidambaram M.E., Ph.D.", { maxLength: 120 }),
   def("about.missionTitle", "about", "about", "text", "About Page · Mission Title", "Our Mission", { maxLength: 60 }),
   def("about.mission", "about", "about", "textarea", "About Page · Mission", "To provide deserving students with financial assistance and educational opportunities, regardless of their economic background, enabling them to pursue their academic dreams and contribute to society.", { maxLength: 600 }),
 
