@@ -82,9 +82,21 @@ export default function LoginPage() {
     e.preventDefault();
     setFormError(null);
 
-    // TEMPORARY: Authentication bypass — navigate directly to application.
-    // Real authentication will be restored later.
-    router.push("/student/application");
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setForm((prev) => ({ ...prev, errors }));
+      return;
+    }
+    setForm((prev) => ({ ...prev, isLoading: true, errors: {} }));
+
+    try {
+      await login(form.identifier.trim(), form.password);
+      router.push("/student/application");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed. Please try again.";
+      setFormError(message || "Login failed. Please try again.");
+      setForm((prev) => ({ ...prev, isLoading: false }));
+    }
   };
 
   return (

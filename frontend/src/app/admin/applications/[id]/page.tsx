@@ -51,6 +51,11 @@ const REJECTION_REASONS = [
   "Incorrect details provided",
 ];
 
+// "No Parents" family status is derived from the saved parent2 fields (no separate DB column).
+function isNoParentsApp(a: any): boolean {
+  return !!a?.parentGuardian?.parent2Name && !a?.parentGuardian?.isSingleParent;
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
@@ -154,7 +159,8 @@ export default function ApplicationDetailPage() {
   const openRejectDialog = () => {
     const docs = app.applicationDocuments || [];
     const uploaded = new Set(docs.map((d: any) => d.documentType).filter(Boolean));
-    const missing = REQUIRED_DOCUMENTS.filter((d) => !uploaded.has(d.key)).map((d) => d.label);
+    const applicableDocs = isNoParentsApp(app) ? REQUIRED_DOCUMENTS.filter((d) => d.key !== "income") : REQUIRED_DOCUMENTS;
+    const missing = applicableDocs.filter((d) => !uploaded.has(d.key)).map((d) => d.label);
     const reasons = new Set<string>();
     if (missing.length > 0) reasons.add("Missing required documents");
     const paymentDone = (app.payments || []).some((p: any) => p.status === "SUCCESS");
@@ -215,7 +221,9 @@ export default function ApplicationDetailPage() {
           message: decisionMsg.trim() || undefined,
         });
       } else {
-        const missingLabels = REQUIRED_DOCUMENTS.filter((d) => selectedMissing.has(d.label)).map((d) => d.label);
+        const missingLabels = (isNoParentsApp(app) ? REQUIRED_DOCUMENTS.filter((d) => d.key !== "income") : REQUIRED_DOCUMENTS)
+        .filter((d) => selectedMissing.has(d.label))
+        .map((d) => d.label);
         await adminApi.applications.changeStatus(id, {
           status: "REJECTED",
           message: decisionMsg.trim() || undefined,
@@ -290,6 +298,7 @@ export default function ApplicationDetailPage() {
   if (error) return <AdminLayout><ErrorState message={error} /></AdminLayout>;
   if (loading || !app) return <AdminLayout><Spinner label="Loading application..." /></AdminLayout>;
 
+  const isNoParents = isNoParentsApp(app);
   const pd = app.personalDetails;
   const addr = app.address;
   const pg = app.parentGuardian;
@@ -300,7 +309,7 @@ export default function ApplicationDetailPage() {
   const payments = app.payments || [];
 
   const uploadedDocKeys = new Set(docs.map((d: any) => d.documentType).filter(Boolean));
-  const requiredChecklist = REQUIRED_DOCUMENTS.map((d) => ({
+  const requiredChecklist = (isNoParents ? REQUIRED_DOCUMENTS.filter((d) => d.key !== "income") : REQUIRED_DOCUMENTS).map((d) => ({
     ...d,
     uploaded: uploadedDocKeys.has(d.key),
   }));
@@ -367,13 +376,27 @@ export default function ApplicationDetailPage() {
           </Section>
 
           <Section title="Parent / Guardian">
-            <FieldRow label="Name" value={pg?.guardianName} />
-            <FieldRow label="Relationship" value={pg?.relationship} />
-            <FieldRow label="Phone" value={pg?.contactNumber} />
-            <FieldRow label="Occupation" value={pg?.occupation} />
-            <FieldRow label="Single Parent" value={pg?.isSingleParent ? "Yes" : "No"} />
-            {pg?.isSingleParent && <FieldRow label="Single Parent Type" value={pg?.singleParentType} />}
-            <FieldRow label="Income" value={pg?.income != null ? `₹${pg.income.toLocaleString()}` : undefined} />
+            {isNoParents ? (
+              <>
+                <FieldRow label="Family Status" value="No Parents" />
+                <FieldRow label="Parent 1 Name" value={pg?.guardianName} />
+                <FieldRow label="Parent 1 Relationship" value={pg?.relationship} />
+                <FieldRow label="Parent 1 Phone" value={pg?.contactNumber} />
+                <FieldRow label="Parent 1 Occupation" value={pg?.occupation} />
+                <FieldRow label="Parent 2 Name" value={pg?.parent2Name} />
+                <FieldRow label="Parent 2 Relationship" value={pg?.parent2Relationship} />
+              </>
+            ) : (
+              <>
+                <FieldRow label="Name" value={pg?.guardianName} />
+                <FieldRow label="Relationship" value={pg?.relationship} />
+                <FieldRow label="Phone" value={pg?.contactNumber} />
+                <FieldRow label="Occupation" value={pg?.occupation} />
+                <FieldRow label="Single Parent" value={pg?.isSingleParent ? "Yes" : "No"} />
+                {pg?.isSingleParent && <FieldRow label="Single Parent Type" value={pg?.singleParentType} />}
+                <FieldRow label="Income" value={pg?.income != null ? `₹${pg.income.toLocaleString()}` : undefined} />
+              </>
+            )}
           </Section>
 
           <Section title="Academic Details">
@@ -390,10 +413,12 @@ export default function ApplicationDetailPage() {
             <FieldRow label="Marks / CGPA" value={acad?.marksPercentageCGPA} />
           </Section>
 
-          <Section title="Financial Details">
-            <FieldRow label="Family Annual Income" value={fin?.familyIncome != null ? `₹${fin.familyIncome.toLocaleString()}` : undefined} />
-            <FieldRow label="Income Source" value={fin?.incomeSource} />
-          </Section>
+          {!isNoParents && (
+            <Section title="Financial Details">
+              <FieldRow label="Family Annual Income" value={fin?.familyIncome != null ? `₹${fin.familyIncome.toLocaleString()}` : undefined} />
+              <FieldRow label="Income Source" value={fin?.incomeSource} />
+            </Section>
+          )}
 
           <Section title="Application Metrics">
             <FieldRow label="Application ID" value={app.applicationId} />

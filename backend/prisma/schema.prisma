@@ -168,6 +168,8 @@ model ParentGuardian {
   isSingleParent  Boolean?
   singleParentType String?
   income          Decimal?
+  parent2Name     String?
+  parent2Relationship String?
 }
 
 model AcademicDetails {

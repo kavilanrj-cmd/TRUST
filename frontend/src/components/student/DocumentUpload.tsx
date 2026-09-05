@@ -73,10 +73,12 @@ export function DocumentUpload({
   applicationId,
   onCountChange,
   isSingleParent = false,
+  noParents = false,
 }: {
   applicationId: string | null;
   onCountChange?: (count: number) => void;
   isSingleParent?: boolean;
+  noParents?: boolean;
 }) {
   const [files, setFiles] = useState<Record<string, DocState | null>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -194,8 +196,15 @@ export function DocumentUpload({
   );
 
   const filteredDocuments = useMemo(
-    () => isSingleParent ? REQUIRED_DOCUMENTS : REQUIRED_DOCUMENTS.filter((d) => d.key !== "deathCertificate"),
-    [isSingleParent]
+    () =>
+      isSingleParent
+        ? noParents
+          ? REQUIRED_DOCUMENTS.filter((d) => d.key !== "income" && d.key !== "deathCertificate")
+          : REQUIRED_DOCUMENTS
+        : noParents
+          ? REQUIRED_DOCUMENTS.filter((d) => d.key !== "income" && d.key !== "deathCertificate")
+          : REQUIRED_DOCUMENTS.filter((d) => d.key !== "deathCertificate"),
+    [isSingleParent, noParents]
   );
 
   return (

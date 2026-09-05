@@ -154,6 +154,8 @@ router.post("/", async (req: Request, res: Response) => {
           isSingleParent: (parentGuardian as any).isSingleParent ?? false,
           singleParentType: (parentGuardian as any).singleParentType || null,
           income: (parentGuardian as any).income != null ? numOr((parentGuardian as any).income) : undefined,
+          parent2Name: (parentGuardian as any).parent2Name || null,
+          parent2Relationship: (parentGuardian as any).parent2Relationship || null,
         }
       } : undefined,
       academicDetails: academicDetails ? {
@@ -248,7 +250,11 @@ router.get("/me", async (req: Request, res: Response) => {
     // exists for that documentType). A student only sees their own application.
     const docRows = (application.applicationDocuments || []) as Array<{ documentType: string | null }>;
     const uploadedKeys = new Set(docRows.map((d) => d.documentType).filter((t): t is string => !!t));
-    const documents = REQUIRED_DOCUMENTS.map((d) => ({
+    // "No Parents" applicants (parent2Name set, not single parent) do not need an
+    // Income Certificate, so exclude it from the required-document list.
+    const isNoParents = !!application.parentGuardian?.parent2Name && !application.parentGuardian.isSingleParent;
+    const effectiveRequired = REQUIRED_DOCUMENTS.filter((d) => (isNoParents && d.key === "income") ? false : true);
+    const documents = effectiveRequired.map((d) => ({
       key: d.key,
       label: d.label,
       uploaded: uploadedKeys.has(d.key),
@@ -327,6 +333,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const userId = user?.userId;
+    const { id } = req.params;
 
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
@@ -404,6 +411,8 @@ router.patch("/:id", async (req: Request, res: Response) => {
           isSingleParent: (parentGuardian as any).isSingleParent,
           singleParentType: (parentGuardian as any).singleParentType || null,
           income: (parentGuardian as any).income,
+          parent2Name: (parentGuardian as any).parent2Name || null,
+          parent2Relationship: (parentGuardian as any).parent2Relationship || null,
         },
       });
     }
@@ -428,16 +437,30 @@ router.patch("/:id", async (req: Request, res: Response) => {
       });
     }
 
-    // Update financial details if provided
+    // Update financial details if provided.
+    // When financialDetails is absent/null (e.g. "No Parents" family status),
+    // any previously stored income data is cleared so nothing stale is shown.
     if (financialDetails) {
-      await prisma.financialDetails.update({
+      const incomeValue = (financialDetails as any).familyIncome;
+      const incomeSourceValue = (financialDetails as any).incomeSource;
+      await prisma.financialDetails.upsert({
         where: { applicationId: id },
-        data: {
-          ...((financialDetails as any).familyIncome !== undefined && (financialDetails as any).familyIncome !== null
-            ? { familyIncome: numOr((financialDetails as any).familyIncome) }
+        update: {
+          ...(incomeValue !== undefined && incomeValue !== null
+            ? { familyIncome: numOr(incomeValue) }
             : {}),
-          incomeSource: (financialDetails as any).incomeSource !== undefined ? strOr((financialDetails as any).incomeSource) : undefined,
+          incomeSource: incomeSourceValue !== undefined ? strOr(incomeSourceValue) : undefined,
         },
+        create: {
+          applicationId: id,
+          familyIncome: incomeValue !== undefined && incomeValue !== null ? numOr(incomeValue) : 0,
+          incomeSource: incomeSourceValue !== undefined ? strOr(incomeSourceValue) : "",
+        },
+      });
+    } else {
+      await prisma.financialDetails.updateMany({
+        where: { applicationId: id },
+        data: { familyIncome: 0, incomeSource: "" },
       });
     }
 
