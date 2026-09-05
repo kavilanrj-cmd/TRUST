@@ -1,11 +1,10 @@
 // Website settings management: safe configurable values only.
 import { Router, Request, Response } from "express";
-import fs from "fs";
 import prisma from "../utils/db";
 import { authenticate, requirePermission } from "../utils/auth";
 import { PERMISSIONS } from "../utils/roles";
 import { auditContextFromRequest, logAudit } from "../utils/audit";
-import { imageUpload, getDocumentBucket, saveDocumentBuffer } from "../utils/storage";
+import { qrUpload, getDocumentBucket, saveDocumentBuffer } from "../utils/storage";
 import { UPI_QR_KEY, UPI_QR_MIME_KEY, UPI_QR_PROVIDER_KEY } from "../utils/applicationFee";
 
 const router = Router();
@@ -110,19 +109,17 @@ router.post(
   "/settings/upi-qr",
   authenticate,
   requirePermission(PERMISSIONS.settings_manage),
-  imageUpload.single("qr"),
+  qrUpload.single("qr"),
   async (req: Request, res: Response) => {
     try {
       const file = (req as any).file;
       if (!file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
-      // imageUpload uses multer disk-storage, so the bytes live at file.path
-      // (file.buffer is undefined for disk storage). Read them into memory so
-      // they can be persisted via saveDocumentBuffer to S3/local storage.
-      const buffer = fs.readFileSync(file.path);
+      // qrUpload uses memory storage on serverless (Vercel) so file.buffer is
+      // populated and no disk write is needed before persisting to S3/local.
       const { storageKey, storageProvider } = await saveDocumentBuffer(
-        buffer,
+        file.buffer,
         file.mimetype,
         getDocumentBucket(),
         "upi-qr"

@@ -179,7 +179,10 @@ export function storageKeyToAbsolutePath(rawKey: string): string {
   return path.join(UPLOAD_DIR, normalized);
 }
 
-// Multer disk storage for image uploads.
+// Multer disk storage for image uploads. NOTE: unusable on serverless runtimes
+// (Vercel read-only /tmp-equivalent: /var/task is read-only), so it is only used
+// where a disk path is actually required. Prefer the memory-storage uploads
+// below for anything that must persist to S3/local storage.
 export const imageUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => {
@@ -193,6 +196,22 @@ export const imageUpload = multer({
     },
   }),
   limits: { fileSize: MAX_IMAGE_SIZE, files: 20 },
+  fileFilter: (_req: Request, file: Express.Multer.File, cb) => {
+    if (file.mimetype in ALLOWED_IMAGE_MIMES) {
+      cb(null, true);
+    } else {
+      cb(new Error("Unsupported file type"));
+    }
+  },
+});
+
+// Memory-storage UPI QR image upload. Keeps the bytes in memory (file.buffer) so
+// the route can persist them to S3/local storage via saveDocumentBuffer — disk
+// storage would try to mkdir on the read-only serverless filesystem. Accepts the
+// same image types as imageUpload.
+export const qrUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_SIZE, files: 1 },
   fileFilter: (_req: Request, file: Express.Multer.File, cb) => {
     if (file.mimetype in ALLOWED_IMAGE_MIMES) {
       cb(null, true);
