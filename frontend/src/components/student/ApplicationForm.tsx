@@ -1669,7 +1669,6 @@ export function ApplicationForm() {
         mime: data.payment?.screenshotMime || screenshotFile.type,
         uploadedAt: data.payment?.uploadedAt || undefined,
       });
-      setScreenshotFile(null);
       setPaymentStatus((s) => (s === "NO_PAYMENT" ? "NOT_SUBMITTED" : s));
       setShowPaymentConfirm(false);
       setPaymentNotice({ type: "success", text: "Payment screenshot uploaded successfully." });
@@ -1678,6 +1677,7 @@ export function ApplicationForm() {
       setScreenshotError(err instanceof Error ? err.message : "Could not upload the payment screenshot.");
     } finally {
       setScreenshotUploading(false);
+      setScreenshotFile(null);
     }
   };
 
