@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { useHomeContent } from "@/lib/home-content";
+import { useAuth } from "@/lib/auth";
 import { ApplicationDeadline } from "./ApplicationDeadline";
 
 interface DeadlineConfig {
@@ -15,8 +16,15 @@ interface DeadlineConfig {
 
 export function Hero() {
   const { t } = useHomeContent();
+  const { user, isLoading } = useAuth();
   const [deadline, setDeadline] = useState<DeadlineConfig | null>(null);
   const isClosed = !!deadline?.deadline && deadline.closed;
+  const isStudent = !!user && user.role === "STUDENT";
+
+  // When an applicant is signed in, hide the "Login to Apply" CTA entirely and
+  // let "Learn More" sit alone. Also wait for the session to finish loading so
+  // a logged-in user never sees a brief flash of it on refresh.
+  const showLoginCta = !isStudent && !isLoading;
 
   useEffect(() => {
     let cancelled = false;
@@ -71,15 +79,16 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            {isClosed ? (
-              <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-navy-50 px-6 py-3 text-sm font-semibold text-muted-foreground">
-                Applications Closed
-              </span>
-            ) : (
-              <Link href="/login" className="btn-gold">
-                {t("home.hero.loginCta", "Login to Apply")}
-              </Link>
-            )}
+            {showLoginCta &&
+              (isClosed ? (
+                <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-navy-50 px-6 py-3 text-sm font-semibold text-muted-foreground">
+                  Applications Closed
+                </span>
+              ) : (
+                <Link href="/login" className="btn-gold">
+                  {t("home.hero.loginCta", "Login to Apply")}
+                </Link>
+              ))}
             <a href="#about" className="btn-outline">
               {t("home.hero.secondaryButton", "Learn More")}
             </a>
