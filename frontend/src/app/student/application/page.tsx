@@ -22,11 +22,11 @@ export default function StudentApplicationPage() {
                 priority
               />
               <span className="border-l border-border pl-3 pr-1 text-left">
-                <span className="block text-sm font-semibold tracking-wide text-navy">Neelakannu Educational Trust</span>
+                <span className="block text-sm font-semibold tracking-wide text-navy dark:text-white">Neelakannu Educational Trust</span>
                 <span className="block text-xs text-muted-foreground">Empowering education</span>
               </span>
             </div>
-            <h1 className="font-serif text-3xl font-bold tracking-tight text-navy sm:text-4xl">
+            <h1 className="font-serif text-3xl font-bold tracking-tight text-navy dark:text-white sm:text-4xl">
               Scholarship Application
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
@@ -45,7 +45,7 @@ export default function StudentApplicationPage() {
           <footer className="mx-auto mt-10 max-w-3xl text-center">
             <p className="text-xs text-muted-foreground">
               Having trouble?
-              <Link href="/contact" className="ml-1 font-medium text-navy underline underline-offset-2 hover:text-navy-700">
+              <Link href="/contact" className="ml-1 font-medium text-navy dark:text-gold underline underline-offset-2 hover:text-navy-700 dark:hover:text-gold/80">
                 Contact the Trust
               </Link>
             </p>

@@ -208,10 +208,16 @@ router.post("/", async (req: Request, res: Response) => {
 // Get current student's application
 router.get("/me", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.userId;
+    const user = (req as any).user;
+    const userId = user?.userId;
 
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Reject guest users (temporary sessions) - they should not have persistent applications
+    if (user?.email?.startsWith("guest-") && user?.email?.endsWith("@temp.local")) {
+      return res.status(401).json({ error: "Authentication required. Please log in to access your application." });
     }
 
     const application = await prisma.application.findFirst({
@@ -275,11 +281,17 @@ router.get("/me", async (req: Request, res: Response) => {
 // Get application by ID (student can only get their own)
 router.get("/:id", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.userId;
+    const user = (req as any).user;
+    const userId = user?.userId;
     const { id } = req.params;
 
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Reject guest users
+    if (user?.email?.startsWith("guest-") && user?.email?.endsWith("@temp.local")) {
+      return res.status(401).json({ error: "Authentication required. Please log in to view your application." });
     }
 
     const application = await prisma.application.findFirst({
@@ -313,11 +325,16 @@ router.get("/:id", async (req: Request, res: Response) => {
 // Update application (save draft)
 router.patch("/:id", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.userId;
-    const { id } = req.params;
+    const user = (req as any).user;
+    const userId = user?.userId;
 
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Reject guest users
+    if (user?.email?.startsWith("guest-") && user?.email?.endsWith("@temp.local")) {
+      return res.status(401).json({ error: "Authentication required. Please log in to save your application." });
     }
 
     // Verify application belongs to this student
@@ -450,11 +467,17 @@ router.patch("/:id", async (req: Request, res: Response) => {
 // Submit application
 router.post("/:id/submit", async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.userId;
+    const user = (req as any).user;
+    const userId = user?.userId;
     const { id } = req.params;
 
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Reject guest users
+    if (user?.email?.startsWith("guest-") && user?.email?.endsWith("@temp.local")) {
+      return res.status(401).json({ error: "Authentication required. Please log in to submit your application." });
     }
 
     // Verify application belongs to this student
