@@ -37,7 +37,7 @@ export default function AboutPage() {
                 {t("about.email", "neelakannueducationaltrust@gmail.com")}
               </a>
               <br/>
-              <span>{t("about.phone", "94443 27336")}</span>
+              <span className="whitespace-pre-line">{t("about.phone", "94443 27336\n9790930494")}</span>
             </p>
           </div>
         </div>

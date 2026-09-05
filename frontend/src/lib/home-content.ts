@@ -160,7 +160,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
     "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India",
   "about.contactTitle": "Contact Information",
   "about.email": "neelakannueducationaltrust@gmail.com",
-  "about.phone": "94443 27336",
+  "about.phone": "94443 27336\n9790930494",
   // Removed duplicate old entries; new founder/mission below
   // Core Objectives and Areas of Work
   "about.organizationTitle": "About the Organization",
