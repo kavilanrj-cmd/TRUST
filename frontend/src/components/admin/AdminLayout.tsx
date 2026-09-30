@@ -219,7 +219,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             N
           </div>
           <div className="leading-tight">
-            <p className="text-sm font-semibold">Neelakannu Trust</p>
+            <p className="text-sm font-semibold">Neelakannu Educational Trust</p>
             <p className="text-[11px] uppercase tracking-wider text-white/60">Admin Panel</p>
           </div>
         </div>

@@ -161,29 +161,59 @@ router.post("/", async (req: Request, res: Response) => {
       } : undefined,
       academicDetails: academicDetails ? {
         create: {
-          schoolCollege: strOr((academicDetails as any).schoolCollege),
-          academicType: strOr((academicDetails as any).academicType, ""),
+          // Legacy combined column kept in sync for backwards compatibility.
+          schoolCollege: strOr((academicDetails as any).schoolCollege) || null,
+          schoolName: strOr((academicDetails as any).schoolName) || null,
+          schoolAddress: strOr((academicDetails as any).schoolAddress) || null,
+          collegeName: strOr((academicDetails as any).collegeName) || null,
+          collegeAddress: strOr((academicDetails as any).collegeAddress) || null,
+          academicType: strOr((academicDetails as any).academicType) || null,
           course: strOr((academicDetails as any).course),
           educationLevel: strOr((academicDetails as any).educationLevel, "UNDERGRADUATE"),
           academicYear: strOr((academicDetails as any).academicYear),
-          yearOfStudy: strOr((academicDetails as any).yearOfStudy, ""),
-          className: strOr((academicDetails as any).className, ""),
-          section: strOr((academicDetails as any).section, ""),
-          semester: strOr((academicDetails as any).semester, ""),
-          ugPg: strOr((academicDetails as any).ugPg, ""),
-          marksPercentageCGPA: strOr((academicDetails as any).marksPercentageCGPA, ""),
+          yearOfStudy: strOr((academicDetails as any).yearOfStudy) || null,
+          className: strOr((academicDetails as any).className) || null,
+          section: strOr((academicDetails as any).section) || null,
+          semester: strOr((academicDetails as any).semester) || null,
+          ugPg: strOr((academicDetails as any).ugPg) || null,
+          marksPercentageCGPA: strOr((academicDetails as any).marksPercentageCGPA),
         }
       } : undefined,
       financialDetails: financialDetails ? {
         create: {
           familyIncome: numOr((financialDetails as any).familyIncome, 0),
           incomeSource: strOr((financialDetails as any).incomeSource),
+          // Decimal column: accept a number/string, otherwise leave NULL so the
+          // column stays nullable for applications created before this field.
+          ...((financialDetails as any).scholarshipAmount !== undefined &&
+          (financialDetails as any).scholarshipAmount !== null &&
+          (financialDetails as any).scholarshipAmount !== ""
+            ? { scholarshipAmount: numOr((financialDetails as any).scholarshipAmount, 0) }
+            : {}),
         }
       } : undefined,
     };
 
     if (scholarshipProgramId) {
       applicationData.scholarshipProgram = { connect: { id: scholarshipProgramId } };
+    }
+
+    // Bank details are created as a nested 1:1 relation so the whole draft is
+    // written atomically (no orphan/partial rows). The unique constraint on
+    // applicationId guarantees a single BankDetails record per application.
+    const bankDetailsInput = req.body.bankDetails;
+    if (bankDetailsInput) {
+      const bankData = bankDetailsInput as any;
+      const bankFields = {
+        accountHolderName: strOr(bankData.accountHolderName),
+        accountNumber: strOr(bankData.accountNumber),
+        bankName: strOr(bankData.bankName),
+        branchName: strOr(bankData.branchName),
+        ifscCode: strOr(bankData.ifscCode).toUpperCase(),
+      };
+      if (Object.values(bankFields).some((v) => v.length > 0)) {
+        applicationData.bankDetails = { create: bankFields };
+      }
     }
 
     // Create application with draft status
@@ -195,6 +225,7 @@ router.post("/", async (req: Request, res: Response) => {
         parentGuardian: true,
         academicDetails: true,
         financialDetails: true,
+        bankDetails: true,
       },
     });
 
@@ -231,6 +262,7 @@ router.get("/me", async (req: Request, res: Response) => {
         parentGuardian: true,
         academicDetails: true,
         financialDetails: true,
+        bankDetails: true,
         scholarshipProgram: true,
         applicationDocuments: true,
         payments: { orderBy: { createdAt: "desc" } },
@@ -330,6 +362,7 @@ router.get("/:id", async (req: Request, res: Response) => {
         parentGuardian: true,
         academicDetails: true,
         financialDetails: true,
+        bankDetails: true,
         scholarshipProgram: true,
       },
     });
@@ -386,72 +419,153 @@ router.patch("/:id", async (req: Request, res: Response) => {
       parentGuardian,
       academicDetails,
       financialDetails,
+      bankDetails,
     } = req.body;
 
-    // Update personal details if provided
+    // Update personal details if provided.
+    // Upsert rather than update() so a draft that predates one of these
+    // sections (or was created without it) is repaired instead of throwing.
     if (personalDetails) {
       const dob = toDateTime((personalDetails as any).dateOfBirth);
-      await prisma.personalDetails.update({
+      await prisma.personalDetails.upsert({
         where: { applicationId: id },
-        data: {
-          fullName: (personalDetails as any).fullName,
-          bankRecordName: (personalDetails as any).nameBankRecord ?? (personalDetails as any).bankRecordName,
+        update: {
+          fullName: strOr((personalDetails as any).fullName),
+          bankRecordName: (personalDetails as any).nameBankRecord ?? (personalDetails as any).bankRecordName ?? "",
           ...(dob !== undefined ? { dateOfBirth: dob } : {}),
-          gender: (personalDetails as any).gender,
-          phone: (personalDetails as any).phone,
+          gender: strOr((personalDetails as any).gender),
+          phone: strOr((personalDetails as any).phone),
+        },
+        create: {
+          applicationId: id,
+          fullName: strOr((personalDetails as any).fullName),
+          bankRecordName: (personalDetails as any).nameBankRecord ?? (personalDetails as any).bankRecordName ?? "",
+          dateOfBirth: dob ?? new Date().toISOString(),
+          gender: strOr((personalDetails as any).gender),
+          phone: strOr((personalDetails as any).phone),
         },
       });
     }
 
     // Update address if provided
     if (address) {
-      await prisma.address.update({
+      await prisma.address.upsert({
         where: { applicationId: id },
-        data: {
-          street: (address as any).street,
-          doorNumber: (address as any).doorNumber,
-          city: (address as any).city,
-          district: (address as any).district,
-          state: (address as any).state,
-          pinCode: (address as any).pinCode,
+        update: {
+          street: strOr((address as any).street),
+          doorNumber: (address as any).doorNumber ?? "",
+          city: strOr((address as any).city),
+          district: strOr((address as any).district),
+          state: strOr((address as any).state),
+          pinCode: strOr((address as any).pinCode),
+        },
+        create: {
+          applicationId: id,
+          street: strOr((address as any).street),
+          doorNumber: (address as any).doorNumber ?? "",
+          city: strOr((address as any).city),
+          district: strOr((address as any).district),
+          state: strOr((address as any).state),
+          pinCode: strOr((address as any).pinCode),
         },
       });
     }
 
     // Update parent/guardian if provided
     if (parentGuardian) {
-      await prisma.parentGuardian.update({
+      await prisma.parentGuardian.upsert({
         where: { applicationId: id },
-        data: {
-          guardianName: (parentGuardian as any).guardianName,
-          relationship: (parentGuardian as any).relationship,
-          occupation: (parentGuardian as any).occupation,
-          contactNumber: (parentGuardian as any).contactNumber,
-          isSingleParent: (parentGuardian as any).isSingleParent,
+        update: {
+          guardianName: strOr((parentGuardian as any).guardianName),
+          relationship: strOr((parentGuardian as any).relationship),
+          occupation: strOr((parentGuardian as any).occupation),
+          contactNumber: strOr((parentGuardian as any).contactNumber),
+          isSingleParent: (parentGuardian as any).isSingleParent ?? false,
           singleParentType: (parentGuardian as any).singleParentType || null,
-          income: (parentGuardian as any).income,
+          income: (parentGuardian as any).income != null ? numOr((parentGuardian as any).income) : undefined,
+          parent2Name: (parentGuardian as any).parent2Name || null,
+          parent2Relationship: (parentGuardian as any).parent2Relationship || null,
+        },
+        create: {
+          applicationId: id,
+          guardianName: strOr((parentGuardian as any).guardianName),
+          relationship: strOr((parentGuardian as any).relationship),
+          occupation: strOr((parentGuardian as any).occupation),
+          contactNumber: strOr((parentGuardian as any).contactNumber),
+          isSingleParent: (parentGuardian as any).isSingleParent ?? false,
+          singleParentType: (parentGuardian as any).singleParentType || null,
+          ...((parentGuardian as any).income != null
+            ? { income: numOr((parentGuardian as any).income) }
+            : {}),
           parent2Name: (parentGuardian as any).parent2Name || null,
           parent2Relationship: (parentGuardian as any).parent2Relationship || null,
         },
       });
     }
 
-    // Update academic details if provided
+    // Update academic details if provided.
+    // `schoolCollege` is the legacy combined column; it is intentionally kept in
+    // sync for backwards compatibility and is never dropped, so older records
+    // and any consumer still reading it continue to work.
     if (academicDetails) {
-      await prisma.academicDetails.update({
+      await prisma.academicDetails.upsert({
         where: { applicationId: id },
-        data: {
-          schoolCollege: (academicDetails as any).schoolCollege,
-          academicType: (academicDetails as any).academicType,
-          course: (academicDetails as any).course,
-          educationLevel: (academicDetails as any).educationLevel,
-          academicYear: (academicDetails as any).academicYear,
-          yearOfStudy: (academicDetails as any).yearOfStudy,
-          className: (academicDetails as any).className,
-          section: (academicDetails as any).section,
-          semester: (academicDetails as any).semester,
-          ugPg: (academicDetails as any).ugPg,
-          marksPercentageCGPA: (academicDetails as any).marksPercentageCGPA,
+        update: {
+          ...((academicDetails as any).schoolCollege !== undefined
+            ? { schoolCollege: (academicDetails as any).schoolCollege || null }
+            : {}),
+          ...((academicDetails as any).schoolName !== undefined
+            ? { schoolName: (academicDetails as any).schoolName || null }
+            : {}),
+          ...((academicDetails as any).schoolAddress !== undefined
+            ? { schoolAddress: (academicDetails as any).schoolAddress || null }
+            : {}),
+          ...((academicDetails as any).collegeName !== undefined
+            ? { collegeName: (academicDetails as any).collegeName || null }
+            : {}),
+          ...((academicDetails as any).collegeAddress !== undefined
+            ? { collegeAddress: (academicDetails as any).collegeAddress || null }
+            : {}),
+          ...((academicDetails as any).academicType !== undefined
+            ? { academicType: (academicDetails as any).academicType || null }
+            : {}),
+          course: strOr((academicDetails as any).course),
+          educationLevel: strOr((academicDetails as any).educationLevel, "UNDERGRADUATE"),
+          academicYear: strOr((academicDetails as any).academicYear),
+          ...((academicDetails as any).yearOfStudy !== undefined
+            ? { yearOfStudy: (academicDetails as any).yearOfStudy || null }
+            : {}),
+          ...((academicDetails as any).className !== undefined
+            ? { className: (academicDetails as any).className || null }
+            : {}),
+          ...((academicDetails as any).section !== undefined
+            ? { section: (academicDetails as any).section || null }
+            : {}),
+          ...((academicDetails as any).semester !== undefined
+            ? { semester: (academicDetails as any).semester || null }
+            : {}),
+          ...((academicDetails as any).ugPg !== undefined
+            ? { ugPg: (academicDetails as any).ugPg || null }
+            : {}),
+          marksPercentageCGPA: (academicDetails as any).marksPercentageCGPA ?? "",
+        },
+        create: {
+          applicationId: id,
+          schoolCollege: (academicDetails as any).schoolCollege || null,
+          schoolName: (academicDetails as any).schoolName || null,
+          schoolAddress: (academicDetails as any).schoolAddress || null,
+          collegeName: (academicDetails as any).collegeName || null,
+          collegeAddress: (academicDetails as any).collegeAddress || null,
+          academicType: (academicDetails as any).academicType || null,
+          course: strOr((academicDetails as any).course),
+          educationLevel: strOr((academicDetails as any).educationLevel, "UNDERGRADUATE"),
+          academicYear: strOr((academicDetails as any).academicYear),
+          yearOfStudy: (academicDetails as any).yearOfStudy || null,
+          className: (academicDetails as any).className || null,
+          section: (academicDetails as any).section || null,
+          semester: (academicDetails as any).semester || null,
+          ugPg: (academicDetails as any).ugPg || null,
+          marksPercentageCGPA: (academicDetails as any).marksPercentageCGPA ?? "",
         },
       });
     }
@@ -462,6 +576,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
     if (financialDetails) {
       const incomeValue = (financialDetails as any).familyIncome;
       const incomeSourceValue = (financialDetails as any).incomeSource;
+      const scholarshipAmountValue = (financialDetails as any).scholarshipAmount;
       await prisma.financialDetails.upsert({
         where: { applicationId: id },
         update: {
@@ -469,11 +584,17 @@ router.patch("/:id", async (req: Request, res: Response) => {
             ? { familyIncome: numOr(incomeValue) }
             : {}),
           incomeSource: incomeSourceValue !== undefined ? strOr(incomeSourceValue) : undefined,
+          ...(scholarshipAmountValue !== undefined && scholarshipAmountValue !== null
+            ? { scholarshipAmount: numOr(scholarshipAmountValue) }
+            : {}),
         },
         create: {
           applicationId: id,
           familyIncome: incomeValue !== undefined && incomeValue !== null ? numOr(incomeValue) : 0,
           incomeSource: incomeSourceValue !== undefined ? strOr(incomeSourceValue) : "",
+          ...(scholarshipAmountValue !== undefined && scholarshipAmountValue !== null
+            ? { scholarshipAmount: numOr(scholarshipAmountValue) }
+            : {}),
         },
       });
     } else {
@@ -481,6 +602,30 @@ router.patch("/:id", async (req: Request, res: Response) => {
         where: { applicationId: id },
         data: { familyIncome: 0, incomeSource: "" },
       });
+    }
+
+    // Update bank details if provided.
+    // BankDetails is a 1:1 relation with Application (unique applicationId),
+    // so upsert keeps exactly one row per application and cannot create
+    // duplicates. Ownership was already verified above via the studentId check.
+    if (bankDetails) {
+      const bankData = bankDetails as any;
+      const bankFields = {
+        accountHolderName: strOr(bankData.accountHolderName),
+        accountNumber: strOr(bankData.accountNumber),
+        bankName: strOr(bankData.bankName),
+        branchName: strOr(bankData.branchName),
+        ifscCode: strOr(bankData.ifscCode).toUpperCase(),
+      };
+      // Do not create a half-empty row from an untouched/blank step.
+      const hasAnyBankValue = Object.values(bankFields).some((v) => v.length > 0);
+      if (hasAnyBankValue) {
+        await prisma.bankDetails.upsert({
+          where: { applicationId: id },
+          update: bankFields,
+          create: { applicationId: id, ...bankFields },
+        });
+      }
     }
 
     // Fetch updated application
@@ -492,6 +637,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
         parentGuardian: true,
         academicDetails: true,
         financialDetails: true,
+        bankDetails: true,
         scholarshipProgram: true,
       },
     });
@@ -535,6 +681,7 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
         parentGuardian: true,
         academicDetails: true,
         financialDetails: true,
+        bankDetails: true,
       },
     });
 
@@ -665,6 +812,34 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
     // Financial details are required for all applicants except "No Parents" (No Parents does not declare income).
     if (!isNoParents && !hasFinancialDetails) {
       return res.status(400).json({ error: "All required fields must be completed before submitting" });
+    }
+
+    // Bank details are required so the approved scholarship can be disbursed.
+    // Existing applications created before bank details were introduced are
+    // prompted to complete the step rather than failing with a server error.
+    const bank = application.bankDetails;
+    const bankComplete =
+      !!bank &&
+      !!(bank.accountHolderName || "").trim() &&
+      !!(bank.accountNumber || "").trim() &&
+      !!(bank.bankName || "").trim() &&
+      !!(bank.branchName || "").trim() &&
+      !!(bank.ifscCode || "").trim();
+    if (!bankComplete) {
+      return res.status(400).json({
+        error: "Please complete your bank details before submitting.",
+        code: "BANK_DETAILS_REQUIRED",
+      });
+    }
+
+    // The applicant must state the scholarship amount they are requesting.
+    // This is distinct from the admin-configured application fee.
+    const requestedAmount = application.financialDetails?.scholarshipAmount;
+    if (requestedAmount == null || !(Number(requestedAmount) > 0)) {
+      return res.status(400).json({
+        error: "Please enter the scholarship amount you are requesting before submitting.",
+        code: "SCHOLARSHIP_AMOUNT_REQUIRED",
+      });
     }
 
     // Check required documents exist (ApplicationDocument.applicationId is a FK to Application.id)

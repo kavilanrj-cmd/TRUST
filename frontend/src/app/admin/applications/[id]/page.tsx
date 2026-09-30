@@ -344,6 +344,7 @@ export default function ApplicationDetailPage() {
   const pg = app.parentGuardian;
   const acad = app.academicDetails;
   const fin = app.financialDetails;
+  const bank = app.bankDetails;
   const docs = app.applicationDocuments || [];
   const notes = app.notes || [];
   const payments = app.payments || [];
@@ -453,7 +454,18 @@ export default function ApplicationDetailPage() {
 
           <Section title="Academic Details">
             <FieldRow label="Academic Type" value={acad?.academicType} />
-            <FieldRow label="School / College" value={acad?.schoolCollege} />
+            <FieldRow label="School Name" value={acad?.schoolName || acad?.schoolCollege} />
+            <FieldRow label="School Address" value={acad?.schoolAddress} />
+            <FieldRow label="College Name" value={acad?.collegeName} />
+            <FieldRow label="College Address" value={acad?.collegeAddress} />
+            {/* Legacy combined column: only shown when it holds a value that is
+                not already covered by the new separate fields, so historical
+                applications remain fully readable. */}
+            {acad?.schoolCollege &&
+              acad.schoolCollege !== acad.schoolName &&
+              acad.schoolCollege !== acad.collegeName && (
+                <FieldRow label="School / College (legacy)" value={acad.schoolCollege} />
+              )}
             <FieldRow label="Course" value={acad?.course} />
             <FieldRow label="Education Level" value={acad?.educationLevel?.replace(/_/g, " ")} />
             <FieldRow label="Academic Year" value={acad?.academicYear} />
@@ -469,6 +481,33 @@ export default function ApplicationDetailPage() {
             <Section title="Financial Details">
               <FieldRow label="Family Annual Income" value={fin?.familyIncome != null ? `₹${fin.familyIncome.toLocaleString()}` : undefined} />
               <FieldRow label="Income Source" value={fin?.incomeSource} />
+            </Section>
+          )}
+
+          {/* Requested scholarship amount. This is the applicant's request and
+              is intentionally distinct from the application fee shown under
+              Payment Information. */}
+          <Section title="Scholarship">
+            <FieldRow
+              label="Requested Scholarship Amount"
+              value={
+                fin?.scholarshipAmount != null && Number(fin.scholarshipAmount) > 0
+                  ? `₹${Number(fin.scholarshipAmount).toLocaleString("en-IN")}`
+                  : "Not provided"
+              }
+            />
+          </Section>
+
+          {/* Bank details are sensitive and are only served by the
+              role-protected admin routes (this page is admin-gated), so they
+              are never exposed on any public or applicant-facing endpoint. */}
+          {bank && (
+            <Section title="Bank Details">
+              <FieldRow label="Account Holder Name" value={bank.accountHolderName} />
+              <FieldRow label="Account Number" value={bank.accountNumber} />
+              <FieldRow label="Bank Name" value={bank.bankName} />
+              <FieldRow label="Branch Name" value={bank.branchName} />
+              <FieldRow label="IFSC Code" value={bank.ifscCode} />
             </Section>
           )}
 

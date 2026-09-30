@@ -255,6 +255,15 @@ function renderDashboard(
               <p className="text-muted-foreground">
                 <strong>Scholarship:</strong> {scholarshipName}
               </p>
+              {/* Amount the applicant requested. Distinct from the
+                  application fee, which is admin-configured. */}
+              {typeof application.financialDetails?.scholarshipAmount === "number" &&
+              Number(application.financialDetails.scholarshipAmount) > 0 && (
+                <p className="text-muted-foreground">
+                  <strong>Requested Scholarship Amount:</strong>{" "}
+                  ₹{Number(application.financialDetails.scholarshipAmount).toLocaleString("en-IN")}
+                </p>
+              )}
               {decision?.decisionMessage && (
                 <div className="mt-2 rounded-lg border border-border bg-gray-50 p-3">
                   <p className="text-sm text-navy whitespace-pre-wrap dark:text-slate-300">

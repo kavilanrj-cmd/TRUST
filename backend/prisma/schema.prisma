@@ -112,6 +112,7 @@ model Application {
   academicDetailsId String?
   financialDetails FinancialDetails?
   financialDetailsId String?
+  bankDetails      BankDetails?
   applicationDocuments ApplicationDocument[]
   payments         Payment[]
   receipts         Receipt[]
@@ -177,7 +178,11 @@ model AcademicDetails {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id])
   applicationId   String  @unique
-  schoolCollege   String
+  schoolCollege   String?
+  schoolName      String?
+  schoolAddress   String?
+  collegeName     String?
+  collegeAddress  String?
   academicType    String?
   course          String
   educationLevel  EducationLevel
@@ -196,6 +201,20 @@ model FinancialDetails {
   applicationId   String  @unique
   familyIncome    Decimal
   incomeSource    String
+  scholarshipAmount Decimal?
+}
+
+model BankDetails {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String  @unique
+  accountHolderName String
+  accountNumber String
+  bankName String
+  branchName String
+  ifscCode String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ApplicationDocument {

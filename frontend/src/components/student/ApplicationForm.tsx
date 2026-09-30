@@ -44,16 +44,57 @@ const STEPS = [
   { id: 3, label: "Family" },
 
 
-  { id: 4, label: "Documents" },
+  { id: 4, label: "Bank Details" },
 
 
-  { id: 5, label: "Review" },
+  { id: 5, label: "Documents" },
 
 
-  { id: 6, label: "Payment" },
+  { id: 6, label: "Review" },
+
+
+  { id: 7, label: "Payment" },
 
 
 ] as const;
+
+
+const INDIAN_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Lakshadweep",
+  "Puducherry",
+];
 
 
 
@@ -249,6 +290,9 @@ type FormData = {
   schoolName: string;
 
 
+  schoolAddress: string;
+
+
   className: string;
 
 
@@ -256,6 +300,9 @@ type FormData = {
 
 
   collegeName: string;
+
+
+  collegeAddress: string;
 
 
   course: string;
@@ -274,6 +321,24 @@ type FormData = {
 
 
   incomeSource: string;
+
+
+  scholarshipAmount: string;
+
+
+  accountHolderName: string;
+
+
+  accountNumber: string;
+
+
+  bankName: string;
+
+
+  branchName: string;
+
+
+  ifscCode: string;
 
 
 };
@@ -348,6 +413,9 @@ const EMPTY_FORM: FormData = {
   schoolName: "",
 
 
+  schoolAddress: "",
+
+
   className: "",
 
 
@@ -355,6 +423,9 @@ const EMPTY_FORM: FormData = {
 
 
   collegeName: "",
+
+
+  collegeAddress: "",
 
 
   course: "",
@@ -373,6 +444,24 @@ const EMPTY_FORM: FormData = {
 
 
   incomeSource: "",
+
+
+  scholarshipAmount: "",
+
+
+  accountHolderName: "",
+
+
+  accountNumber: "",
+
+
+  bankName: "",
+
+
+  branchName: "",
+
+
+  ifscCode: "",
 
 
 };
@@ -483,6 +572,18 @@ type LoadedApplication = {
     schoolCollege?: string | null;
 
 
+    schoolName?: string | null;
+
+
+    schoolAddress?: string | null;
+
+
+    collegeName?: string | null;
+
+
+    collegeAddress?: string | null;
+
+
     academicType?: string | null;
 
 
@@ -525,6 +626,24 @@ type LoadedApplication = {
     incomeSource?: string | null;
 
 
+    scholarshipAmount?: number | null;
+
+
+  } | null;
+
+
+  bankDetails?: {
+
+    accountHolderName?: string | null;
+
+    accountNumber?: string | null;
+
+    bankName?: string | null;
+
+    branchName?: string | null;
+
+    ifscCode?: string | null;
+
   } | null;
 
 
@@ -540,7 +659,44 @@ const PIN_RX = /^[0-9]{6}$/;
 const PHONE_RX = /^[6-9][0-9]{9}$/;
 
 
+// IFSC: 4 letters (bank code) + "0" + 6 alphanumeric characters, e.g. SBIN0001234.
+const IFSC_RX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
+// Bank account numbers are 9-18 digits in India.
+const ACCOUNT_RX = /^[0-9]{9,18}$/;
+
+// Scholarship amounts are rupee values; allow up to 2 decimal places (paise).
+const AMOUNT_RX = /^[0-9]+(\.[0-9]{1,2})?$/;
+
+// Upper bound guard so a typo cannot request an absurd amount (₹ 1 crore).
+const MAX_SCHOLARSHIP_AMOUNT = 10000000;
+
+
+
+
+
+// Determine which branch of the Academic step an existing application belongs
+// to. Applications created before `academicType` was reliably stored only have
+// the legacy `schoolCollege` value, so infer the branch from the surrounding
+// data instead of leaving the applicant on an unselected choice.
+function resolveAcademicType(ac: {
+  academicType?: string | null;
+  schoolName?: string | null;
+  collegeName?: string | null;
+  className?: string | null;
+  course?: string | null;
+  semester?: string | null;
+  schoolCollege?: string | null;
+}): AcademicType {
+  const explicit = (ac.academicType || "").toLowerCase();
+  if (explicit === "school" || explicit === "college") return explicit;
+  if (ac.className) return "school";
+  if (ac.course || ac.semester) return "college";
+  if (ac.schoolName) return "school";
+  if (ac.collegeName) return "college";
+  if (ac.schoolCollege) return "school";
+  return "";
+}
 
 
 function classifyStep(stepIndex: number, currentStep: number): StepStatus {
@@ -729,6 +885,16 @@ export function ApplicationForm() {
           const fin = app.financialDetails || {};
 
 
+          const bank = app.bankDetails || {};
+
+
+          // Backward compatibility: applications created before the separate
+          // school/college fields only have the legacy `schoolCollege` value.
+          // Fall back to it so old drafts still load their institution name
+          // instead of appearing empty. Never overwrite stored data here.
+          const legacySchoolCollege = ac.schoolCollege || "";
+
+
           setForm((f) => ({
 
 
@@ -792,10 +958,19 @@ export function ApplicationForm() {
             parent2Relationship: (pg as any).parent2Relationship || "",
 
 
-            collegeName: ac.schoolCollege || "",
+            collegeName: ac.collegeName || legacySchoolCollege,
 
 
-            schoolName: ac.schoolCollege || "",
+            collegeAddress: ac.collegeAddress || "",
+
+
+            schoolName: ac.schoolName || legacySchoolCollege,
+
+
+            schoolAddress: ac.schoolAddress || "",
+
+
+            academicType: resolveAcademicType(ac),
 
 
             className: ac.className || "",
@@ -820,6 +995,24 @@ export function ApplicationForm() {
 
 
             incomeSource: fin.incomeSource || "",
+
+
+            scholarshipAmount: fin.scholarshipAmount != null ? String(fin.scholarshipAmount) : "",
+
+
+            accountHolderName: bank.accountHolderName || "",
+
+
+            accountNumber: bank.accountNumber || "",
+
+
+            bankName: bank.bankName || "",
+
+
+            branchName: bank.branchName || "",
+
+
+            ifscCode: bank.ifscCode || "",
 
 
           }));
@@ -1083,6 +1276,9 @@ export function ApplicationForm() {
         if (!data.schoolName.trim()) e.schoolName = "Please enter your school name.";
 
 
+        if (!data.schoolAddress.trim()) e.schoolAddress = "Please enter your school address.";
+
+
         if (!data.academicYear.trim()) e.academicYear = "Please enter your academic year.";
 
 
@@ -1090,6 +1286,9 @@ export function ApplicationForm() {
 
 
         if (!data.collegeName.trim()) e.collegeName = "Please enter your college name.";
+
+
+        if (!data.collegeAddress.trim()) e.collegeAddress = "Please enter your college address.";
 
 
         if (!data.course.trim()) e.course = "Please enter your course.";
@@ -1152,6 +1351,67 @@ export function ApplicationForm() {
     }
 
 
+    if (step === 4) {
+
+
+      const holder = data.accountHolderName.trim();
+
+
+      const account = data.accountNumber.trim();
+
+
+      const ifsc = data.ifscCode.trim().toUpperCase();
+
+
+      if (!holder) e.accountHolderName = "Please enter the account holder name.";
+
+
+      if (!account) e.accountNumber = "Please enter the bank account number.";
+
+
+      else if (!ACCOUNT_RX.test(account)) e.accountNumber = "Enter a valid account number (9-18 digits).";
+
+
+      if (!data.bankName.trim()) e.bankName = "Please enter the bank name.";
+
+
+      if (!data.branchName.trim()) e.branchName = "Please enter the branch name.";
+
+
+      if (!ifsc) e.ifscCode = "Please enter the IFSC code.";
+
+
+      else if (!IFSC_RX.test(ifsc)) e.ifscCode = "Enter a valid IFSC code (e.g. SBIN0001234).";
+
+
+    }
+
+
+    if (step === 6) {
+
+
+      // The Review step is where the applicant confirms the requested
+      // scholarship amount, so it is validated before advancing to Payment.
+
+
+      const amount = data.scholarshipAmount.trim();
+
+
+      if (!amount) e.scholarshipAmount = "Please enter the scholarship amount you are requesting.";
+
+
+      else if (!AMOUNT_RX.test(amount)) e.scholarshipAmount = "Enter a valid amount in rupees (numbers only).";
+
+
+      else if (Number(amount) <= 0) e.scholarshipAmount = "The scholarship amount must be greater than zero.";
+
+
+      else if (Number(amount) > MAX_SCHOLARSHIP_AMOUNT) e.scholarshipAmount = "The requested amount cannot exceed ₹1,00,00,000.";
+
+
+    }
+
+
     return e;
 
 
@@ -1197,7 +1457,22 @@ export function ApplicationForm() {
       academicType: data.academicType,
 
 
-      schoolCollege,
+      // Keep the legacy `schoolCollege` column in sync for backwards
+      // compatibility with any consumer that still reads it, while the new
+      // separate fields carry the authoritative values.
+      schoolCollege: isSchool ? data.schoolName : data.collegeName,
+
+
+      schoolName: isSchool ? data.schoolName : "",
+
+
+      schoolAddress: isSchool ? data.schoolAddress : "",
+
+
+      collegeName: isSchool ? "" : data.collegeName,
+
+
+      collegeAddress: isSchool ? "" : data.collegeAddress,
 
 
       course: isSchool ? "" : data.course,
@@ -1350,15 +1625,30 @@ export function ApplicationForm() {
         academicDetails: buildAcademicPayload(form),
 
 
-        financialDetails: form.familyStatus === "NO_PARENTS" ? null : {
+        // The requested scholarship amount is always saved, including for
+        // "No Parents" applicants, because it is independent of income.
+        // An empty field is sent as null so the backend leaves the column
+        // untouched instead of writing a misleading 0.
+        financialDetails: {
+          familyIncome:
+            form.familyStatus === "NO_PARENTS"
+              ? 0
+              : form.familyIncome
+                ? Number(form.familyIncome)
+                : undefined,
+          incomeSource: form.familyStatus === "NO_PARENTS" ? "" : form.incomeSource,
+          scholarshipAmount: form.scholarshipAmount.trim()
+            ? Number(form.scholarshipAmount.trim())
+            : null,
+        },
 
 
-          familyIncome: form.familyIncome ? Number(form.familyIncome) : undefined,
-
-
-          incomeSource: form.incomeSource,
-
-
+        bankDetails: {
+          accountHolderName: form.accountHolderName.trim(),
+          accountNumber: form.accountNumber.trim(),
+          bankName: form.bankName.trim(),
+          branchName: form.branchName.trim(),
+          ifscCode: form.ifscCode.trim().toUpperCase(),
         },
 
 
@@ -1509,7 +1799,8 @@ export function ApplicationForm() {
       setAppEditingId(nextAppId);
 
 
-      setCurrentStep((s) => Math.min(s + 1, 5));
+      // Clamp to the last step (Payment) instead of the old 6-step layout.
+      setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
 
 
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2448,13 +2739,16 @@ const data = await res.json().catch(() => ({}));
             {currentStep === 3 && "Family & Financial Information"}
 
 
-            {currentStep === 4 && "Document Uploads"}
+            {currentStep === 4 && "Bank Details"}
 
 
-            {currentStep === 5 && "Review Your Application"}
+            {currentStep === 5 && "Document Uploads"}
 
 
-            {currentStep === 6 && "Pay Application Fee"}
+            {currentStep === 6 && "Review Your Application"}
+
+
+            {currentStep === 7 && "Pay Application Fee"}
 
 
           </h2>
@@ -2466,19 +2760,25 @@ const data = await res.json().catch(() => ({}));
             {currentStep === 4
 
 
-              ? "Upload clear and readable copies of the required documents."
+              ? "Enter the bank account where the scholarship amount should be deposited."
 
 
               : currentStep === 5
 
 
-                ? "Please verify all information below before submitting."
+              ? "Upload clear and readable copies of the required documents."
 
 
-                : currentStep === 6
+              : currentStep === 6
 
 
-                  ? "Payment is required to complete and submit your application."
+              ? "Please verify all information below before submitting."
+
+
+              : currentStep === 7
+
+
+              ? "Payment is required to complete and submit your application."
 
 
                   : `Fields marked with * are required.`}
@@ -2865,7 +3165,17 @@ const data = await res.json().catch(() => ({}));
                   <option value="">Select state</option>
 
 
-                  <option>Tamil Nadu</option>
+                  {INDIAN_STATES.map((state) => (
+
+
+                    <option key={state} value={state}>
+
+                      {state}
+
+                    </option>
+
+
+                  ))}
 
 
                 </select>
@@ -3063,6 +3373,42 @@ const data = await res.json().catch(() => ({}));
                   </div>
 
 
+                  <div className="md:col-span-2">
+
+
+                    <label htmlFor="schoolAddress" className="field-label">School Address *</label>
+
+
+                    <input
+
+
+                      id="schoolAddress"
+
+
+                      type="text"
+
+
+                      className="field-input"
+
+
+                      placeholder="Enter your school address"
+
+
+                      value={form.schoolAddress}
+
+
+                      onChange={(e) => set("schoolAddress", e.target.value)}
+
+
+                    />
+
+
+                    {errors.schoolAddress && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.schoolAddress}</p>}
+
+
+                  </div>
+
+
                   <div>
 
 
@@ -3211,6 +3557,42 @@ const data = await res.json().catch(() => ({}));
 
 
                     {errors.collegeName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.collegeName}</p>}
+
+
+                  </div>
+
+
+                  <div className="md:col-span-2">
+
+
+                    <label htmlFor="collegeAddress" className="field-label">College Address *</label>
+
+
+                    <input
+
+
+                      id="collegeAddress"
+
+
+                      type="text"
+
+
+                      className="field-input"
+
+
+                      placeholder="Enter your college address"
+
+
+                      value={form.collegeAddress}
+
+
+                      onChange={(e) => set("collegeAddress", e.target.value)}
+
+
+                    />
+
+
+                    {errors.collegeAddress && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.collegeAddress}</p>}
 
 
                   </div>
@@ -3760,7 +4142,217 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          <div className={currentStep === 4 ? "" : "hidden"}>
+          {currentStep === 4 && (
+
+
+            <div className="rounded-xl border border-gold/40 bg-gold-soft p-6">
+
+
+              <p className="mb-5 text-sm text-muted-foreground">
+
+
+                These details are used only to credit the scholarship amount if your application is approved.
+
+
+              </p>
+
+
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+
+                <div>
+
+
+                  <label htmlFor="accountHolderName" className="field-label">Account Holder Name *</label>
+
+
+                  <input
+
+
+                    id="accountHolderName"
+
+
+                    type="text"
+
+
+                    className="field-input"
+
+
+                    placeholder="Enter account holder name"
+
+
+                    value={form.accountHolderName}
+
+
+                    onChange={(e) => set("accountHolderName", e.target.value)}
+
+
+                  />
+
+
+                  {errors.accountHolderName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.accountHolderName}</p>}
+
+
+                </div>
+
+
+                <div>
+
+
+                  <label htmlFor="accountNumber" className="field-label">Account Number *</label>
+
+
+                  <input
+
+
+                    id="accountNumber"
+
+
+                    type="text"
+
+
+                    inputMode="numeric"
+
+
+                    className="field-input"
+
+
+                    placeholder="Enter bank account number"
+
+
+                    value={form.accountNumber}
+
+
+                    onChange={(e) => set("accountNumber", e.target.value.replace(/[^0-9]/g, "").slice(0, 18))}
+
+
+                  />
+
+
+                  {errors.accountNumber && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.accountNumber}</p>}
+
+
+                </div>
+
+
+                <div>
+
+
+                  <label htmlFor="bankName" className="field-label">Bank Name *</label>
+
+
+                  <input
+
+
+                    id="bankName"
+
+
+                    type="text"
+
+
+                    className="field-input"
+
+
+                    placeholder="e.g. State Bank of India"
+
+
+                    value={form.bankName}
+
+
+                    onChange={(e) => set("bankName", e.target.value)}
+
+
+                  />
+
+
+                  {errors.bankName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.bankName}</p>}
+
+
+                </div>
+
+
+                <div>
+
+
+                  <label htmlFor="branchName" className="field-label">Branch Name *</label>
+
+
+                  <input
+
+
+                    id="branchName"
+
+
+                    type="text"
+
+
+                    className="field-input"
+
+
+                    placeholder="Enter branch name"
+
+
+                    value={form.branchName}
+
+
+                    onChange={(e) => set("branchName", e.target.value)}
+
+
+                  />
+
+
+                  {errors.branchName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.branchName}</p>}
+
+
+                </div>
+
+
+                <div className="md:col-span-2">
+
+
+                  <label htmlFor="ifscCode" className="field-label">IFSC Code *</label>
+
+
+                  <input
+
+
+                    id="ifscCode"
+
+
+                    type="text"
+
+
+                    className="field-input uppercase"
+
+
+                    placeholder="e.g. SBIN0001234"
+
+
+                    value={form.ifscCode}
+
+
+                    onChange={(e) => set("ifscCode", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11))}
+
+
+                  />
+
+
+                  {errors.ifscCode && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.ifscCode}</p>}
+
+
+                </div>
+
+
+              </div>
+
+
+            </div>
+
+
+          )}
+
+
+          <div className={currentStep === 5 ? "" : "hidden"}>
 
 
             <DocumentUpload applicationId={applicationId} onCountChange={setDocCount} isSingleParent={form.isSingleParent} noParents={form.familyStatus === "NO_PARENTS"} />
@@ -3772,7 +4364,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 6 && (
+          {currentStep === 7 && (
 
 
 
@@ -4683,7 +5275,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 5 && (
+          {currentStep === 6 && (
 
 
             <div className="space-y-6">
@@ -4767,6 +5359,9 @@ const data = await res.json().catch(() => ({}));
                       <ReviewRow label="School Name" value={form.schoolName} />
 
 
+                      <ReviewRow label="School Address" value={form.schoolAddress} />
+
+
                       <ReviewRow label="Class" value={form.className} />
 
 
@@ -4783,6 +5378,9 @@ const data = await res.json().catch(() => ({}));
 
 
                       <ReviewRow label="College Name" value={form.collegeName} />
+
+
+                      <ReviewRow label="College Address" value={form.collegeAddress} />
 
 
                       <ReviewRow label="Course" value={form.course} />
@@ -4863,6 +5461,50 @@ const data = await res.json().catch(() => ({}));
                 )}
 
 
+                <ReviewBlock title="Bank Details">
+
+
+                  <ReviewRow label="Account Holder Name" value={form.accountHolderName} />
+
+
+                  <ReviewRow
+                    label="Account Number"
+                    value={
+                      form.accountNumber
+                        ? form.accountNumber.replace(/(\d{4})(?=\d)/g, "$1 ")
+                        : ""
+                    }
+                  />
+
+
+                  <ReviewRow label="Bank Name" value={form.bankName} />
+
+
+                  <ReviewRow label="Branch Name" value={form.branchName} />
+
+
+                  <ReviewRow label="IFSC Code" value={form.ifscCode} />
+
+
+                </ReviewBlock>
+
+
+                <ReviewBlock title="Scholarship">
+
+
+                  <ReviewRow
+                    label="Requested Scholarship Amount"
+                    value={
+                      form.scholarshipAmount
+                        ? `₹${Number(form.scholarshipAmount).toLocaleString("en-IN")}`
+                        : ""
+                    }
+                  />
+
+
+                </ReviewBlock>
+
+
                 <ReviewBlock title="Documents">
 
 
@@ -4884,7 +5526,10 @@ const data = await res.json().catch(() => ({}));
                 <p className="text-sm text-muted-foreground leading-relaxed">
 
 
-                  I hereby declare that the information provided in this scholarship application is true, complete and accurate to the best of my knowledge. I understand that any false or misleading information may result in the rejection of my application or cancellation of the scholarship at any stage.
+                  I declare that all the information provided by me in this scholarship application is true, correct and complete, and that all documents submitted by me are genuine. I understand that any false, misleading or forged information or documents may result in the rejection or cancellation of my application, and may make me liable for appropriate action.
+
+
+                  <span className="mt-2 block">I have read and understood this declaration, and I accept it.</span>
 
 
                 </p>
@@ -4992,7 +5637,7 @@ const data = await res.json().catch(() => ({}));
               type="button"
 
 
-              onClick={currentStep === 4 ? () => setCurrentStep(5) : saveAndContinue}
+              onClick={currentStep === 5 ? () => setCurrentStep(6) : saveAndContinue}
 
 
               disabled={saving}
@@ -5004,7 +5649,7 @@ const data = await res.json().catch(() => ({}));
             >
 
 
-              {saving ? "Saving…" : currentStep === 4 ? "Continue to Review →" : "Save & Continue →"}
+              {saving ? "Saving…" : currentStep === 5 ? "Continue to Review →" : "Save & Continue →"}
 
 
             </button>
@@ -5016,7 +5661,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 5 && !showDeclaration && (
+          {currentStep === 6 && !showDeclaration && (
 
 
             <button
@@ -5055,7 +5700,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 5 && showDeclaration && (
+          {currentStep === 6 && showDeclaration && (
 
 
             <button
@@ -5085,7 +5730,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 6 && (
+          {currentStep === 7 && (
 
 
             <button

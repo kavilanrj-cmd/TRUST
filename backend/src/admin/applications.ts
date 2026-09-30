@@ -43,6 +43,7 @@ const applicationInclude = {
   parentGuardian: true,
   academicDetails: true,
   financialDetails: true,
+  bankDetails: true,
   applicationDocuments: true,
   payments: true,
   receipts: { take: 5 },
