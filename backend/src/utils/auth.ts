@@ -123,9 +123,13 @@ async function getOrCreateGuestUser(sessionId: string): Promise<AuthUser | null>
   };
 }
 
+// Guest sessions silently created a real User row for every unauthenticated
+// request that reached a router mounted behind `authenticate`, which let anyone
+// create application drafts / upload files with no account at all. The bypass is
+// now strictly opt-in for local debugging and is OFF unless explicitly enabled.
+const GUEST_SESSIONS_ENABLED = process.env.ALLOW_GUEST_SESSIONS === "true";
+
 // Middleware: requires a valid, active, authenticated user.
-// TEMPORARY: Also supports guest sessions (no JWT, but a net_guest_session
-// cookie is used to create/identify a temporary guest user in the database).
 export function authenticate(req: Request, res: Response, next: NextFunction) {
   (async () => {
     const user = await loadUser(req);
@@ -135,8 +139,12 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
       return next();
     }
 
-    // TEMPORARY: Guest session bypass — if no JWT but a guest session cookie
-    // exists (or should be created), auto-create/retrieve a guest user.
+    if (!GUEST_SESSIONS_ENABLED) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Opt-in guest session: if no JWT but a guest session cookie exists (or
+    // should be created), auto-create/retrieve a guest user.
     const GUEST_COOKIE_OPTS = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

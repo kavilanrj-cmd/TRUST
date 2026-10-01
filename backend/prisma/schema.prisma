@@ -206,7 +206,7 @@ model FinancialDetails {
 
 model BankDetails {
   id              String   @default(uuid()) @id
-  application     Application @relation(fields: [applicationId], references: [id])
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId   String  @unique
   accountHolderName String
   accountNumber String

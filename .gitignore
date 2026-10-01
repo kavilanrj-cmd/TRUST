@@ -3,6 +3,8 @@
 .env.*
 !.env.example
 node_modules/
+uploads/
+qa-uploads/
 .next/
 dist/
 build/

@@ -56,8 +56,8 @@ router.post("/:applicationId/documents", async (req: Request, res: Response) => 
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    if (application.status !== "DRAFT") {
-      return res.status(403).json({ error: "Documents can only be uploaded for draft applications" });
+    if (application.status !== "DRAFT" && application.status !== "CORRECTION_REQUESTED") {
+      return res.status(403).json({ error: "Documents can only be uploaded for draft or correction-requested applications" });
     }
 
     const {
@@ -140,8 +140,8 @@ router.post("/:applicationId/upload", documentUpload.single("file"), async (req:
     if (!application) {
       return res.status(404).json({ error: "Application not found or access denied" });
     }
-    if (application.status !== "DRAFT") {
-      return res.status(403).json({ error: "Documents can only be uploaded for draft applications" });
+    if (application.status !== "DRAFT" && application.status !== "CORRECTION_REQUESTED") {
+      return res.status(403).json({ error: "Documents can only be uploaded for draft or correction-requested applications" });
     }
 
     const file = (req as any).file;
@@ -292,8 +292,8 @@ router.delete("/:applicationId/documents/:documentId", async (req: Request, res:
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    if (application.status !== "DRAFT") {
-      return res.status(403).json({ error: "Documents can only be deleted from draft applications" });
+    if (application.status !== "DRAFT" && application.status !== "CORRECTION_REQUESTED") {
+      return res.status(403).json({ error: "Documents can only be deleted from draft or correction-requested applications" });
     }
 
     const document = await prisma.applicationDocument.findFirst({

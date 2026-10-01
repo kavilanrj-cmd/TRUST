@@ -408,8 +408,12 @@ router.patch("/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    // Prevent modification of submitted applications
-    if (application.status !== "DRAFT") {
+    // Prevent modification of submitted applications. CORRECTION_REQUESTED is
+    // the admin's explicit "fix and resubmit" signal (the applicant dashboard
+    // shows an "Edit and Resubmit" button), so the applicant must be able to
+    // reopen the form until they resubmit.
+    const editable = application.status === "DRAFT" || application.status === "CORRECTION_REQUESTED";
+    if (!editable) {
       return res.status(403).json({ error: "Cannot modify submitted applications" });
     }
 
@@ -533,7 +537,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
           educationLevel: strOr((academicDetails as any).educationLevel, "UNDERGRADUATE"),
           academicYear: strOr((academicDetails as any).academicYear),
           ...((academicDetails as any).yearOfStudy !== undefined
-            ? { yearOfStudy: (academicDetails as any).yearOfStudy || null }
+            ? { yearOfStudy: strOr((academicDetails as any).yearOfStudy) }
             : {}),
           ...((academicDetails as any).className !== undefined
             ? { className: (academicDetails as any).className || null }
@@ -560,7 +564,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
           course: strOr((academicDetails as any).course),
           educationLevel: strOr((academicDetails as any).educationLevel, "UNDERGRADUATE"),
           academicYear: strOr((academicDetails as any).academicYear),
-          yearOfStudy: (academicDetails as any).yearOfStudy || null,
+          yearOfStudy: strOr((academicDetails as any).yearOfStudy),
           className: (academicDetails as any).className || null,
           section: (academicDetails as any).section || null,
           semester: (academicDetails as any).semester || null,
@@ -689,9 +693,10 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    // Check application is in draft status (or a submitted application whose
-    // payment was rejected and is being re-submitted with corrected details).
-    if (application.status !== "DRAFT") {
+    // Check application is in draft status, was sent back for correction, or is
+    // a submitted application whose payment was rejected and is being
+    // re-submitted with corrected details.
+    if (application.status !== "DRAFT" && application.status !== "CORRECTION_REQUESTED") {
       const latestPayment = await prisma.payment.findFirst({
         where: { applicationId: application.id },
         orderBy: { createdAt: "desc" },

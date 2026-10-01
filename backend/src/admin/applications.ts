@@ -36,7 +36,10 @@ const TRANSITIONS: Record<string, string[]> = {
 };
 
 const applicationInclude = {
-  student: { select: { id: true, name: true, email: true, phone: true, emailVerified: true } },
+  // NOTE: User has no `phone` column (the applicant's number lives on
+  // PersonalDetails.phone). Selecting a non-existent field makes Prisma throw
+  // a validation error and the whole application-detail endpoint returns 500.
+  student: { select: { id: true, name: true, email: true, emailVerified: true } },
   scholarshipProgram: true,
   personalDetails: true,
   address: true,
@@ -333,7 +336,9 @@ router.patch(
           const studentName = full.student.name || "Applicant";
           const email = full.student.email;
           const appId = full.applicationId;
-          const sName = full.scholarshipProgram.name;
+          // scholarshipProgram is nullable (applications may be created without
+          // a linked program), so guard before reading .name.
+          const sName = full.scholarshipProgram?.name || "Scholarship";
           if (status === "APPROVED" || status === "ACCEPTED") await sendEmail("application-approved", { email, name: studentName, applicationId: appId, scholarshipName: sName });
           else if (status === "REJECTED") await sendEmail("application-rejected", { email, name: studentName, applicationId: appId, scholarshipName: sName });
           else if (status === "WAITLISTED") await sendEmail("application-waitlisted", { email, name: studentName, applicationId: appId, scholarshipName: sName });

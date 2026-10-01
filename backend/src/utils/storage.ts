@@ -47,6 +47,10 @@ function getS3Client(): S3Client {
 }
 
 export function getDocumentBucket(): string {
+  // The bucket name is only meaningful for S3 mode. Local-disk mode ignores the
+  // bucket argument entirely, so requiring AWS_BUCKET_NAME there would break
+  // every upload route in non-S3 deployments for no reason.
+  if (!isS3Mode()) return "";
   return getEnv("AWS_BUCKET_NAME");
 }
 
