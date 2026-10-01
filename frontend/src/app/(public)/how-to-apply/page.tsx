@@ -2,6 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  UserRound,
+  FilePenLine,
+  FileUp,
+  SearchCheck,
+  Wallet,
+  UserCheck,
+  Send,
+  LayoutDashboard,
+  ChevronDown,
+  type LucideIcon,
+} from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 import { useHomeContent } from "@/lib/home-content";
 import { Reveal } from "@/components/home/Reveal";
@@ -10,6 +22,15 @@ interface FeeConfig {
   amount: number;
   enabled: boolean;
   currency: string;
+}
+
+interface ProcessStep {
+  n: string;
+  title: string;
+  description: string;
+  Icon: LucideIcon;
+  /** Informational (non-interactive) key/value detail shown inside the card. */
+  detail?: { label: string; fields: string[] };
 }
 
 export default function HowToApplyPage() {
@@ -23,14 +44,69 @@ export default function HowToApplyPage() {
       .catch(() => setFee(null));
   }, []);
 
-  const steps = [
-    { n: "01", title: t("home.howToApply.step1.title", "Create an Account"), description: t("home.howToApply.step1.description", "Register on our portal with a valid email address.") },
-    { n: "02", title: t("home.howToApply.step2.title", "Complete Your Application"), description: t("home.howToApply.step2.description", "Fill in your personal, academic and family details accurately.") },
-    { n: "03", title: t("home.howToApply.step3.title", "Upload Documents"), description: t("home.howToApply.step3.description", "Upload the required supporting documents.") },
-    { n: "04", title: "Review Details", description: "Verify all your information and documents before proceeding." },
-    { n: "05", title: "Pay Application Fee", description: "Pay the application fee to finalise your application." },
-    { n: "06", title: t("home.howToApply.step4.title", "Submit Application"), description: t("home.howToApply.step4.description", "Review your information and submit your application.") },
-    { n: "07", title: "Track Application", description: "Track the status of your application from your dashboard." },
+  const steps: ProcessStep[] = [
+    {
+      n: "01",
+      title: t("home.howToApply.step1.title", "Create an Account"),
+      description: t(
+        "home.howToApply.step1.description",
+        "Register on our portal with a valid email address."
+      ),
+      Icon: UserRound,
+    },
+    {
+      n: "02",
+      title: t("home.howToApply.step2.title", "Complete Your Application"),
+      description: t(
+        "home.howToApply.step2.description",
+        "Fill in your personal, academic and family details accurately."
+      ),
+      Icon: FilePenLine,
+    },
+    {
+      n: "03",
+      title: t("home.howToApply.step3.title", "Upload Documents"),
+      description: t(
+        "home.howToApply.step3.description",
+        "Upload the required supporting documents."
+      ),
+      Icon: FileUp,
+    },
+    {
+      n: "04",
+      title: "Review Details",
+      description: "Verify all your information and documents before proceeding.",
+      Icon: SearchCheck,
+    },
+    {
+      n: "05",
+      title: "Pay Application Fee",
+      description: "Pay the application fee to finalize your application.",
+      Icon: Wallet,
+    },
+    {
+      n: "06",
+      title: "Recommendation Details",
+      description:
+        "Provide the name and designation of the person who recommended you for the scholarship.",
+      Icon: UserCheck,
+      detail: { label: "Recommended By", fields: ["Name", "Designation"] },
+    },
+    {
+      n: "07",
+      title: t("home.howToApply.step4.title", "Submit Application"),
+      description: t(
+        "home.howToApply.step4.description",
+        "Review your information and submit your application."
+      ),
+      Icon: Send,
+    },
+    {
+      n: "08",
+      title: "Track Application",
+      description: "Track the status of your application from your dashboard.",
+      Icon: LayoutDashboard,
+    },
   ];
 
   return (
@@ -49,17 +125,69 @@ export default function HowToApplyPage() {
           </header>
         </Reveal>
 
-        <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ol className="mx-auto mt-14 flex max-w-3xl flex-col items-stretch">
           {steps.map((s, i) => (
-            <Reveal key={s.n} delay={(i % 3) * 80}>
-              <div className="card-trust flex h-full flex-col rounded-2xl bg-white p-7 transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_-18px_rgba(22,41,74,0.3)] dark:bg-[#131a2e]">
-                <span className="font-serif text-4xl font-bold text-gold/40">{s.n}</span>
-                <h2 className="mt-4 font-serif text-xl font-bold text-navy dark:text-white">{s.title}</h2>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
-              </div>
-            </Reveal>
+            <li key={s.n} className="flex flex-col items-stretch">
+              <Reveal delay={i * 70}>
+                <div className="group relative overflow-hidden rounded-2xl border border-gold/45 bg-[linear-gradient(160deg,#16294a_0%,#1e365e_55%,#142340_100%)] px-6 py-7 shadow-[0_18px_44px_-24px_rgba(22,41,74,0.85)] transition duration-300 hover:border-gold/70 hover:shadow-[0_22px_52px_-20px_rgba(200,162,74,0.45)] sm:px-9 sm:py-9">
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(200,162,74,0.28),transparent_68%)] transition duration-500 group-hover:bg-[radial-gradient(circle,rgba(200,162,74,0.4),transparent_68%)]"
+                  />
+                  <div className="relative flex items-start gap-5 sm:gap-7">
+                    <div className="flex shrink-0 flex-col items-center gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="flex h-14 w-14 items-center justify-center rounded-xl border border-gold/45 bg-[linear-gradient(160deg,rgba(200,162,74,0.22),rgba(200,162,74,0.06))] text-gold sm:h-16 sm:w-16"
+                      >
+                        <s.Icon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={1.6} />
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="font-serif text-3xl font-bold leading-none text-gold sm:text-4xl">
+                          {s.n}
+                        </span>
+                        <h2 className="font-serif text-xl font-bold leading-snug text-[#fafaf7] sm:text-2xl">
+                          {s.title}
+                        </h2>
+                      </div>
+                      <p className="mt-3 text-sm leading-relaxed text-[#d9dfec] sm:text-[0.95rem]">
+                        {s.description}
+                      </p>
+                      {s.detail && (
+                        <div className="mt-5 rounded-xl border border-gold/30 bg-[rgba(255,255,255,0.04)] p-4">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold">
+                            {s.detail.label}
+                          </p>
+                          <dl className="mt-3 space-y-2.5">
+                            {s.detail.fields.map((f) => (
+                              <div
+                                key={f}
+                                className="flex items-center justify-between gap-4 border-b border-white/10 pb-2.5 last:border-0 last:pb-0"
+                              >
+                                <dt className="text-sm font-medium text-[#e7ebf4]">{f}</dt>
+                                <dd
+                                  aria-hidden="true"
+                                  className="h-px flex-1 bg-[linear-gradient(to_right,transparent,rgba(200,162,74,0.5),transparent)]"
+                                />
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+              {i < steps.length - 1 && (
+                <div className="flex justify-center" aria-hidden="true">
+                  <ChevronDown className="my-3 h-7 w-7 text-gold/80" strokeWidth={2} />
+                </div>
+              )}
+            </li>
           ))}
-        </div>
+        </ol>
 
         <Reveal delay={150}>
           <div className="mx-auto mt-14 max-w-3xl rounded-2xl border border-gold/30 bg-gold-soft p-8 dark:bg-[#1d2740]">
