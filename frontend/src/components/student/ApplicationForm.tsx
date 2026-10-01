@@ -1631,7 +1631,7 @@ export function ApplicationForm() {
       const amount = data.scholarshipAmount.trim();
 
 
-      if (!amount) e.scholarshipAmount = "Please enter the scholarship amount you are requesting.";
+      if (!amount) e.scholarshipAmount = "Scholarship amount is required.";
 
 
       else if (!AMOUNT_RX.test(amount)) e.scholarshipAmount = "Enter a valid amount in rupees (numbers only).";
@@ -5720,14 +5720,85 @@ const data = await res.json().catch(() => ({}));
                 <ReviewBlock title="Scholarship">
 
 
-                  <ReviewRow
-                    label="Requested Scholarship Amount"
-                    value={
-                      form.scholarshipAmount
-                        ? `₹${Number(form.scholarshipAmount).toLocaleString("en-IN")}`
-                        : ""
-                    }
-                  />
+                  <div className="sm:col-span-2">
+
+
+                    <dt className="text-xs text-muted-foreground">Scholarship Amount (₹) *</dt>
+
+
+                    <dd className="mt-1.5">
+
+
+                      <input
+
+
+                        id="scholarshipAmount"
+
+
+                        type="number"
+
+
+                        className="field-input"
+
+
+                        placeholder="Enter the scholarship amount you are requesting"
+
+
+                        value={form.scholarshipAmount}
+
+
+                        onChange={(e) => set("scholarshipAmount", e.target.value)}
+
+
+                        min={1}
+
+
+                        inputMode="numeric"
+
+
+                      />
+
+
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+
+
+                        Enter the amount of scholarship assistance you are requesting.
+
+
+                      </p>
+
+
+                      {errors.scholarshipAmount && (
+                        <p className="mt-1.5 text-sm text-destructive" role="alert">
+                          {errors.scholarshipAmount}
+                        </p>
+                      )}
+
+
+                      {form.scholarshipAmount && (
+                        <p className="mt-1.5 text-sm text-foreground">
+
+
+                          Requested Scholarship Amount:{" "}
+
+
+                          <span className="font-semibold">
+
+
+                            ₹{Number(form.scholarshipAmount).toLocaleString("en-IN")}
+
+
+                          </span>
+
+
+                        </p>
+                      )}
+
+
+                    </dd>
+
+
+                  </div>
 
 
                 </ReviewBlock>
@@ -5937,7 +6008,39 @@ const data = await res.json().catch(() => ({}));
               type="button"
 
 
-              onClick={() => setCurrentStep(7)}
+              onClick={() => {
+
+                // The Review step collects the requested scholarship amount, so
+                // validate it before allowing the applicant on to Payment.
+                const e = validateStep(6, form);
+
+
+                if (Object.keys(e).length > 0) {
+
+
+                  setErrors(e);
+
+
+                  setFormNotice({ type: "error", text: "Please correct the highlighted fields before continuing." });
+
+
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+
+
+                  return;
+
+
+                }
+
+
+                setErrors({});
+
+
+                setFormNotice(null);
+
+
+                setCurrentStep(7);
+              }}
 
 
               className="btn-gold"
