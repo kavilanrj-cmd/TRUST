@@ -12,6 +12,8 @@ import Link from "next/link";
 
 import { useCallback, useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
+import { useMemo, useRef } from "react";
+import { Check, ChevronDown, Search } from "lucide-react";
 
 
 import { API_BASE_URL } from "@/lib/api";
@@ -92,12 +94,235 @@ const INDIAN_STATES = [
   "Chandigarh",
   "Dadra and Nagar Haveli and Daman and Diu",
   "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
   "Lakshadweep",
   "Puducherry",
 ];
 
 
 
+
+
+interface StateSelectProps {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  invalid?: boolean;
+}
+
+/**
+ * Searchable State combobox. Keeps the native <select> look and feel via
+ * `field-input`, but adds an embedded search box, full keyboard support
+ * (arrows / Enter / Escape / type-ahead) and a visible check on the current
+ * selection. The stored value is still the plain state name, so previously
+ * saved applications continue to load unchanged.
+ */
+function StateSelect({ id, value, onChange, invalid }: StateSelectProps) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [firstLetter, setFirstLetter] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const typeaheadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Matches anywhere in the name, but names *starting* with the query rank
+  // first so "Ta" surfaces Tamil Nadu rather than Karnataka.
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return INDIAN_STATES;
+    const starts: string[] = [];
+    const contains: string[] = [];
+    for (const s of INDIAN_STATES) {
+      const i = s.toLowerCase().indexOf(q);
+      if (i === 0) starts.push(s);
+      else if (i > 0) contains.push(s);
+    }
+    return [...starts, ...contains];
+  }, [query]);
+
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+    setActiveIndex(0);
+  };
+
+  const commit = (state: string) => {
+    onChange(state);
+    close();
+  };
+
+  // Close when clicking or tabbing outside the combobox.
+  useEffect(() => {
+    if (!open) return;
+    const onDocPointerDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) close();
+    };
+    document.addEventListener("mousedown", onDocPointerDown);
+    return () => document.removeEventListener("mousedown", onDocPointerDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) searchRef.current?.focus();
+  }, [open]);
+
+  // Clamp the highlight when the filtered list shrinks under the cursor.
+  // Derived during render rather than in an effect, to avoid an extra pass.
+  const safeIndex = results.length === 0 ? 0 : Math.min(activeIndex, results.length - 1);
+
+  // Keep the highlighted option in view during keyboard navigation.
+  useEffect(() => {
+    if (!open) return;
+    const el = listRef.current?.children[safeIndex] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [open, safeIndex]);
+
+  const onTriggerKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setOpen(true);
+      setActiveIndex(value ? Math.max(0, INDIAN_STATES.indexOf(value)) : 0);
+      return;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+      return;
+    }
+    if (e.key.length === 1 && /\S/.test(e.key)) {
+      // Type-ahead on the collapsed control: "t" jumps to the first match.
+      const letter = e.key.toLowerCase();
+      setFirstLetter(letter);
+      setQuery(letter);
+      setOpen(true);
+      setActiveIndex(0);
+      if (typeaheadTimer.current) clearTimeout(typeaheadTimer.current);
+      typeaheadTimer.current = setTimeout(() => setFirstLetter(null), 700);
+    }
+  };
+
+  const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (results.length ? (i + 1) % results.length : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (results.length ? (i - 1 + results.length) % results.length : 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (results[safeIndex]) commit(results[safeIndex]);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActiveIndex(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActiveIndex(Math.max(0, results.length - 1));
+    } else if (e.key === "Tab") {
+      close();
+    }
+  };
+
+  const activeId = results[safeIndex] ? `${id}-opt-${safeIndex}` : undefined;
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        id={id}
+        onClick={() => (open ? close() : setOpen(true))}
+        onKeyDown={onTriggerKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={`${id}-listbox`}
+        data-invalid={invalid || undefined}
+        className={`field-input flex items-center justify-between gap-2 text-left ${
+          open ? "border-navy ring-2 ring-navy/15 dark:border-gold dark:ring-gold/30" : ""
+        }`}
+      >
+        <span className={value ? "" : "text-muted-foreground"}>
+          {value || "Select state"}
+        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute z-40 mt-1.5 w-full overflow-hidden rounded-lg border border-border bg-white shadow-[0_12px_32px_-12px_rgba(22,41,74,0.35)] dark:border-slate-700 dark:bg-[#131a2e]">
+          <div className="relative border-b border-border p-2 dark:border-slate-700">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              ref={searchRef}
+              type="text"
+              value={firstLetter ?? query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setActiveIndex(0);
+              }}
+              onKeyDown={onSearchKeyDown}
+              placeholder="Search state..."
+              aria-label="Search state"
+              aria-controls={`${id}-listbox`}
+              aria-autocomplete="list"
+              aria-activedescendant={activeId}
+              role="combobox"
+              aria-expanded
+              className="w-full rounded-md border border-input bg-white py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15 dark:border-white/15 dark:bg-[#0f1a30] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-gold dark:focus:ring-gold/30"
+            />
+          </div>
+
+          <ul
+            ref={listRef}
+            id={`${id}-listbox`}
+            role="listbox"
+            aria-label="Indian states and union territories"
+            className="max-h-60 overflow-y-auto overscroll-contain py-1"
+          >
+            {results.length === 0 && (
+              <li className="px-4 py-3 text-sm text-muted-foreground">No states found</li>
+            )}
+            {results.map((s, i) => {
+              const selected = s === value;
+              return (
+                <li key={s}>
+                  <button
+                    type="button"
+                    id={`${id}-opt-${i}`}
+                    role="option"
+                    aria-selected={selected}
+                    onMouseEnter={() => setActiveIndex(i)}
+                    onClick={() => commit(s)}
+                    className={`flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm transition-colors ${
+                      i === safeIndex
+                        ? "bg-navy-50 text-navy dark:bg-[#1d2740] dark:text-white"
+                        : "text-foreground"
+                    }`}
+                  >
+                    <span>{s}</span>
+                    {selected && (
+                      <Check aria-hidden="true" className="h-4 w-4 shrink-0 text-gold-600" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 
 type AcademicType = "" | "school" | "college";
@@ -3159,26 +3384,12 @@ const data = await res.json().catch(() => ({}));
                 <label htmlFor="state" className="field-label">State *</label>
 
 
-                <select id="state" className="field-input" value={form.state} onChange={(e) => set("state", e.target.value)}>
-
-
-                  <option value="">Select state</option>
-
-
-                  {INDIAN_STATES.map((state) => (
-
-
-                    <option key={state} value={state}>
-
-                      {state}
-
-                    </option>
-
-
-                  ))}
-
-
-                </select>
+                <StateSelect
+                  id="state"
+                  value={form.state}
+                  onChange={(v) => set("state", v)}
+                  invalid={!!errors.state}
+                />
 
 
                 {errors.state && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.state}</p>}
