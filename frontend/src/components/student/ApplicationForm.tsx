@@ -890,6 +890,15 @@ const IFSC_RX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 // Bank account numbers are 9-18 digits in India.
 const ACCOUNT_RX = /^[0-9]{9,18}$/;
 
+// Masks a bank account number for display, keeping the last four digits so
+// the applicant (or an admin reviewing the application) can still tell two
+// accounts apart without the full number being on screen.
+const maskAccountNumber = (value: string): string => {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length <= 4) return digits;
+  return `\u2022\u2022\u2022\u2022 ${digits.slice(-4)}`;
+};
+
 // Scholarship amounts are rupee values; allow up to 2 decimal places (paise).
 const AMOUNT_RX = /^[0-9]+(\.[0-9]{1,2})?$/;
 
@@ -5692,11 +5701,7 @@ const data = await res.json().catch(() => ({}));
 
                   <ReviewRow
                     label="Account Number"
-                    value={
-                      form.accountNumber
-                        ? form.accountNumber.replace(/(\d{4})(?=\d)/g, "$1 ")
-                        : ""
-                    }
+                    value={maskAccountNumber(form.accountNumber)}
                   />
 
 
