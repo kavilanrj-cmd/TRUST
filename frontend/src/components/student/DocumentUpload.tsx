@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 
 const REQUIRED_DOCUMENTS = [
@@ -31,7 +31,14 @@ const ALLOWED_TYPES = [
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024; // 8MB for images
 
-type DocState = { name: string; size: number; type: string; uploading: boolean; uploaded: boolean };
+type DocState = {
+  name: string;
+  size: number;
+  type: string;
+  uploading: boolean;
+  uploaded: boolean;
+  documentId?: string;
+};
 
 function errorMessageFor(file: File): string | null {
   if (!ALLOWED_TYPES.includes(file.type)) {
@@ -110,11 +117,15 @@ export function DocumentUpload({
           const data = await res.json().catch(() => ({}));
           throw new Error(data.error || "Upload failed");
         }
+        const saved = await res.json().catch(() => null);
+        const documentId = saved?.document?.id as string | undefined;
         setFiles((prev) => {
           const cur = prev[key];
           const next = {
             ...prev,
-            [key]: cur ? { ...cur, uploading: false, uploaded: true } : cur,
+            [key]: cur
+              ? { ...cur, uploading: false, uploaded: true, documentId: documentId ?? cur.documentId }
+              : cur,
           };
           updateCount(next);
           return next;
@@ -176,7 +187,8 @@ export function DocumentUpload({
   );
 
   const removeFile = useCallback(
-    (key: string) => {
+    async (key: string) => {
+      const documentId = files[key]?.documentId;
       setFiles((prev) => {
         const next = { ...prev, [key]: null };
         updateCount(next);
@@ -186,9 +198,68 @@ export function DocumentUpload({
       if (inputRefs.current[key]) {
         inputRefs.current[key]!.value = "";
       }
+      if (!applicationId || !documentId) return;
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/applications/${applicationId}/documents/${documentId}`,
+          { method: "DELETE", credentials: "include" }
+        );
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Could not remove the document.");
+        }
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          [key]: err instanceof Error ? err.message : "Could not remove the document.",
+        }));
+      }
     },
-    [updateCount]
+    [applicationId, files, updateCount]
   );
+
+  // Rehydrate from the server so a reload, refresh or back-navigation shows the
+  // documents that are actually stored against the application instead of an
+  // empty upload form.
+  useEffect(() => {
+    if (!applicationId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/applications/${applicationId}/documents`, {
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (cancelled || !data?.documents) return;
+        const next: Record<string, DocState | null> = {};
+        for (const doc of data.documents as Array<{
+          id: string;
+          documentType: string | null;
+          originalFilename: string;
+          fileType: string;
+          fileSize: number;
+        }>) {
+          if (!doc.documentType) continue;
+          next[doc.documentType] = {
+            name: doc.originalFilename,
+            size: doc.fileSize ?? 0,
+            type: doc.fileType ?? "",
+            uploading: false,
+            uploaded: true,
+            documentId: doc.id,
+          };
+        }
+        setFiles(next);
+        updateCount(next);
+      } catch {
+        // leave the empty upload form in place if the list cannot be read
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [applicationId, updateCount]);
 
   const uploadedCount = useMemo(
     () => Object.values(files).filter(Boolean).length,
@@ -287,7 +358,7 @@ export function DocumentUpload({
                         </button>
                         <button
                           type="button"
-                          onClick={() => removeFile(doc.key)}
+                          onClick={() => void removeFile(doc.key)}
                           className="text-xs font-medium text-destructive underline underline-offset-2 hover:text-destructive/80"
                         >
                           Remove

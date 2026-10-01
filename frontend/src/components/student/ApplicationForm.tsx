@@ -5628,7 +5628,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep < 5 && (
+          {currentStep < 6 && (
 
 
             <button
@@ -5709,7 +5709,7 @@ const data = await res.json().catch(() => ({}));
               type="button"
 
 
-              onClick={() => setCurrentStep(6)}
+              onClick={() => setCurrentStep(7)}
 
 
               className="btn-gold"
