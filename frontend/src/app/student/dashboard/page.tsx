@@ -190,7 +190,7 @@ function renderDashboard(
               Welcome, {studentName}
             </h2>
             <p className="text-muted-foreground text-center">
-              Neelakannu Educational Trust Scholarship Portal
+              NEELAKANNU EDUCATIONAL TRUST Scholarship Portal
             </p>
           </div>
 

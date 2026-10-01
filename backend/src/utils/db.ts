@@ -1,4 +1,4 @@
-// Database client for the Neelakannu Educational Trust Platform
+// Database client for the NEELAKANNU EDUCATIONAL TRUST Platform
 // Uses Prisma ORM with PostgreSQL - Phase 1A setup
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";

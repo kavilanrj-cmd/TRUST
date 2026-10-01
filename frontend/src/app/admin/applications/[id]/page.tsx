@@ -153,7 +153,7 @@ export default function ApplicationDetailPage() {
   const openAcceptDialog = () => {
     setDecisionDialog("ACCEPT");
     setDecisionMsg(
-      `Congratulations! Your application (${app.applicationId}) has been accepted. Welcome to the Neelakannu Educational Trust scholarship programme.`
+      `Congratulations! Your application (${app.applicationId}) has been accepted. Welcome to the NEELAKANNU EDUCATIONAL TRUST scholarship programme.`
     );
     setSelectedReasons(new Set());
     setSelectedMissing(new Set());
@@ -174,7 +174,7 @@ export default function ApplicationDetailPage() {
     setSelectedMissing(new Set(missing));
     setSelectedReasons(reasons);
     const msg =
-      `Thank you for applying to the Neelakannu Educational Trust scholarship. ` +
+      `Thank you for applying to the NEELAKANNU EDUCATIONAL TRUST scholarship. ` +
       (reasons.size > 0
         ? `Unfortunately, your application could not be accepted for the following reason(s): ${Array.from(reasons).join(", ")}.`
         : `Unfortunately, we are unable to consider your application at this time.`) +

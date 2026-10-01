@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Neelakannu Educational Trust - Forgot Password",
-  description: "Forgot password page for Neelakannu Educational Trust",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Forgot Password",
+  description: "Forgot password page for NEELAKANNU EDUCATIONAL TRUST",
 };
 
 export default function ForgotPasswordPage() {

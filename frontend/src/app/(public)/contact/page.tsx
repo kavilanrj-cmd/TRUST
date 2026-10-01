@@ -104,7 +104,7 @@ export default function ContactPage() {
             Contact Us
           </motion.h1>
           <motion.p variants={fadeUp} className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            We&rsquo;re here to help. Get in touch with Neelakannu Educational Trust.
+            We&rsquo;re here to help. Get in touch with NEELAKANNU EDUCATIONAL TRUST.
           </motion.p>
           {/* subtle gold decorative line */}
           <motion.div
@@ -339,7 +339,7 @@ export default function ContactPage() {
             </div>
             <div className="mt-5 grid gap-6 md:grid-cols-[1fr_auto]">
               <div>
-                <p className="font-semibold text-navy dark:text-white">Neelakannu Educational Trust</p>
+                <p className="font-semibold text-navy dark:text-white">NEELAKANNU EDUCATIONAL TRUST</p>
                 <p className="mt-2 whitespace-pre-line text-muted-foreground">{address}</p>
               </div>
               <div className="flex items-start md:justify-end">

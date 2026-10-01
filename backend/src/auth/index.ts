@@ -1,4 +1,4 @@
-// Authentication routes for Neelakannu Educational Trust Platform
+// Authentication routes for NEELAKANNU EDUCATIONAL TRUST Platform
 // Handles: Register, Login, Logout, Email Verification, Forgot Password, Reset Password
 
 import express, { Request, Response } from "express";
@@ -86,7 +86,7 @@ router.post("/register", async (req: Request, res: Response) => {
       await client.emails.send({
         from: SENDER,
         to: email,
-        subject: "Verify your email - Neelakannu Educational Trust",
+        subject: "Verify your email - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`
       });
     }
@@ -321,7 +321,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
       await resetClient.emails.send({
         from: SENDER,
         to: email,
-        subject: "Reset your password - Neelakannu Educational Trust",
+        subject: "Reset your password - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Click <a href="${FRONTEND_BASE_URL}/auth/reset-password?token=${resetToken}">here</a> to reset your password.</p>`
       });
     }

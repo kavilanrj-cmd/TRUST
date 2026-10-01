@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Neelakannu Educational Trust - Announcements",
-  description: "Important announcements from Neelakannu Educational Trust",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Announcements",
+  description: "Important announcements from NEELAKANNU EDUCATIONAL TRUST",
 };
 
 export default function AnnouncementsPage() {
@@ -25,7 +25,7 @@ export default function AnnouncementsPage() {
               <div>
                 <h3 className="font-medium mb-1">Application Portal Now Open</h3>
                 <p className="text-sm text-muted-foreground">
-                  The application portal for the Neelakannu Educational Trust Scholarship
+                  The application portal for the NEELAKANNU EDUCATIONAL TRUST Scholarship
                   2026 is now open. Applications are being accepted until the deadline.
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">

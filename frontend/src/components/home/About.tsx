@@ -17,7 +17,7 @@ export function About() {
               <p className="mt-5 leading-relaxed text-muted-foreground">
                 {t(
                   "home.about.description",
-                  "Neelakannu Educational Trust was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed."
+                  "NEELAKANNU EDUCATIONAL TRUST was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed."
                 )}
               </p>
 

@@ -55,7 +55,7 @@ export function Hero() {
           <div className="flex items-center gap-3">
             <Image
               src="/assets/neelakannu-trust-logo.png"
-              alt="Neelakannu Educational Trust"
+              alt="NEELAKANNU EDUCATIONAL TRUST"
               width={56}
               height={56}
               className="h-14 w-14"
@@ -68,7 +68,7 @@ export function Hero() {
           </div>
 
           <h1 className="mt-6 font-serif text-4xl font-bold leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem] dark:text-white">
-            {t("home.hero.title", "Neelakannu Educational Trust")}
+            {t("home.hero.title", "NEELAKANNU EDUCATIONAL TRUST")}
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
@@ -116,7 +116,7 @@ export function Hero() {
               <div className="relative mx-auto mb-8 flex justify-center">
                 <Image
                   src="/assets/neelakannu-trust-logo.png"
-                  alt="Neelakannu Educational Trust logo"
+                  alt="NEELAKANNU EDUCATIONAL TRUST logo"
                   width={200}
                   height={200}
                   className="h-auto w-32 rounded-3xl shadow-2xl sm:w-40 lg:w-48"

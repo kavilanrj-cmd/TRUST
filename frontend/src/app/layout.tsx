@@ -1,5 +1,5 @@
 /*
-Neelakannu Educational Trust - Digital Scholarship & Trust Management Platform
+NEELAKANNU EDUCATIONAL TRUST - Digital Scholarship & Trust Management Platform
 Phase 1A: Foundation
 Phase 1B: Public Website
 
@@ -11,8 +11,8 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 
 export const metadata = {
-  title: "Neelakannu Educational Trust - Digital Scholarship Platform",
-  description: "Scholarship and trust management platform for Neelakannu Educational Trust, Chennai",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Digital Scholarship Platform",
+  description: "Scholarship and trust management platform for NEELAKANNU EDUCATIONAL TRUST, Chennai",
 };
 
 export default function RootLayout({

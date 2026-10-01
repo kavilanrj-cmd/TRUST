@@ -19,7 +19,7 @@ const FALLBACK: NewsItem[] = [
     title: "Application Portal Now Open",
     category: "Announcement",
     content:
-      "The application portal for the Neelakannu Educational Trust Scholarship is now open. Applications are being accepted until the deadline.",
+      "The application portal for the NEELAKANNU EDUCATIONAL TRUST Scholarship is now open. Applications are being accepted until the deadline.",
     createdAt: new Date().toISOString(),
   },
   {
@@ -83,7 +83,7 @@ export function NewsEvents() {
             <p className="mt-4 text-muted-foreground">
               {t(
                 "home.news.description",
-                "Updates, announcements and opportunities from the Neelakannu Educational Trust."
+                "Updates, announcements and opportunities from the NEELAKANNU EDUCATIONAL TRUST."
               )}
             </p>
           </div>

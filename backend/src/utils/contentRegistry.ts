@@ -1,10 +1,25 @@
-﻿// Central CMS content registry for the Neelakannu Educational Trust website.
+﻿// Central CMS content registry for the NEELAKANNU EDUCATIONAL TRUST website.
 // Each editable item has a stable, namespaced key. The registry controls:
 //   - which fields are editable
 //   - default values (fallback for the public site)
 //   - type (text / textarea / rich / image / url)
 //   - max length & validation
 // Developers control structure; admins control only these values.
+
+// The Trust name is always shown in full capitals as branding.
+// Content seeded or typed before the rebrand can still hold an older casing, so
+// every stored CMS value is run through this helper before it is published.
+// The pattern requires whitespace between the words, which keeps technical
+// identifiers such as "neelakannueducationaltrust@gmail.com" untouched.
+export const TRUST_NAME = "NEELAKANNU EDUCATIONAL TRUST";
+
+const TRUST_NAME_PATTERN = /neelakannu\s+educational\s+trust/gi;
+
+export function normalizeTrustBranding<T>(value: T): T {
+  return typeof value === "string"
+    ? ((value as string).replace(TRUST_NAME_PATTERN, TRUST_NAME) as unknown as T)
+    : value;
+}
 
 export interface ContentFieldDef {
   key: string;
@@ -51,7 +66,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
 
   // ---- Hero ----
   def("home.hero.eyebrow", "home", "hero", "text", "Hero · Eyebrow", "Scholarships for Deserving Students", { maxLength: 80 }),
-  def("home.hero.title", "home", "hero", "text", "Hero · Title", "Neelakannu Educational Trust", { maxLength: 120 }),
+  def("home.hero.title", "home", "hero", "text", "Hero · Title", "NEELAKANNU EDUCATIONAL TRUST", { maxLength: 120 }),
   def("home.hero.description", "home", "hero", "textarea", "Hero · Description", "Supporting deserving students with educational opportunities, scholarships and financial assistance.", { maxLength: 400 }),
   def("home.hero.primaryButton", "home", "hero", "text", "Hero · Primary Button", "Apply for Scholarship", { maxLength: 60 }),
   def("home.hero.secondaryButton", "home", "hero", "text", "Hero · Secondary Button", "Learn More", { maxLength: 60 }),
@@ -72,7 +87,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   // ---- About ----
   def("home.about.eyebrow", "home", "about", "text", "About · Eyebrow", "Who We Are", { maxLength: 80 }),
   def("home.about.title", "home", "about", "text", "About · Title", "A Trust Built on Education and Compassion", { maxLength: 120 }),
-  def("home.about.description", "home", "about", "rich", "About · Description", "Neelakannu Educational Trust was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed.", { maxLength: 1200 }),
+  def("home.about.description", "home", "about", "rich", "About · Description", "NEELAKANNU EDUCATIONAL TRUST was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed.", { maxLength: 1200 }),
   def("home.about.visionTitle", "home", "about", "text", "About · Vision Title", "Our Vision", { maxLength: 60 }),
   def("home.about.vision", "home", "about", "textarea", "About · Vision", "A society where every deserving student, regardless of economic background, has access to quality education and the opportunity to reach their full potential.", { maxLength: 500 }),
   def("home.about.missionTitle", "home", "about", "text", "About · Mission Title", "Our Mission", { maxLength: 60 }),
@@ -146,13 +161,13 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
 
   // ---- Final CTA ----
   def("home.finalCta.title", "home", "finalCta", "text", "Final CTA · Title", "Your Education. Your Future. Our Support.", { maxLength: 120 }),
-  def("home.finalCta.description", "home", "finalCta", "textarea", "Final CTA · Description", "Take the first step today and apply for a scholarship with Neelakannu Educational Trust.", { maxLength: 300 }),
+  def("home.finalCta.description", "home", "finalCta", "textarea", "Final CTA · Description", "Take the first step today and apply for a scholarship with NEELAKANNU EDUCATIONAL TRUST.", { maxLength: 300 }),
   def("home.finalCta.primaryButton", "home", "finalCta", "text", "Final CTA · Primary", "Apply for Scholarship", { maxLength: 60 }),
   def("home.finalCta.secondaryButton", "home", "finalCta", "text", "Final CTA · Secondary", "Contact Us", { maxLength: 60 }),
 
   // ---- Footer ----
-  def("home.footer.aboutTitle", "home", "footer", "text", "Footer · About Title", "About Neelakannu Educational Trust", { maxLength: 80 }),
-  def("home.footer.description", "home", "footer", "textarea", "Footer · Description", "Neelakannu Educational Trust empowers deserving students through scholarships and financial assistance.", { maxLength: 400 }),
+  def("home.footer.aboutTitle", "home", "footer", "text", "Footer · About Title", "About NEELAKANNU EDUCATIONAL TRUST", { maxLength: 80 }),
+  def("home.footer.description", "home", "footer", "textarea", "Footer · Description", "NEELAKANNU EDUCATIONAL TRUST empowers deserving students through scholarships and financial assistance.", { maxLength: 400 }),
   def("home.footer.quickTitle", "home", "footer", "text", "Footer · Quick Links Title", "Quick Links", { maxLength: 60 }),
   def("home.footer.discoverTitle", "home", "footer", "text", "Footer · Discover Title", "Discover", { maxLength: 60 }),
   def("home.footer.contactTitle", "home", "footer", "text", "Footer · Contact Title", "Contact", { maxLength: 60 }),
@@ -178,8 +193,8 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
 
   // ---- About page ----
   def("about.eyebrow", "about", "about", "text", "About Page · Eyebrow", "About Us", { maxLength: 80 }),
-  def("about.title", "about", "about", "text", "About Page · Title", "Neelakannu Educational Trust", { maxLength: 120 }),
-  def("about.intro", "about", "about", "textarea", "About Page · Intro", "Established on 14th November 2018, Neelakannu Educational Trust is a charitable organization dedicated to empowering students through education and scholarship opportunities.", { maxLength: 500 }),
+  def("about.title", "about", "about", "text", "About Page · Title", "NEELAKANNU EDUCATIONAL TRUST", { maxLength: 120 }),
+  def("about.intro", "about", "about", "textarea", "About Page · Intro", "Established on 14th November 2018, NEELAKANNU EDUCATIONAL TRUST is a charitable organization dedicated to empowering students through education and scholarship opportunities.", { maxLength: 500 }),
   def("about.registeredOfficeTitle", "about", "about", "text", "About Page · Registered Office Title", "Registered Office", { maxLength: 60 }),
   def("about.address", "about", "about", "textarea", "About Page · Address", "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India", { maxLength: 300 }),
   def("about.contactTitle", "about", "about", "text", "About Page · Contact Title", "Contact Information", { maxLength: 60 }),
@@ -192,7 +207,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
 
   // ---- About the Organization ----
   def("about.organizationTitle", "about", "about", "text", "About Page · About The Organization Title", "About the Organization", { maxLength: 120 }),
-  def("about.organization", "about", "about", "textarea", "About Page · About The Organization", "Neelakannu Educational Trust is a registered public charitable trust dedicated to the advancement of education, social welfare, healthcare support, and cultural preservation across diverse sections of society. Established with a commitment to inclusive development, the Trust operates without discrimination on the basis of caste, creed, religion, or socio-economic status. The Trust seeks to empower individuals and communities through access to quality education, skill development, humanitarian assistance, and initiatives that promote national integration and social harmony. Particular emphasis is placed on supporting children, persons with disabilities, rural populations, and economically disadvantaged groups, enabling them to lead self-reliant and dignified lives.", { maxLength: 2000 }),
+  def("about.organization", "about", "about", "textarea", "About Page · About The Organization", "NEELAKANNU EDUCATIONAL TRUST is a registered public charitable trust dedicated to the advancement of education, social welfare, healthcare support, and cultural preservation across diverse sections of society. Established with a commitment to inclusive development, the Trust operates without discrimination on the basis of caste, creed, religion, or socio-economic status. The Trust seeks to empower individuals and communities through access to quality education, skill development, humanitarian assistance, and initiatives that promote national integration and social harmony. Particular emphasis is placed on supporting children, persons with disabilities, rural populations, and economically disadvantaged groups, enabling them to lead self-reliant and dignified lives.", { maxLength: 2000 }),
 
   // ---- Vision ----
   def("about.visionTitle", "about", "about", "text", "About Page · Vision Title", "Vision", { maxLength: 120 }),
@@ -204,7 +219,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
 
   // ---- Founder ----
   def("about.founderTitle", "about", "about", "text", "About Page · Founder Title", "Founder", { maxLength: 60 }),
-  def("about.founder", "about", "about", "textarea", "About Page · Founder", "Prof. Dr. K. Chidambaram\nME., Ph. D.\nFounder and Settlor\nNeelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.", { maxLength: 3000 }),
+  def("about.founder", "about", "about", "textarea", "About Page · Founder", "Prof. Dr. K. Chidambaram\nME., Ph. D.\nFounder and Settlor\nNEELAKANNU EDUCATIONAL TRUST was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.", { maxLength: 3000 }),
 
   // ---- Core Objectives and Areas of Work ----
   def("about.coreObjectivesTitle", "about", "about", "text", "About Page · Core Objectives Title", "Core Objectives and Areas of Work", { maxLength: 120 }),
@@ -241,7 +256,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   // ---- Contact page ----
   def("contact.eyebrow", "contact", "contact", "text", "Contact Page · Eyebrow", "Contact", { maxLength: 80 }),
   def("contact.title", "contact", "contact", "text", "Contact Page · Title", "Contact Us", { maxLength: 120 }),
-  def("contact.intro", "contact", "contact", "textarea", "Contact Page · Intro", "We'd love to hear from you. Get in touch with Neelakannu Educational Trust.", { maxLength: 300 }),
+  def("contact.intro", "contact", "contact", "textarea", "Contact Page · Intro", "We'd love to hear from you. Get in touch with NEELAKANNU EDUCATIONAL TRUST.", { maxLength: 300 }),
   def("contact.officeTitle", "contact", "contact", "text", "Contact Page · Office Title", "Trust Office", { maxLength: 60 }),
   def("contact.address", "contact", "contact", "textarea", "Contact Page · Address", "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India", { maxLength: 300 }),
   def("contact.emailLabel", "contact", "contact", "text", "Contact Page · Email Label", "Email", { maxLength: 40 }),

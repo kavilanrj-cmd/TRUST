@@ -1,4 +1,4 @@
-// Permission system for the Neelakannu Educational Trust admin panel.
+// Permission system for the NEELAKANNU EDUCATIONAL TRUST admin panel.
 // Permissions are enforced server-side. Frontend checks are cosmetic only.
 
 export const ROLES = {

@@ -1,4 +1,4 @@
-// Email service for Neelakannu Educational Trust Platform
+// Email service for NEELAKANNU EDUCATIONAL TRUST Platform
 // Uses Resend for transactional emails
 // Email failures should not corrupt application/payment transactions
 
@@ -45,127 +45,127 @@ const getEmailContent = (type: EmailType, data: any): { subject: string; html: s
   switch (type) {
     case "registration":
       return {
-        subject: "Welcome to Neelakannu Educational Trust Scholarship Portal",
+        subject: "Welcome to NEELAKANNU EDUCATIONAL TRUST Scholarship Portal",
         html: `<p>Hello ${data.name},</p>
-<p>Welcome to the Neelakannu Educational Trust Scholarship Portal. Your account has been successfully created.</p>
+<p>Welcome to the NEELAKANNU EDUCATIONAL TRUST Scholarship Portal. Your account has been successfully created.</p>
 <p>Please <a href="${data.verifyUrl}">verify your email address</a> to start applying for scholarships.</p>
-<p>Thank you,<br/>Neelakannu Educational Trust</p>`,
+<p>Thank you,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "verification":
       return {
-        subject: "Verify Your Email - Neelakannu Educational Trust",
+        subject: "Verify Your Email - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Please click the link below to verify your email address:</p>
 <p><a href="${data.verifyUrl}">Verify Email Address</a></p>
 <p>This verification link will expire in 24 hours.</p>
 <p>If you did not create an account, please ignore this email.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "password-reset":
       return {
-        subject: "Reset Your Password - Neelakannu Educational Trust",
+        subject: "Reset Your Password - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>We received a request to reset your password. Click the link below to create a new password:</p>
 <p><a href="${data.resetUrl}">Reset Password</a></p>
 <p>This password reset link will expire in 1 hour.</p>
 <p>If you did not request a password reset, please ignore this email.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "application-submitted":
       return {
-        subject: "Application Submitted - Neelakannu Educational Trust",
+        subject: "Application Submitted - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Your scholarship application has been successfully submitted.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Scholarship:</strong> ${data.scholarshipName}</p>
 <p><strong>Submission Date:</strong> ${data.submissionDate}</p>
 <p>You will receive email notifications about your application status.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "application-id":
       return {
-        subject: "Your Application ID - Neelakannu Educational Trust",
+        subject: "Your Application ID - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Your scholarship application ID has been generated.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Scholarship:</strong> ${data.scholarshipName}</p>
 <p>Keep this ID for future reference and to track your application status.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "payment-successful":
       return {
-        subject: "Payment Successful - Neelakannu Educational Trust",
+        subject: "Payment Successful - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Your application fee payment has been successfully received.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Amount:</strong> ${data.amount}</p>
 <p><strong>Payment ID:</strong> ${data.paymentId}</p>
 <p>Your application is now under review. You will be notified of the decision.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "payment-failed":
       return {
-        subject: "Payment Failed - Neelakannu Educational Trust",
+        subject: "Payment Failed - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Your application fee payment could not be processed.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Amount:</strong> ${data.amount}</p>
 <p>Please complete the payment to continue your application.</p>
 <p>If you have already paid, please contact support.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "under-review":
       return {
-        subject: "Application Under Review - Neelakannu Educational Trust",
+        subject: "Application Under Review - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Your scholarship application is now under review.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Scholarship:</strong> ${data.scholarshipName}</p>
 <p>The review process typically takes 2-3 weeks.</p>
 <p>You will be notified of the decision via email.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "application-approved":
       return {
-        subject: "Application Approved! - Neelakannu Educational Trust",
+        subject: "Application Approved! - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Congratulations! Your scholarship application has been approved.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Scholarship:</strong> ${data.scholarshipName}</p>
 <p>Please check your email for further instructions regarding scholarship disbursement.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "application-rejected":
       return {
-        subject: "Application Status Update - Neelakannu Educational Trust",
+        subject: "Application Status Update - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Your scholarship application has been reviewed.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Scholarship:</strong> ${data.scholarshipName}</p>
 <p>We regret to inform you that your application was not selected for this scholarship cycle.</p>
-<p>Thank you for your interest in the Neelakannu Educational Trust scholarship program.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Thank you for your interest in the NEELAKANNU EDUCATIONAL TRUST scholarship program.</p>
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "application-waitlisted":
       return {
-        subject: "Waitlisted - Neelakannu Educational Trust",
+        subject: "Waitlisted - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>Your scholarship application has been placed on the waitlist.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Scholarship:</strong> ${data.scholarshipName}</p>
 <p>You will be notified if a seat becomes available.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
     case "correction-requested":
       return {
-        subject: " Correction Required for Your Application - Neelakannu Educational Trust",
+        subject: " Correction Required for Your Application - NEELAKANNU EDUCATIONAL TRUST",
         html: `<p>Hello ${data.name},</p>
 <p>The administration has requested corrections to your scholarship application.</p>
 <p><strong>Application ID:</strong> ${data.applicationId}</p>
 <p><strong>Correction Message:</strong> ${data.correctionMessage}</p>
 <p>Please <a href="${data.loginUrl}">log in to your account</a> and review the requested information.</p>
 <p>You have 7 days to make the necessary corrections and resubmit your application.</p>
-<p>Best regards,<br/>Neelakannu Educational Trust</p>`,
+<p>Best regards,<br/>NEELAKANNU EDUCATIONAL TRUST</p>`,
       };
   }
 };

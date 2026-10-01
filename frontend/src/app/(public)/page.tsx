@@ -11,9 +11,9 @@ import { SuccessStories } from "@/components/home/SuccessStories";
 import { NewsEvents } from "@/components/home/NewsEvents";
 
 export const metadata = {
-  title: "Neelakannu Educational Trust - Empowering Education, Enabling Dreams",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Empowering Education, Enabling Dreams",
   description:
-    "Neelakannu Educational Trust empowers deserving students with scholarships and financial assistance. Applying for the 2026 scholarship intake is easy.",
+    "NEELAKANNU EDUCATIONAL TRUST empowers deserving students with scholarships and financial assistance. Applying for the 2026 scholarship intake is easy.",
 };
 
 export default function HomePage() {

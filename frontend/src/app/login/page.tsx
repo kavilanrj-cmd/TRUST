@@ -1,8 +1,8 @@
 import LoginPage from "@/components/LoginPage";
 
 export const metadata = {
-  title: "Neelakannu Educational Trust - Login",
-  description: "Login page for Neelakannu Educational Trust",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Login",
+  description: "Login page for NEELAKANNU EDUCATIONAL TRUST",
 };
 
 export default function LoginPageRoute() {

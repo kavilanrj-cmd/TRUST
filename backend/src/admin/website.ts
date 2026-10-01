@@ -3,7 +3,12 @@ import { Router, Request, Response } from "express";
 import prisma from "../utils/db";
 import { authenticate, requirePermission, managementRoles } from "../utils/auth";
 import { PERMISSIONS } from "../utils/roles";
-import { CONTENT_REGISTRY, validateContentValue, defaultValueFor } from "../utils/contentRegistry";
+import {
+  CONTENT_REGISTRY,
+  validateContentValue,
+  defaultValueFor,
+  normalizeTrustBranding,
+} from "../utils/contentRegistry";
 import { auditContextFromRequest, logAudit } from "../utils/audit";
 
 const router = Router();
@@ -13,8 +18,10 @@ const routerPublic = Router();
 // Also updates existing rows that still have the old registry default values.
 export async function seedSiteContentIfNeeded(): Promise<void> {
   try {
-    const existing = await prisma.siteContent.findMany({ select: { key: true, value: true } });
-    const existingMap = new Map(existing.map((c: any) => [c.key, c.value]));
+    const existing = await prisma.siteContent.findMany({
+      select: { key: true, value: true, draftValue: true },
+    });
+    const existingMap = new Map<string, string>(existing.map((c: any) => [c.key, c.value]));
 
     // Create missing keys
     const missingKeys = CONTENT_REGISTRY.filter((c) => !existingMap.has(c.key));
@@ -36,19 +43,39 @@ export async function seedSiteContentIfNeeded(): Promise<void> {
 
     // Update existing keys that still have the OLD default value (from previous registry versions)
     // This fixes stale content in production without requiring manual DB updates
-    const oldDefaults: Record<string, string> = {
-      "about.title": "About Neelakannu Educational Trust",
+    const oldDefaults: Record<string, string | string[]> = {
+      "about.title": ["About Neelakannu Educational Trust", "Neelakannu Educational Trust"],
       "about.phone": "94443 27336",
       "about.founder": "Prof. Dr. K. Chidambaram",
     };
 
-    for (const [key, oldDefault] of Object.entries(oldDefaults)) {
+    for (const [key, oldValue] of Object.entries(oldDefaults)) {
       const currentValue = existingMap.get(key);
       const newDefault = CONTENT_REGISTRY.find((c) => c.key === key)?.defaultValue;
-      if (currentValue === oldDefault && newDefault && newDefault !== oldDefault) {
+      const legacyValues = Array.isArray(oldValue) ? oldValue : [oldValue];
+      if (
+        currentValue != null &&
+        legacyValues.includes(currentValue) &&
+        newDefault &&
+        newDefault !== currentValue
+      ) {
         await prisma.siteContent.update({
           where: { key },
           data: { value: newDefault },
+        });
+      }
+    }
+
+    // Normalise the Trust name in any stored content that still uses the old
+    // casing, so the rebrand does not revert after deployment. Runs after the
+    // exact-default migration above, and only writes when something changed.
+    for (const row of existing) {
+      const nextValue = normalizeTrustBranding(row.value);
+      const nextDraftValue = normalizeTrustBranding(row.draftValue);
+      if (nextValue !== row.value || nextDraftValue !== row.draftValue) {
+        await prisma.siteContent.update({
+          where: { key: row.key },
+          data: { value: nextValue, draftValue: nextDraftValue },
         });
       }
     }
@@ -64,9 +91,11 @@ export async function getPublishedContentMap(): Promise<Record<string, string>> 
 
   const rows = await prisma.siteContent.findMany({ select: { key: true, value: true } });
   const map: Record<string, string> = {};
-  for (const r of rows) map[r.key] = r.value ?? defaultValueFor(r.key);
+  // Normalised on read as well as on write, so the public site always renders the
+  // current branding even if the corrective write above was skipped.
+  for (const r of rows) map[r.key] = normalizeTrustBranding(r.value ?? defaultValueFor(r.key));
   for (const c of CONTENT_REGISTRY) {
-    if (!(c.key in map)) map[c.key] = c.defaultValue;
+    if (!(c.key in map)) map[c.key] = normalizeTrustBranding(c.defaultValue);
   }
   return map;
 }

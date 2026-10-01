@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Neelakannu Educational Trust - Scholarship Program",
-  description: "Scholarship program details for Neelakannu Educational Trust",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Scholarship Program",
+  description: "Scholarship program details for NEELAKANNU EDUCATIONAL TRUST",
 };
 
 export default function ScholarshipPage() {
@@ -20,7 +20,7 @@ export default function ScholarshipPage() {
           <div>
             <h2 className="text-2xl font-semibold mb-4">Scholarship Name</h2>
             <p className="text-3xl font-bold text-primary mb-2">
-              Neelakannu Educational Trust Scholarship 2026
+              NEELAKANNU EDUCATIONAL TRUST Scholarship 2026
             </p>
             <p className="text-muted-foreground leading-relaxed">
               A merit-cum-means based scholarship program designed to support

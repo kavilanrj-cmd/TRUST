@@ -154,7 +154,7 @@ export default function LoginPage() {
           >
             <Image
               src="/assets/neelakannu-trust-logo.png"
-              alt="Neelakannu Educational Trust logo"
+              alt="NEELAKANNU EDUCATIONAL TRUST logo"
               width={72}
               height={72}
               className="h-18 w-18 rounded-2xl shadow-lg"
@@ -162,7 +162,7 @@ export default function LoginPage() {
             />
             <div>
               <h2 className="font-serif text-2xl font-bold leading-tight text-white sm:text-3xl">
-                Neelakannu
+                NEELAKANNU
               </h2>
               <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#D4AF37]">
                 Educational Trust
@@ -238,13 +238,13 @@ export default function LoginPage() {
           >
             <Image
               src="/assets/neelakannu-trust-logo.png"
-              alt="Neelakannu Educational Trust logo"
+              alt="NEELAKANNU EDUCATIONAL TRUST logo"
               width={48}
               height={48}
               className="h-12 w-12 rounded-xl"
             />
             <div>
-              <p className="font-serif text-lg font-bold text-[#0A1F44] dark:text-white">Neelakannu</p>
+              <p className="font-serif text-lg font-bold text-[#0A1F44] dark:text-white">NEELAKANNU</p>
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#B8902F] dark:text-[#D4AF37]">
                 Educational Trust
               </p>
@@ -258,7 +258,7 @@ export default function LoginPage() {
               Welcome Back
             </h1>
             <p className="mt-2 text-muted-foreground dark:text-white/70">
-              Sign in to continue to Neelakannu Educational Trust
+              Sign in to continue to NEELAKANNU EDUCATIONAL TRUST
             </p>
           </motion.header>
 

@@ -15,14 +15,14 @@ export default function StudentApplicationPage() {
             <div className="mx-auto mb-6 flex w-fit items-center justify-center gap-3">
               <Image
                 src="/assets/neelakannu-trust-logo.png"
-                alt="Neelakannu Educational Trust logo"
+                alt="NEELAKANNU EDUCATIONAL TRUST logo"
                 width={64}
                 height={64}
                 className="h-16 w-16 sm:h-20 sm:w-20"
                 priority
               />
               <span className="text-left">
-                <span className="block text-base font-bold tracking-wide text-navy dark:text-white">Neelakannu Educational Trust</span>
+                <span className="block text-base font-bold tracking-wide text-navy dark:text-white">NEELAKANNU EDUCATIONAL TRUST</span>
                 <span className="block text-sm text-muted-foreground dark:text-slate-400">Empowering education</span>
               </span>
             </div>

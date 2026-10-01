@@ -1,4 +1,4 @@
-// API base URL for the Neelakannu Educational Trust backend.
+// API base URL for the NEELAKANNU EDUCATIONAL TRUST backend.
 //
 // Production: empty string so every `${API_BASE_URL}/api/…` call is a
 // same-origin request (e.g. "/api/…").  The Next.js rewrite in

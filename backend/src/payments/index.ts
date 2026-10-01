@@ -1,4 +1,4 @@
-// Payment routes for Neelakannu Educational Trust Platform
+// Payment routes for NEELAKANNU EDUCATIONAL TRUST Platform
 // Handles: Razorpay order creation, payment verification, webhook handling.
 // The Razorpay secret is only ever used on the server (never the frontend).
 

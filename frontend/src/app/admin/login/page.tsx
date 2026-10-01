@@ -35,13 +35,13 @@ export default function AdminLoginPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <Image
             src="/assets/neelakannu-trust-logo.png"
-            alt="Neelakannu Educational Trust"
+            alt="NEELAKANNU EDUCATIONAL TRUST"
             width={64}
             height={64}
             className="h-16 w-16"
           />
           <h1 className="mt-4 font-serif text-2xl font-bold text-white">Admin Portal</h1>
-          <p className="mt-1 text-sm text-white/70">Neelakannu Educational Trust</p>
+          <p className="mt-1 text-sm text-white/70">NEELAKANNU EDUCATIONAL TRUST</p>
         </div>
 
         <div className="card-trust bg-white p-8 dark:bg-[#131a2e]">

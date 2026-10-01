@@ -1,4 +1,4 @@
-// Scholarship types for Neelakannu Educational Trust Platform
+// Scholarship types for NEELAKANNU EDUCATIONAL TRUST Platform
 
 export enum EducationLevel {
   HIGH_SCHOOL = "high_school",

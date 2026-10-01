@@ -65,7 +65,7 @@ export function SuccessStories() {
           <p className="mt-4 text-muted-foreground">
             {t(
               "home.successStories.description",
-              "Real journeys of students supported by the Neelakannu Educational Trust scholarship program."
+              "Real journeys of students supported by the NEELAKANNU EDUCATIONAL TRUST scholarship program."
             )}
           </p>
         </div>

@@ -1,4 +1,4 @@
-// Public certificate downloads for the Neelakannu Educational Trust.
+// Public certificate downloads for the NEELAKANNU EDUCATIONAL TRUST.
 // Only PUBLISHED certificates are ever listed or downloadable. Draft and
 // unpublished certificates are invisible to the public. Files are streamed
 // through the secure backend (never served from a public bucket URL).

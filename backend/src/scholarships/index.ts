@@ -1,4 +1,4 @@
-// Scholarship API routes for Neelakannu Educational Trust Platform
+// Scholarship API routes for NEELAKANNU EDUCATIONAL TRUST Platform
 // Handles: Get scholarships, Get scholarship by ID, Eligibility check
 
 import express, { Request, Response } from "express";

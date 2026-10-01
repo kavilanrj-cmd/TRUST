@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Neelakannu Educational Trust - Verify Email",
-  description: "Email verification page for Neelakannu Educational Trust",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Verify Email",
+  description: "Email verification page for NEELAKANNU EDUCATIONAL TRUST",
 };
 
 export default function VerifyEmailPage() {

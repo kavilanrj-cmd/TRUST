@@ -2246,7 +2246,7 @@ const data = await res.json().catch(() => ({}));
           src="/assets/neelakannu-trust-logo.png"
 
 
-          alt="Neelakannu Educational Trust logo"
+          alt="NEELAKANNU EDUCATIONAL TRUST logo"
 
 
           width={72}
@@ -2285,7 +2285,7 @@ const data = await res.json().catch(() => ({}));
         <p className="mx-auto mt-4 max-w-md text-muted-foreground">
 
 
-          Thank you for applying for educational support from Neelakannu Educational Trust.
+          Thank you for applying for educational support from NEELAKANNU EDUCATIONAL TRUST.
 
 
         </p>

@@ -54,7 +54,7 @@ export default function CertificatesPage() {
             <span className="eyebrow">{t("nav.certificates", "Certificates")}</span>
             <h1 className="h2-section mt-4">{t("nav.certificates", "Certificates")}</h1>
             <p className="mt-4 text-lg text-muted-foreground">
-              Official certificates issued by Neelakannu Educational Trust. Certificate files are
+              Official certificates issued by NEELAKANNU EDUCATIONAL TRUST. Certificate files are
               available to download by the recipients.
             </p>
           </header>

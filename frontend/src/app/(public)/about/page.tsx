@@ -10,12 +10,12 @@ export default function AboutPage() {
         <header className="text-center mb-12">
           <span className="eyebrow">{t("about.eyebrow", "About Us")}</span>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mt-4 mb-4">
-            {t("about.title", "Neelakannu Educational Trust")}
+            {t("about.title", "NEELAKANNU EDUCATIONAL TRUST")}
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {t(
               "about.intro",
-              "Established on 14th November 2018, Neelakannu Educational Trust is a charitable organization dedicated to empowering students through education and scholarship opportunities."
+              "Established on 14th November 2018, NEELAKANNU EDUCATIONAL TRUST is a charitable organization dedicated to empowering students through education and scholarship opportunities."
             )}
           </p>
         </header>
@@ -34,7 +34,7 @@ export default function AboutPage() {
 
         <div className="pt-6">
           <p className="text-muted-foreground leading-relaxed">
-            {t("about.founder.para1", "Neelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.")}
+            {t("about.founder.para1", "NEELAKANNU EDUCATIONAL TRUST was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.")}
           </p>
           <p className="text-muted-foreground leading-relaxed mt-4" style={{ textAlign: 'justify' }}>
             {t("about.founder.para2", "Driven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.")}

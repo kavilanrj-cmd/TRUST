@@ -20,7 +20,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "nav.applyLabel": "Apply Now",
   // Hero
   "home.hero.badge": "Scholarships for Deserving Students",
-  "home.hero.title": "Neelakannu Educational Trust",
+  "home.hero.title": "NEELAKANNU EDUCATIONAL TRUST",
   "home.hero.description":
     "Empowering deserving students through educational scholarships and trust management since 2018.",
   "home.hero.primaryButton": "Apply for Scholarship",
@@ -42,7 +42,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "home.about.eyebrow": "Who We Are",
   "home.about.title": "A Trust Built on Education and Compassion",
   "home.about.description":
-    "Neelakannu Educational Trust was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed.",
+    "NEELAKANNU EDUCATIONAL TRUST was established to support meritorious yet economically challenged students in pursuing their educational dreams. We believe every child deserves the opportunity to learn, grow and succeed.",
   "home.about.visionTitle": "Our Vision",
   "home.about.vision":
     "To build an inclusive and equitable society in which every individual, regardless of social, economic, or physical limitations, has access to education, opportunities for holistic development and the means to lead a dignified and productive life.",
@@ -120,13 +120,13 @@ export const CMS_DEFAULTS: Record<string, string> = {
   // Final CTA
   "home.finalCta.title": "Your Education. Your Future. Our Support.",
   "home.finalCta.description":
-    "Take the first step today and apply for a scholarship with Neelakannu Educational Trust.",
+    "Take the first step today and apply for a scholarship with NEELAKANNU EDUCATIONAL TRUST.",
   "home.finalCta.primaryButton": "Apply for Scholarship",
   "home.finalCta.secondaryButton": "Contact Us",
   // Footer
-  "home.footer.aboutTitle": "About Neelakannu Educational Trust",
+  "home.footer.aboutTitle": "About NEELAKANNU EDUCATIONAL TRUST",
   "home.footer.description":
-    "Neelakannu Educational Trust empowers deserving students through scholarships and financial assistance.",
+    "NEELAKANNU EDUCATIONAL TRUST empowers deserving students through scholarships and financial assistance.",
   "home.footer.quickTitle": "Quick Links",
   "home.footer.discoverTitle": "Discover",
   "home.footer.contactTitle": "Contact",
@@ -152,9 +152,9 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "home.whatWeDo.quoteTitle": "Scholarships & Grants",
   // About page
   "about.eyebrow": "About Us",
-  "about.title": "Neelakannu Educational Trust",
+  "about.title": "NEELAKANNU EDUCATIONAL TRUST",
   "about.intro":
-    "Established on 14th November 2018, Neelakannu Educational Trust is a charitable organization dedicated to empowering students through education and scholarship opportunities.",
+    "Established on 14th November 2018, NEELAKANNU EDUCATIONAL TRUST is a charitable organization dedicated to empowering students through education and scholarship opportunities.",
   "about.registeredOfficeTitle": "Registered Office",
   "about.address":
     "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India",
@@ -165,7 +165,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   // Core Objectives and Areas of Work
   "about.organizationTitle": "About the Organization",
   "about.organization":
-    "Neelakannu Educational Trust is a registered public charitable trust dedicated to the advancement of education, social welfare, healthcare support, and cultural preservation across diverse sections of society. Established with a commitment to inclusive development, the Trust operates without discrimination on the basis of caste, creed, religion, or socio-economic status. The Trust seeks to empower individuals and communities through access to quality education, skill development, humanitarian assistance, and initiatives that promote national integration and social harmony. Particular emphasis is placed on supporting children, persons with disabilities, rural populations, and economically disadvantaged groups, enabling them to lead self-reliant and dignified lives.",
+    "NEELAKANNU EDUCATIONAL TRUST is a registered public charitable trust dedicated to the advancement of education, social welfare, healthcare support, and cultural preservation across diverse sections of society. Established with a commitment to inclusive development, the Trust operates without discrimination on the basis of caste, creed, religion, or socio-economic status. The Trust seeks to empower individuals and communities through access to quality education, skill development, humanitarian assistance, and initiatives that promote national integration and social harmony. Particular emphasis is placed on supporting children, persons with disabilities, rural populations, and economically disadvantaged groups, enabling them to lead self-reliant and dignified lives.",
   // Vision
   "about.visionTitle": "Vision",
   "about.vision":
@@ -177,10 +177,10 @@ export const CMS_DEFAULTS: Record<string, string> = {
   // Founder
   "about.founderTitle": "Founder",
   "about.founder":
-    "Prof. Dr. K. Chidambaram M.E., Ph.D.\nME., Ph. D.\nFounder and Settlor\nNeelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
+    "Prof. Dr. K. Chidambaram M.E., Ph.D.\nME., Ph. D.\nFounder and Settlor\nNEELAKANNU EDUCATIONAL TRUST was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
   "about.founder.subheading": "Founder and Settlor",
   "about.founder.para1":
-    "Neelakannu Educational Trust was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.",
+    "NEELAKANNU EDUCATIONAL TRUST was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.",
   "about.founder.para2":
     "Driven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
   // Core Objectives and Areas of Work
@@ -218,7 +218,7 @@ export const CMS_DEFAULTS: Record<string, string> = {
   // Contact page
   "contact.eyebrow": "Contact",
   "contact.title": "Contact Us",
-  "contact.intro": "We'd love to hear from you. Get in touch with Neelakannu Educational Trust.",
+  "contact.intro": "We'd love to hear from you. Get in touch with NEELAKANNU EDUCATIONAL TRUST.",
   "contact.officeTitle": "Trust Office",
   "contact.address":
     "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India",

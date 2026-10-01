@@ -1,6 +1,6 @@
 export const metadata = {
-  title: "Neelakannu Educational Trust - Vision & Mission",
-  description: "Vision and mission of Neelakannu Educational Trust",
+  title: "NEELAKANNU EDUCATIONAL TRUST - Vision & Mission",
+  description: "Vision and mission of NEELAKANNU EDUCATIONAL TRUST",
 };
 
 export default function VisionMissionPage() {
@@ -33,7 +33,7 @@ export default function VisionMissionPage() {
               <p className="text-lg leading-relaxed mb-6">
                 To provide financial assistance, scholarship opportunities, and
                 educational support to meritorious and deserving students through
-                the Neelakannu Educational Trust.
+                the NEELAKANNU EDUCATIONAL TRUST.
               </p>
               <p className="text-base text-primary font-medium">
                 &ldquo;Education is the most powerful weapon which we can use to change the world.&rdquo;

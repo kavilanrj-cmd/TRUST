@@ -1,4 +1,4 @@
-// Application API routes for Neelakannu Educational Trust Platform
+// Application API routes for NEELAKANNU EDUCATIONAL TRUST Platform
 // Handles: Create application, Get own application, Get application by ID, Update application
 
 import express, { Request, Response } from "express";

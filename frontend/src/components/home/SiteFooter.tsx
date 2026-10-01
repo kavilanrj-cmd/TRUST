@@ -34,13 +34,13 @@ export function SiteFooter() {
             <Link href="/#home" className="flex items-center gap-3">
               <Image
                 src={t("home.brand.logo", "/assets/neelakannu-trust-logo.png")}
-                alt="Neelakannu Educational Trust logo"
+                alt="NEELAKANNU EDUCATIONAL TRUST logo"
                 width={54}
                 height={54}
                 className="h-14 w-14"
               />
               <span className="leading-tight">
-                <span className="block font-serif text-lg font-bold tracking-tight text-white">Neelakannu</span>
+                <span className="block font-serif text-lg font-bold tracking-tight text-white">NEELAKANNU</span>
                 <span className="block text-xs font-bold uppercase tracking-[0.18em] text-gold">
                   Educational Trust
                 </span>
@@ -49,7 +49,7 @@ export function SiteFooter() {
             <p className="mt-5 text-sm leading-relaxed text-white/70">
               {t(
                 "home.footer.description",
-                "Neelakannu Educational Trust empowers deserving students through scholarships and financial assistance."
+                "NEELAKANNU EDUCATIONAL TRUST empowers deserving students through scholarships and financial assistance."
               )}
             </p>
           </div>
@@ -114,7 +114,7 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="container-trust flex flex-col items-center justify-between gap-3 py-6 text-center sm:flex-row sm:text-left">
-          <p className="text-sm text-white/60">© {year} Neelakannu Educational Trust. {t("home.footer.copyright", "All rights reserved.")}</p>
+          <p className="text-sm text-white/60">© {year} NEELAKANNU EDUCATIONAL TRUST. {t("home.footer.copyright", "All rights reserved.")}</p>
           <p className="text-xs text-white/50">Founded by Prof. Dr. K. Chidambaram</p>
         </div>
       </div>

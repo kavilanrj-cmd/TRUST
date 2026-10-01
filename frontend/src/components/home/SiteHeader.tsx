@@ -64,10 +64,10 @@ export function SiteHeader() {
       }`}
     >
       <div className="container-trust flex h-[76px] items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3" aria-label="Neelakannu Educational Trust">
+        <Link href="/" className="flex items-center gap-3" aria-label="NEELAKANNU EDUCATIONAL TRUST">
           <Image
             src="/assets/neelakannu-trust-logo.png"
-            alt="Neelakannu Educational Trust logo"
+            alt="NEELAKANNU EDUCATIONAL TRUST logo"
             width={52}
             height={52}
             className="h-12 w-12 shrink-0"
@@ -75,7 +75,7 @@ export function SiteHeader() {
           />
           <span className="leading-tight">
             <span className="block font-serif text-lg font-bold tracking-tight text-navy dark:text-white">
-              Neelakannu
+              NEELAKANNU
             </span>
             <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-gold-600">
               Educational Trust

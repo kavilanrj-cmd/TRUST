@@ -1,4 +1,4 @@
-// Document routes for Neelakannu Educational Trust Platform
+// Document routes for NEELAKANNU EDUCATIONAL TRUST Platform
 // Handles: document metadata recording, listing, deletion
 // Documents are associated with a student's application. The document "type"
 // (e.g. sslc, hsc, currentSemesterMarksheet, bonafide, ...) is stored as a free
