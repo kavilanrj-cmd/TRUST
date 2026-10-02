@@ -171,7 +171,14 @@ router.post("/", async (req: Request, res: Response) => {
           course: strOr((academicDetails as any).course),
           educationLevel: strOr((academicDetails as any).educationLevel, "UNDERGRADUATE"),
           academicYear: strOr((academicDetails as any).academicYear),
-          yearOfStudy: strOr((academicDetails as any).yearOfStudy) || null,
+          // `yearOfStudy` is NOT NULL in the schema, so it must never be coerced
+          // to null the way the optional columns above are. The wizard saves the
+          // whole payload from every step, so this arrives as "" until the
+          // Academic step is completed; sending null here made Prisma reject the
+          // insert and the endpoint answered 500. Matches the sibling NOT NULL
+          // columns (course, academicYear, marksPercentageCGPA) and both PATCH
+          // branches, which already used the bare strOr form.
+          yearOfStudy: strOr((academicDetails as any).yearOfStudy),
           className: strOr((academicDetails as any).className) || null,
           section: strOr((academicDetails as any).section) || null,
           semester: strOr((academicDetails as any).semester) || null,
