@@ -8,6 +8,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "seed:test-users": "tsx src/scripts/testUsers.ts seed",
+    "list:test-users": "tsx src/scripts/testUsers.ts list",
+    "disable:test-users": "tsx src/scripts/testUsers.ts disable",
     "postinstall": "prisma generate"
   },
   "keywords": [],

@@ -24,6 +24,11 @@ model User {
   updatedAt   DateTime @updatedAt
   isActive    Boolean  @default(true)
   isFounderProtected Boolean @default(false)
+  // Marks temporary QA accounts created by `npm run seed:test-users`. They are
+  // ordinary STUDENT rows with no extra permissions; the flag only makes them
+  // identifiable so they can be listed and disabled later. Defaults to false so
+  // every real account is unaffected.
+  isTestAccount Boolean @default(false)
   permissions Json?
   lastLoginAt DateTime?
   lastLoginIp String?
