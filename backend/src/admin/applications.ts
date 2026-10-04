@@ -47,6 +47,7 @@ const applicationInclude = {
   academicDetails: true,
   financialDetails: true,
   bankDetails: true,
+  recommenderDetails: true,
   applicationDocuments: true,
   payments: true,
   receipts: { take: 5 },

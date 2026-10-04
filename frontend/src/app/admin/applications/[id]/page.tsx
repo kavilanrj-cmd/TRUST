@@ -345,6 +345,7 @@ export default function ApplicationDetailPage() {
   const acad = app.academicDetails;
   const fin = app.financialDetails;
   const bank = app.bankDetails;
+  const rec = app.recommenderDetails;
   const docs = app.applicationDocuments || [];
   const notes = app.notes || [];
   const payments = app.payments || [];
@@ -508,6 +509,20 @@ export default function ApplicationDetailPage() {
               <FieldRow label="Bank Name" value={bank.bankName} />
               <FieldRow label="Branch Name" value={bank.branchName} />
               <FieldRow label="IFSC Code" value={bank.ifscCode} />
+            </Section>
+          )}
+
+          {/* Recommenders are applicant-supplied contact references, shown here
+              so an admin can verify them while reviewing the application. Older
+              applications have no recommender row, so the section is skipped. */}
+          {rec && (
+            <Section title="Recommended By">
+              <FieldRow label="Recommender 1 Name" value={rec.recommender1Name} />
+              <FieldRow label="Recommender 1 Roll Number" value={rec.recommender1Roll} />
+              <FieldRow label="Recommender 1 Mobile Number" value={rec.recommender1Mobile} />
+              <FieldRow label="Recommender 2 Name" value={rec.recommender2Name} />
+              <FieldRow label="Recommender 2 Roll Number" value={rec.recommender2Roll} />
+              <FieldRow label="Recommender 2 Mobile Number" value={rec.recommender2Mobile} />
             </Section>
           )}
 

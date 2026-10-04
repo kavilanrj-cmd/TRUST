@@ -88,9 +88,9 @@ export default function HowToApplyPage() {
       n: "06",
       title: "Recommendation Details",
       description:
-        "Provide the name and designation of the person who recommended you for the scholarship.",
+        "Provide the name, roll number and mobile number of two people who can recommend you for the scholarship.",
       Icon: UserCheck,
-      detail: { label: "Recommended By", fields: ["Name", "Designation"] },
+      detail: { label: "Recommended By", fields: ["Name", "Roll Number", "Mobile Number"] },
     },
     {
       n: "07",

@@ -100,6 +100,10 @@ model Application {
   scholarshipProgram ScholarshipProgram? @relation(fields: [scholarshipProgramId], references: [id])
   scholarshipProgramId String?
   submittedAt      DateTime?
+  // Applicant Declaration acceptance. Set by the applicant immediately before
+  // final submission and enforced server-side by POST /:id/submit.
+  declarationAccepted Boolean @default(false)
+  declarationAcceptedAt DateTime?
   correctionNote   String?
   reviewedById     String?
   reviewedByName   String?
@@ -118,6 +122,7 @@ model Application {
   financialDetails FinancialDetails?
   financialDetailsId String?
   bankDetails      BankDetails?
+  recommenderDetails RecommenderDetails?
   applicationDocuments ApplicationDocument[]
   payments         Payment[]
   receipts         Receipt[]
@@ -218,6 +223,25 @@ model BankDetails {
   bankName String
   branchName String
   ifscCode String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Who recommended the applicant. Two recommenders are collected, each with a
+// name, roll number and mobile number so the trust can verify the reference.
+// Stored as one 1:1 row per application, exactly like BankDetails. The row is
+// optional on Application, so applications created before this step existed
+// still load with no recommender details.
+model RecommenderDetails {
+  id              String   @default(uuid()) @id
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId   String  @unique
+  recommender1Name String
+  recommender1Roll String
+  recommender1Mobile String
+  recommender2Name String
+  recommender2Roll String
+  recommender2Mobile String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

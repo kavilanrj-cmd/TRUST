@@ -15,10 +15,26 @@ import {
   getDocumentBucket,
   getDocumentBuffer,
 } from "../utils/storage";
+import { evaluateEditability, editRejectedResponse } from "../utils/editWindow";
 
 const router = express.Router();
 
 const STAFF_ROLES: string[] = [ROLES.FOUNDER, ROLES.ADMIN, ROLES.REVIEWER];
+
+// A document is part of the application, so uploading or deleting one is an edit
+// of that application and obeys the same candidate edit window as the form fields.
+// Without this, a locked application could still be altered by posting straight
+// to these routes. Returns true when the response has already been sent.
+function rejectLockedApplicationEdit(
+  res: Response,
+  application: { status: string; submittedAt: Date | null }
+): boolean {
+  const editability = evaluateEditability(application, new Date());
+  if (editability.editable) return false;
+  const rejected = editRejectedResponse(editability);
+  res.status(rejected.status).json(rejected.body);
+  return true;
+}
 
 // Allowed MIME types for scholarship documents
 const ALLOWED_MIME_TYPES = [
@@ -56,9 +72,7 @@ router.post("/:applicationId/documents", async (req: Request, res: Response) => 
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    if (application.status !== "DRAFT" && application.status !== "CORRECTION_REQUESTED") {
-      return res.status(403).json({ error: "Documents can only be uploaded for draft or correction-requested applications" });
-    }
+    if (rejectLockedApplicationEdit(res, application)) return;
 
     const {
       documentType,
@@ -140,9 +154,7 @@ router.post("/:applicationId/upload", documentUpload.single("file"), async (req:
     if (!application) {
       return res.status(404).json({ error: "Application not found or access denied" });
     }
-    if (application.status !== "DRAFT" && application.status !== "CORRECTION_REQUESTED") {
-      return res.status(403).json({ error: "Documents can only be uploaded for draft or correction-requested applications" });
-    }
+    if (rejectLockedApplicationEdit(res, application)) return;
 
     const file = (req as any).file;
     if (!file) {
@@ -292,9 +304,7 @@ router.delete("/:applicationId/documents/:documentId", async (req: Request, res:
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    if (application.status !== "DRAFT" && application.status !== "CORRECTION_REQUESTED") {
-      return res.status(403).json({ error: "Documents can only be deleted from draft or correction-requested applications" });
-    }
+    if (rejectLockedApplicationEdit(res, application)) return;
 
     const document = await prisma.applicationDocument.findFirst({
       where: { id: documentId, applicationId: application.id },

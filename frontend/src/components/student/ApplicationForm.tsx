@@ -13,10 +13,28 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useMemo, useRef } from "react";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, Search } from "lucide-react";
 
 
 import { API_BASE_URL } from "@/lib/api";
+
+
+// Single definition of the Indian mobile format, shared with the login screens so
+// the number an applicant registers and the number they sign in with are checked
+// by the same rule.
+import { MOBILE_RX as PHONE_RX } from "@/lib/login-identity";
+
+
+// Candidate edit window. The values come from the backend; the browser never
+// works out the deadline for itself.
+import {
+  type Editability,
+  canEditApplication,
+  editWindowNotice,
+  isApprovedLock,
+  isExpiredLock,
+  readEditability,
+} from "@/lib/application-editability";
 
 
 import { DocumentUpload } from "./DocumentUpload";
@@ -49,16 +67,28 @@ const STEPS = [
   { id: 4, label: "Bank Details" },
 
 
-  { id: 5, label: "Documents" },
+  { id: 5, label: "Recommended By" },
 
 
-  { id: 6, label: "Review" },
+  { id: 6, label: "Documents" },
 
 
-  { id: 7, label: "Payment" },
+  { id: 7, label: "Review" },
+
+
+  { id: 8, label: "Payment" },
 
 
 ] as const;
+
+
+// Step 6 (Documents) has no per-field form state of its own — documents upload straight to the
+
+// application record — but the backend refuses a submission without at least one
+
+// document, so the applicant is stopped on the step itself instead of at submit.
+const DOCUMENTS_REQUIRED_NOTICE =
+  "Please upload at least one supporting document before continuing to Review.";
 
 
 const INDIAN_STATES = [
@@ -566,6 +596,24 @@ type FormData = {
   ifscCode: string;
 
 
+  // Recommended By: two referees, each with a name, roll number and mobile number.
+  recommender1Name: string;
+
+
+  recommender1Roll: string;
+
+
+  recommender1Mobile: string;
+
+
+  recommender2Name: string;
+
+
+  recommender2Roll: string;
+
+
+  recommender2Mobile: string;
+
 };
 
 
@@ -689,6 +737,23 @@ const EMPTY_FORM: FormData = {
   ifscCode: "",
 
 
+  recommender1Name: "",
+
+
+  recommender1Roll: "",
+
+
+  recommender1Mobile: "",
+
+
+  recommender2Name: "",
+
+
+  recommender2Roll: "",
+
+
+  recommender2Mobile: "",
+
 };
 
 
@@ -710,7 +775,15 @@ type LoadedApplication = {
   status: string;
 
 
+  // Decided by the backend from its own clock and the stored submittedAt. The
+  // form never recomputes it.
+  editability?: Editability | null;
+
+
   applicationId: string;
+
+
+  declarationAccepted?: boolean | null;
 
 
   personalDetails?: {
@@ -872,6 +945,23 @@ type LoadedApplication = {
   } | null;
 
 
+  // Absent on applications created before the Recommended By step existed.
+  recommenderDetails?: {
+
+    recommender1Name?: string | null;
+
+    recommender1Roll?: string | null;
+
+    recommender1Mobile?: string | null;
+
+    recommender2Name?: string | null;
+
+    recommender2Roll?: string | null;
+
+    recommender2Mobile?: string | null;
+
+  } | null;
+
 };
 
 
@@ -879,9 +969,6 @@ type LoadedApplication = {
 
 
 const PIN_RX = /^[0-9]{6}$/;
-
-
-const PHONE_RX = /^[6-9][0-9]{9}$/;
 
 
 // IFSC: 4 letters (bank code) + "0" + 6 alphanumeric characters, e.g. SBIN0001234.
@@ -933,13 +1020,20 @@ function resolveAcademicType(ac: {
 }
 
 
-function classifyStep(stepIndex: number, currentStep: number): StepStatus {
+// Every step in the indicator is a button, so a step that has not been reached yet
 
+// still reads as an interactive target rather than as disabled text.
 
-  if (stepIndex < currentStep) return "complete";
+// `reachedStep` is the furthest step the applicant has legitimately got to; it only
+
+// ever grows, which keeps the completed markers stable while they move backwards.
+function classifyStep(stepIndex: number, currentStep: number, reachedStep: number): StepStatus {
 
 
   if (stepIndex === currentStep) return "current";
+
+
+  if (stepIndex < reachedStep) return "complete";
 
 
   return "todo";
@@ -963,6 +1057,12 @@ export function ApplicationForm() {
   const [currentStep, setCurrentStep] = useState(0);
 
 
+  // Furthest step reached so far. It never decreases, so stepping back to edit an
+
+  // earlier step does not wipe the completed markers off the later ones.
+  const [reachedStep, setReachedStep] = useState(0);
+
+
 
 
 
@@ -984,10 +1084,44 @@ export function ApplicationForm() {
   const [formNotice, setFormNotice] = useState<{ type: "error" | "info" | "success"; text: string } | null>(null);
 
 
-  const [showDeclaration, setShowDeclaration] = useState(false);
+  // Applicant Declaration acceptance. It is mirrored on the application record
+
+
+  // (declarationAccepted) so the agreement survives a reload and can be enforced
+
+
+  // by the backend when the application is submitted.
+
+
+  const [declarationAccepted, setDeclarationAccepted] = useState(false);
+
+
+  // True once the server has confirmed the acceptance; false while the PATCH is
+
+
+  // in flight or has failed, so Submit never races the save.
+
+
+  const [declarationPersisted, setDeclarationPersisted] = useState(false);
+
+
+  const [savingDeclaration, setSavingDeclaration] = useState(false);
 
 
   const [declarationError, setDeclarationError] = useState<string | null>(null);
+
+
+  // Candidate edit window, as decided by the backend. null until /me responds,
+  // which is treated as "not editable" so the form is never briefly editable for a
+  // locked application.
+
+  const [editability, setEditability] = useState<Editability | null>(null);
+
+
+  const applicationEditable = editability?.editable === true;
+
+
+  const editNotice = editability ? editWindowNotice(editability) : null;
 
 
 
@@ -1095,13 +1229,37 @@ export function ApplicationForm() {
         if (!app) return;
 
 
-        if (app.status === "DRAFT") {
+        // The backend owns this decision. A submitted application inside its
+        // 7-day window has to hydrate here too, so the applicant can view and
+        // edit what they submitted instead of landing on a blank wizard.
+
+        const appEditability = readEditability(app);
+
+
+        setEditability(appEditability);
+
+
+        // Loaded for every status, locked ones included: an approved or expired
+        // application still has to be readable. Whether the fields accept changes
+        // is decided by `editability`, not by whether they were populated.
 
 
           setApplicationId(app.applicationId);
 
 
           setAppEditingId(app.id);
+
+
+        // Restore a previously saved acceptance so reloading the page does not
+
+
+        // silently clear what the applicant already agreed to.
+
+
+        setDeclarationAccepted(app.declarationAccepted === true);
+
+
+        setDeclarationPersisted(app.declarationAccepted === true);
 
 
           const pd = app.personalDetails || {};
@@ -1120,6 +1278,10 @@ export function ApplicationForm() {
 
 
           const bank = app.bankDetails || {};
+
+          // Older applications have no recommender row at all; an empty object
+          // keeps the mapping below uniform and the step simply starts blank.
+          const rec = app.recommenderDetails || {};
 
 
           // Backward compatibility: applications created before the separate
@@ -1249,10 +1411,24 @@ export function ApplicationForm() {
             ifscCode: bank.ifscCode || "",
 
 
+            recommender1Name: rec.recommender1Name || "",
+
+
+            recommender1Roll: rec.recommender1Roll || "",
+
+
+            recommender1Mobile: rec.recommender1Mobile || "",
+
+
+            recommender2Name: rec.recommender2Name || "",
+
+
+            recommender2Roll: rec.recommender2Roll || "",
+
+
+            recommender2Mobile: rec.recommender2Mobile || "",
+
           }));
-
-
-        }
 
 
       })
@@ -1621,7 +1797,38 @@ export function ApplicationForm() {
     }
 
 
-    if (step === 6) {
+    if (step === 5) {
+
+
+      // Both recommenders are required: the trust verifies the applicant's
+      // reference, so name, roll number and mobile number must all be present
+      // for each of the two referees before the applicant can continue.
+
+      const recommenders = [
+        { label: "Recommender 1", name: data.recommender1Name, roll: data.recommender1Roll, mobile: data.recommender1Mobile, keys: { name: "recommender1Name" as const, roll: "recommender1Roll" as const, mobile: "recommender1Mobile" as const } },
+        { label: "Recommender 2", name: data.recommender2Name, roll: data.recommender2Roll, mobile: data.recommender2Mobile, keys: { name: "recommender2Name" as const, roll: "recommender2Roll" as const, mobile: "recommender2Mobile" as const } },
+      ];
+
+
+      for (const r of recommenders) {
+
+        if (!r.name.trim()) e[r.keys.name] = `Please enter ${r.label.toLowerCase()}'s name.`;
+
+        if (!r.roll.trim()) e[r.keys.roll] = `Please enter ${r.label.toLowerCase()}'s roll number.`;
+
+        const mobile = r.mobile.trim();
+
+        if (!mobile) e[r.keys.mobile] = `Please enter ${r.label.toLowerCase()}'s mobile number.`;
+
+        else if (!PHONE_RX.test(mobile)) e[r.keys.mobile] = "Enter a valid 10-digit mobile number.";
+
+      }
+
+
+    }
+
+
+    if (step === 7) {
 
 
       // The Review step is where the applicant confirms the requested
@@ -1670,6 +1877,15 @@ export function ApplicationForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
 
+  }, []);
+
+
+  // Move forwards to `next`, remembering how far the applicant has got so the
+
+  // completed markers in the indicator survive them stepping back again.
+  const advanceTo = useCallback((next: number) => {
+    setReachedStep((r) => Math.max(r, next));
+    setCurrentStep(next);
   }, []);
 
 
@@ -1886,6 +2102,19 @@ export function ApplicationForm() {
         },
 
 
+        // Sent on every save (like bank details) so the recommender row is
+        // created/updated in step with the rest of the draft and survives a
+        // refresh or a fresh login.
+        recommenderDetails: {
+          recommender1Name: form.recommender1Name.trim(),
+          recommender1Roll: form.recommender1Roll.trim(),
+          recommender1Mobile: form.recommender1Mobile.trim(),
+          recommender2Name: form.recommender2Name.trim(),
+          recommender2Roll: form.recommender2Roll.trim(),
+          recommender2Mobile: form.recommender2Mobile.trim(),
+        },
+
+
       };
 
 
@@ -2034,7 +2263,7 @@ export function ApplicationForm() {
 
 
       // Clamp to the last step (Payment) instead of the old 6-step layout.
-      setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+      advanceTo(Math.min(currentStep + 1, STEPS.length - 1));
 
 
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2055,28 +2284,100 @@ export function ApplicationForm() {
     }
 
 
-  }, [currentStep, form, validateStep, applicationId, appEditingId, buildAcademicPayload]);
+  }, [currentStep, form, validateStep, applicationId, appEditingId, buildAcademicPayload, advanceTo]);
 
 
 
 
 
-  const goToStep = useCallback((step: number) => {
+  // Footer "Save & Continue" / "Continue to Review". Steps 0-5 persist the draft
 
+  // before advancing; Documents uploads as the applicant picks files, so it only
 
-    setFormNotice(null);
+  // has to clear its own requirement. This mirrors exactly what the step
 
+  // indicator's forward jumps check, so both routes behave the same.
+  const continueFromCurrentStep = useCallback(() => {
+    if (currentStep !== 6) {
+      void saveAndContinue();
+      return;
+    }
+
+    if (docCount === 0) {
+      setErrors({});
+      setFormNotice({ type: "error", text: DOCUMENTS_REQUIRED_NOTICE });
+      return;
+    }
 
     setErrors({});
+    setFormNotice(null);
+    advanceTo(7);
+  }, [advanceTo, currentStep, docCount, saveAndContinue]);
 
 
-    setCurrentStep(step);
+  // Step indicator navigation.
+  //
+  // Backwards — and re-clicking the step you are already on — is always allowed so
 
+  // the applicant can revisit and edit anything they have already filled in.
+  // Forwards, the applicant may only skip steps that already hold valid data, and
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  // each skipped step is checked with the very same validator its own "Save &
 
+  // Continue" button uses. The first step that fails takes the applicant there with
 
-  }, []);
+  // the existing validation message, so a later step can never be reached by
+
+  // bypassing required fields.
+  //
+  // This only moves the view. It issues no request, so clicking a step can never
+
+  // create a new application, reload the page or discard what is already entered.
+
+  // The form state lives in this component and the draft is already saved, so
+
+  // returning to a previous step shows the same values.
+  const goToStep = useCallback(
+    (step: number) => {
+      if (step === currentStep) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      if (step > currentStep) {
+        for (let skipped = currentStep; skipped < step; skipped++) {
+          const fieldErrors = validateStep(skipped, form);
+          if (Object.keys(fieldErrors).length > 0) {
+            setErrors(fieldErrors);
+            setFormNotice({ type: "error", text: "Please correct the highlighted fields before continuing." });
+            advanceTo(skipped);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+
+          // Steps without field-level rules still have to clear their own
+
+          // requirement. Documents is the only one: the backend requires at least
+
+          // one upload before an application can be submitted.
+          if (skipped === 6 && docCount === 0) {
+            setErrors({});
+            setFormNotice({ type: "error", text: DOCUMENTS_REQUIRED_NOTICE });
+            advanceTo(skipped);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+        }
+      }
+
+      setErrors({});
+      setFormNotice(null);
+      setReachedStep((r) => Math.max(r, step));
+      setCurrentStep(step);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [advanceTo, currentStep, docCount, form, validateStep]
+  );
 
 
 
@@ -2207,16 +2508,145 @@ export function ApplicationForm() {
   };
 
 
+  // Move focus to the agreement checkbox so keyboard and screen-reader users land
+
+
+  // on the control that is blocking submission.
+
+
+  const focusDeclaration = useCallback(() => {
+
+
+    const el = document.getElementById("applicant-declaration-checkbox");
+
+
+    if (!el) return;
+
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+
+    el.focus({ preventScroll: true });
+
+
+  }, []);
+
+
+  // Persist the acceptance on the application record. Returns false when it could
+
+
+  // not be confirmed, so the caller can refuse to submit.
+
+
+  const persistDeclaration = useCallback(
+
+
+    async (accepted: boolean): Promise<boolean> => {
+
+
+      if (!appEditingId) return false;
+
+
+      setSavingDeclaration(true);
+
+
+      try {
+
+
+        const res = await fetch(`${API_BASE_URL}/api/applications/${appEditingId}`, {
+
+
+          method: "PATCH",
+
+
+          headers: { "Content-Type": "application/json" },
+
+
+          credentials: "include",
+
+
+          body: JSON.stringify({ declarationAccepted: accepted }),
+
+
+        });
+
+
+        if (!res.ok) return false;
+
+
+        setDeclarationPersisted(accepted);
+
+
+        return true;
+
+
+      } catch {
+
+
+        return false;
+
+
+      } finally {
+
+
+        setSavingDeclaration(false);
+
+
+      }
+
+
+    },
+
+
+    [appEditingId]
+
+
+  );
+
+
   const submitApplication = useCallback(async () => {
 
 
-    if (!showDeclaration) {
+    if (!declarationAccepted) {
 
 
-      setDeclarationError("Please agree to the declaration before submitting your application.");
+      setDeclarationError("Please read the Applicant Declaration and tick the agreement checkbox before submitting your application.");
+
+
+      focusDeclaration();
 
 
       return;
+
+
+    }
+
+
+    // The box may have been ticked while its save was still in flight, so make
+
+
+    // sure the acceptance reached the server before asking to submit.
+
+
+    if (!declarationPersisted) {
+
+
+      const saved = await persistDeclaration(true);
+
+
+      if (!saved) {
+
+
+        setDeclarationError("We could not save your agreement. Please try again.");
+
+
+        focusDeclaration();
+
+
+        return;
+
+
+      }
 
 
     }
@@ -2391,6 +2821,24 @@ const data = await res.json().catch(() => ({}));
 
           setPaymentNotice({ type: "error", text: (data as any).error || "Please confirm that you have completed the payment." });
 
+        } else if (code === "RECOMMENDER_DETAILS_REQUIRED") {
+
+          // The backend is the final gate on the Recommended By step. Send the
+          // applicant back there with the same per-field messages the step uses,
+          // instead of leaving the error on the payment panel.
+
+          const message = (data as any).error || "Please complete both recommender details before submitting.";
+
+          setPaymentNotice({ type: "error", text: message });
+
+          setErrors(validateStep(5, form));
+
+          setFormNotice({ type: "error", text: message });
+
+          advanceTo(5);
+
+          window.scrollTo({ top: 0, behavior: "smooth" });
+
         } else {
 
           setPaymentNotice({ type: "error", text: (data as any).error || "Could not submit your application. Please try again." });
@@ -2435,7 +2883,7 @@ const data = await res.json().catch(() => ({}));
     }
 
 
-  }, [showDeclaration, appEditingId, applicationId, upiTxnId, showPaymentConfirm, paymentStatus, fee, paymentRef, paymentScreenshot]);
+  }, [declarationAccepted, declarationPersisted, focusDeclaration, persistDeclaration, appEditingId, applicationId, upiTxnId, showPaymentConfirm, paymentStatus, fee, paymentRef, paymentScreenshot, validateStep, form, advanceTo]);
 
 
 
@@ -2733,173 +3181,104 @@ const data = await res.json().catch(() => ({}));
     <div className="space-y-6">
 
 
-      {/* Progress indicator */}
+      {/* Progress indicator.
 
+          Every entry is a real button, so all steps are clickable: backwards
+          freely, forwards only across steps that already hold valid data. Nothing
+          here fetches or saves — it just moves the view, so the entered data and
+          the existing draft are left untouched. */}
 
       <nav className="card-trust px-5 py-4 sm:px-6" aria-label="Application progress">
-
-
-        <ol className="flex items-center gap-1 sm:gap-2">
-
-
+        <ol className="flex items-center gap-0 overflow-x-auto pb-1 sm:gap-2 sm:overflow-x-visible sm:pb-0">
           {STEPS.map((step, i) => {
-
-
-            const status = classifyStep(i, currentStep);
-
-
-            const clickable = status === "complete";
-
-
-            const content = (
-
-
-              <span className="flex min-w-0 flex-1 flex-col items-center gap-1">
-
-
-                <span
-
-
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition
-
-
-                    ${
-
-
-                      status === "complete"
-
-
-                        ? "bg-success text-success-foreground"
-
-
-                        : status === "current"
-
-
-                          ? "bg-gold text-navy shadow-sm"
-
-
-                          : "border border-border bg-muted text-muted-foreground"
-
-
-                    }`}
-
-
-                  aria-current={status === "current" ? "step" : undefined}
-
-
-                >
-
-
-                  {status === "complete" ? (
-
-
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-4 w-4" aria-hidden="true">
-
-
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-
-
-                    </svg>
-
-
-                  ) : (
-
-
-                    i + 1
-
-
-                  )}
-
-
-                </span>
-
-
-                <span
-
-
-                  className={`hidden text-[11px] font-medium sm:block ${
-
-
-                    status === "current" ? "text-navy dark:text-white" : status === "complete" ? "text-success" : "text-muted-foreground"
-
-
-                  }`}
-
-
-                >
-
-
-                  {step.label}
-
-
-                </span>
-
-
-              </span>
-
-
-            );
-
+            const status = classifyStep(i, currentStep, reachedStep);
+            const isCurrent = status === "current";
 
             return (
-
-
-              <li key={step.id} className="flex min-w-0 flex-1 items-center">
-
-
-                {clickable ? (
-
-
-                  <button type="button" onClick={() => goToStep(i)} className="flex w-full flex-col items-center gap-1" title={`Go to ${step.label}`}>
-
-
-                    {content}
-
-
-                  </button>
-
-
-                ) : (
-
-
-                  <span className="flex w-full flex-col items-center gap-1">{content}</span>
-
-
-                )}
-
-
-                {i < STEPS.length - 1 && (
-
+              <li key={step.id} className="flex shrink-0 items-center sm:min-w-0 sm:flex-1">
+                <button
+                  type="button"
+                  onClick={() => goToStep(i)}
+                  title={isCurrent ? step.label : `Go to ${step.label}`}
+                  aria-current={isCurrent ? "step" : undefined}
+                  aria-label={`Step ${i + 1} of ${STEPS.length}: ${step.label}`}
+                  className="group flex w-11 shrink-0 cursor-pointer flex-col items-center gap-1 rounded-lg px-1 py-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 focus-visible:ring-offset-card active:scale-[0.97] dark:focus-visible:ring-gold sm:w-full"
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition group-hover:scale-105 ${
+                      status === "complete"
+                        ? "bg-success text-success-foreground group-hover:bg-success/85"
+                        : status === "current"
+                          ? "bg-gold text-navy shadow-sm group-hover:bg-gold-600"
+                          : "border border-border bg-muted text-muted-foreground group-hover:border-navy/40 group-hover:bg-navy-50 group-hover:text-navy dark:group-hover:border-white/40 dark:group-hover:bg-white/10 dark:group-hover:text-white"
+                    }`}
+                  >
+                    {status === "complete" ? (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-4 w-4" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    ) : (
+                      i + 1
+                    )}
+                  </span>
 
                   <span
+                    className={`hidden text-[11px] font-medium leading-tight transition group-hover:font-semibold sm:block ${
+                      isCurrent
+                        ? "text-navy dark:text-white"
+                        : status === "complete"
+                          ? "text-success"
+                          : "text-muted-foreground group-hover:text-navy dark:group-hover:text-white"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </button>
 
-
-                    className={`mx-1 h-px flex-1 rounded sm:mx-2 ${i < currentStep ? "bg-success" : "bg-border"}`}
-
-
+                {i < STEPS.length - 1 && (
+                  <span
+                    className={`mx-0.5 h-px w-2.5 shrink-0 rounded sm:mx-2 sm:w-auto sm:min-w-0 sm:flex-1 ${i < reachedStep ? "bg-success" : "bg-border"}`}
                     aria-hidden="true"
-
-
                   />
-
-
                 )}
-
-
               </li>
-
-
             );
-
-
           })}
-
-
         </ol>
-
-
       </nav>
 
+
+
+
+
+      {editability && editNotice && (
+
+
+
+
+        <div
+
+          role="status"
+
+          aria-live="polite"
+
+          className={`rounded-lg border px-4 py-3 text-sm ${
+
+            isApprovedLock(editability)
+              ? "border-success/30 bg-success/5 text-success"
+              : isExpiredLock(editability)
+                ? "border-border bg-muted text-muted-foreground"
+                : "border-gold/40 bg-gold-soft text-navy-800"
+
+          }`}
+
+        >
+
+          {editNotice}
+
+        </div>
+
+      )}
 
 
 
@@ -2976,13 +3355,16 @@ const data = await res.json().catch(() => ({}));
             {currentStep === 4 && "Bank Details"}
 
 
-            {currentStep === 5 && "Document Uploads"}
+            {currentStep === 5 && "Recommended By"}
 
 
-            {currentStep === 6 && "Review Your Application"}
+            {currentStep === 6 && "Document Uploads"}
 
 
-            {currentStep === 7 && "Pay Application Fee"}
+            {currentStep === 7 && "Review Your Application"}
+
+
+            {currentStep === 8 && "Pay Application Fee"}
 
 
           </h2>
@@ -3000,16 +3382,22 @@ const data = await res.json().catch(() => ({}));
               : currentStep === 5
 
 
-              ? "Upload clear and readable copies of the required documents."
+              ? "Give the name, roll number and mobile number of two people who can recommend you."
 
 
               : currentStep === 6
 
 
-              ? "Please verify all information below before submitting."
+              ? "Upload clear and readable copies of the required documents."
 
 
               : currentStep === 7
+
+
+              ? "Please verify all information below before submitting."
+
+
+              : currentStep === 8
 
 
               ? "Payment is required to complete and submit your application."
@@ -3026,6 +3414,12 @@ const data = await res.json().catch(() => ({}));
 
 
 
+
+        {/* Every field lives inside one disabled <fieldset> when the window is closed.
+            That single attribute makes the whole wizard read-only — inputs,
+            selects, the document uploader and the declaration checkbox — without
+            touching any individual control or changing the layout. */}
+        <fieldset disabled={!applicationEditable} className="m-0 min-w-0 border-0 p-0">
 
         <div className="px-5 py-6 sm:px-8 sm:py-8">
 
@@ -4572,7 +4966,304 @@ const data = await res.json().catch(() => ({}));
           )}
 
 
-          <div className={currentStep === 5 ? "" : "hidden"}>
+          {currentStep === 5 && (
+
+
+            <div className="space-y-6">
+
+
+              <p className="text-sm text-muted-foreground">
+
+
+                Please give two people who can recommend you, for example a teacher, principal or employer. We may contact them to verify your application.
+
+
+              </p>
+
+
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+
+                <div className="rounded-xl border border-gold/40 bg-gold-soft p-5">
+
+
+                  <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-navy-700 dark:text-slate-300">
+
+
+                    Recommender 1
+
+
+                  </h3>
+
+
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+
+
+                    <div className="sm:col-span-2">
+
+
+                      <label htmlFor="recommender1Name" className="field-label">Name *</label>
+
+
+                      <input
+
+
+                        id="recommender1Name"
+
+
+                        type="text"
+
+
+                        className="field-input"
+
+
+                        placeholder="Enter recommender's full name"
+
+
+                        value={form.recommender1Name}
+
+
+                        onChange={(e) => set("recommender1Name", e.target.value)}
+
+
+                      />
+
+
+                      {errors.recommender1Name && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender1Name}</p>}
+
+
+                    </div>
+
+
+                    <div>
+
+
+                      <label htmlFor="recommender1Roll" className="field-label">Roll Number *</label>
+
+
+                      <input
+
+
+                        id="recommender1Roll"
+
+
+                        type="text"
+
+
+                        className="field-input"
+
+
+                        placeholder="Enter roll number"
+
+
+                        value={form.recommender1Roll}
+
+
+                        onChange={(e) => set("recommender1Roll", e.target.value)}
+
+
+                      />
+
+
+                      {errors.recommender1Roll && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender1Roll}</p>}
+
+
+                    </div>
+
+
+                    <div>
+
+
+                      <label htmlFor="recommender1Mobile" className="field-label">Mobile Number *</label>
+
+
+                      <input
+
+
+                        id="recommender1Mobile"
+
+
+                        type="tel"
+
+
+                        inputMode="numeric"
+
+
+                        maxLength={10}
+
+
+                        className="field-input"
+
+
+                        placeholder="10-digit mobile number"
+
+
+                        value={form.recommender1Mobile}
+
+
+                        onChange={(e) => set("recommender1Mobile", e.target.value.replace(/[^0-9]/g, "").slice(0, 10))}
+
+
+                      />
+
+
+                      {errors.recommender1Mobile && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender1Mobile}</p>}
+
+
+                    </div>
+
+
+                  </div>
+
+
+                </div>
+
+
+                <div className="rounded-xl border border-gold/40 bg-gold-soft p-5">
+
+
+                  <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-navy-700 dark:text-slate-300">
+
+
+                    Recommender 2
+
+
+                  </h3>
+
+
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+
+
+                    <div className="sm:col-span-2">
+
+
+                      <label htmlFor="recommender2Name" className="field-label">Name *</label>
+
+
+                      <input
+
+
+                        id="recommender2Name"
+
+
+                        type="text"
+
+
+                        className="field-input"
+
+
+                        placeholder="Enter recommender's full name"
+
+
+                        value={form.recommender2Name}
+
+
+                        onChange={(e) => set("recommender2Name", e.target.value)}
+
+
+                      />
+
+
+                      {errors.recommender2Name && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender2Name}</p>}
+
+
+                    </div>
+
+
+                    <div>
+
+
+                      <label htmlFor="recommender2Roll" className="field-label">Roll Number *</label>
+
+
+                      <input
+
+
+                        id="recommender2Roll"
+
+
+                        type="text"
+
+
+                        className="field-input"
+
+
+                        placeholder="Enter roll number"
+
+
+                        value={form.recommender2Roll}
+
+
+                        onChange={(e) => set("recommender2Roll", e.target.value)}
+
+
+                      />
+
+
+                      {errors.recommender2Roll && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender2Roll}</p>}
+
+
+                    </div>
+
+
+                    <div>
+
+
+                      <label htmlFor="recommender2Mobile" className="field-label">Mobile Number *</label>
+
+
+                      <input
+
+
+                        id="recommender2Mobile"
+
+
+                        type="tel"
+
+
+                        inputMode="numeric"
+
+
+                        maxLength={10}
+
+
+                        className="field-input"
+
+
+                        placeholder="10-digit mobile number"
+
+
+                        value={form.recommender2Mobile}
+
+
+                        onChange={(e) => set("recommender2Mobile", e.target.value.replace(/[^0-9]/g, "").slice(0, 10))}
+
+
+                      />
+
+
+                      {errors.recommender2Mobile && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender2Mobile}</p>}
+
+
+                    </div>
+
+
+                  </div>
+
+
+                </div>
+
+
+              </div>
+
+
+            </div>
+
+
+          )}
+
+
+          <div className={currentStep === 6 ? "" : "hidden"}>
 
 
             <DocumentUpload applicationId={applicationId} onCountChange={setDocCount} isSingleParent={form.isSingleParent} noParents={form.familyStatus === "NO_PARENTS"} />
@@ -4584,7 +5275,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 7 && (
+          {currentStep === 8 && (
 
 
 
@@ -5495,7 +6186,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 6 && (
+          {currentStep === 7 && (
 
 
             <div className="space-y-6">
@@ -5717,6 +6408,30 @@ const data = await res.json().catch(() => ({}));
                 </ReviewBlock>
 
 
+                <ReviewBlock title="Recommended By">
+
+
+                  <ReviewRow label="Recommender 1 Name" value={form.recommender1Name} />
+
+
+                  <ReviewRow label="Recommender 1 Roll Number" value={form.recommender1Roll} />
+
+
+                  <ReviewRow label="Recommender 1 Mobile Number" value={form.recommender1Mobile} />
+
+
+                  <ReviewRow label="Recommender 2 Name" value={form.recommender2Name} />
+
+
+                  <ReviewRow label="Recommender 2 Roll Number" value={form.recommender2Roll} />
+
+
+                  <ReviewRow label="Recommender 2 Mobile Number" value={form.recommender2Mobile} />
+
+
+                </ReviewBlock>
+
+
                 <ReviewBlock title="Scholarship">
 
 
@@ -5819,67 +6534,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-              <div className="rounded-xl border border-border bg-surface-muted p-5">
 
-
-                <p className="text-sm text-muted-foreground leading-relaxed">
-
-
-                  I declare that all the information provided by me in this scholarship application is true, correct and complete, and that all documents submitted by me are genuine. I understand that any false, misleading or forged information or documents may result in the rejection or cancellation of my application, and may make me liable for appropriate action.
-
-
-                  <span className="mt-2 block">I have read and understood this declaration, and I accept it.</span>
-
-
-                </p>
-
-
-                <label className="mt-4 flex items-start gap-3">
-
-
-                  <input
-
-
-                    type="checkbox"
-
-
-                    className="mt-1 h-5 w-5 rounded border-border text-navy dark:text-white focus:ring-2 focus:ring-navy/30"
-
-
-                    checked={showDeclaration}
-
-
-                    onChange={(e) => {
-
-
-                      setShowDeclaration(e.target.checked);
-
-
-                      if (e.target.checked) setDeclarationError(null);
-
-
-                    }}
-
-
-                  />
-
-
-                  <span className="text-sm font-medium text-foreground">
-
-
-                    I agree to the above declaration
-
-
-                  </span>
-
-
-                </label>
-
-
-                {declarationError && <p className="mt-2 text-sm text-destructive" role="alert">{declarationError}</p>}
-
-
-              </div>
 
 
             </div>
@@ -5892,6 +6547,234 @@ const data = await res.json().catch(() => ({}));
 
 
 
+
+
+        {/* Applicant Declaration. Rendered after every application step and
+
+
+            immediately before the final Submit Application action, because that
+
+
+            is where the applicant actually commits to the statement. */}
+
+
+        {currentStep === 8 && (
+
+
+          <section
+
+
+            aria-labelledby="applicant-declaration-heading"
+
+
+            className="rounded-xl border-2 border-navy/25 bg-white p-5 shadow-sm dark:border-gold/30 dark:bg-[#131a2e] sm:p-6"
+
+
+          >
+
+
+            <h3
+
+
+              id="applicant-declaration-heading"
+
+
+              className="text-base font-semibold text-navy dark:text-gold"
+
+
+            >
+
+
+              Applicant Declaration
+
+
+            </h3>
+
+
+            <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground dark:text-slate-300">
+
+
+              <p>
+
+
+                I hereby declare that all the information provided by me in this scholarship application is true, correct, and complete to the best of my knowledge. I further declare that all documents and information submitted by me are genuine and authentic.
+
+
+              </p>
+
+
+              <p>
+
+
+                I understand that providing any false, misleading, or forged information or documents may result in the rejection or cancellation of my scholarship application and may subject me to appropriate action as per the applicable rules.
+
+
+              </p>
+
+
+              <p>I have read and understood the above declaration and agree to abide by its terms.</p>
+
+
+            </div>
+
+
+            <label
+
+
+              htmlFor="applicant-declaration-checkbox"
+
+
+              className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg bg-surface-muted p-3 dark:bg-[#0d1220]"
+
+
+            >
+
+
+              <input
+
+
+                id="applicant-declaration-checkbox"
+
+
+                name="declarationAccepted"
+
+
+                type="checkbox"
+
+
+                checked={declarationAccepted}
+
+
+                aria-required="true"
+
+
+                aria-invalid={declarationError ? true : undefined}
+
+
+                aria-describedby={declarationError ? "applicant-declaration-error" : "applicant-declaration-hint"}
+
+
+                disabled={savingDeclaration}
+
+
+                onChange={async (e) => {
+
+
+                  const accepted = e.target.checked;
+
+
+                  setDeclarationAccepted(accepted);
+
+
+                  if (!accepted) {
+
+
+                    setDeclarationPersisted(false);
+
+
+                    setDeclarationError("Please tick the agreement checkbox to submit your application.");
+
+
+                    await persistDeclaration(false);
+
+
+                    return;
+
+
+                  }
+
+
+                  setDeclarationError(null);
+
+
+                  const saved = await persistDeclaration(true);
+
+
+                  if (!saved) {
+
+
+                    setDeclarationError("We could not save your agreement. Please try again.");
+
+
+                  }
+
+
+                }}
+
+
+                className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-border text-navy accent-[#d4af37] focus:ring-2 focus:ring-navy/30 disabled:cursor-wait"
+
+
+              />
+
+
+              <span className="text-sm font-medium text-foreground">
+
+
+                I agree to the above Applicant Declaration.
+
+
+              </span>
+
+
+            </label>
+
+
+            {declarationError ? (
+
+
+              <p
+
+
+                id="applicant-declaration-error"
+
+
+                role="alert"
+
+
+                className="mt-3 flex items-start gap-2 text-sm font-medium text-destructive"
+
+
+              >
+
+
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+
+
+                {declarationError}
+
+
+              </p>
+
+
+            ) : (
+
+
+              <p id="applicant-declaration-hint" className="mt-3 text-sm text-muted-foreground">
+
+
+                {declarationPersisted
+
+
+                  ? "Your agreement has been saved with this application."
+
+
+                  : "You must agree to this declaration before you can submit your application."}
+
+
+              </p>
+
+
+            )}
+
+
+          </section>
+
+
+        )}
+
+
+        </fieldset>
 
 
         {/* Footer nav */}
@@ -5927,7 +6810,10 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep < 6 && (
+          {/* Save, Continue-to-Payment and Submit all write to the application, so they
+            are offered only while the backend says it is still editable. The
+            backend rejects them regardless; this keeps the UI honest. */}
+          {applicationEditable && currentStep < 7 && (
 
 
             <button
@@ -5936,7 +6822,7 @@ const data = await res.json().catch(() => ({}));
               type="button"
 
 
-              onClick={currentStep === 5 ? () => setCurrentStep(6) : saveAndContinue}
+              onClick={continueFromCurrentStep}
 
 
               disabled={saving}
@@ -5948,7 +6834,7 @@ const data = await res.json().catch(() => ({}));
             >
 
 
-              {saving ? "Saving…" : currentStep === 5 ? "Continue to Review →" : "Save & Continue →"}
+              {saving ? "Saving…" : currentStep === 6 ? "Continue to Review →" : "Save & Continue →"}
 
 
             </button>
@@ -5960,7 +6846,7 @@ const data = await res.json().catch(() => ({}));
 
 
 
-          {currentStep === 6 && !showDeclaration && (
+{applicationEditable && currentStep === 7 && (
 
 
             <button
@@ -5971,48 +6857,14 @@ const data = await res.json().catch(() => ({}));
 
               onClick={() => {
 
-
-                setDeclarationError("Please agree to the declaration before submitting your application.");
-
-
-                window.scrollTo({ top: 0, behavior: "smooth" });
-
-
-              }}
-
-
-              className="btn-gold"
-
-
-            >
-
-
-              Continue to Payment →
-
-
-            </button>
-
-
-          )}
-
-
-
-
-
-          {currentStep === 6 && showDeclaration && (
-
-
-            <button
-
-
-              type="button"
-
-
-              onClick={() => {
 
                 // The Review step collects the requested scholarship amount, so
+
+
                 // validate it before allowing the applicant on to Payment.
-                const e = validateStep(6, form);
+
+
+                const e = validateStep(7, form);
 
 
                 if (Object.keys(e).length > 0) {
@@ -6039,7 +6891,9 @@ const data = await res.json().catch(() => ({}));
                 setFormNotice(null);
 
 
-                setCurrentStep(7);
+                advanceTo(8);
+
+
               }}
 
 
@@ -6055,13 +6909,7 @@ const data = await res.json().catch(() => ({}));
             </button>
 
 
-          )}
-
-
-
-
-
-          {currentStep === 7 && (
+          )}{applicationEditable && currentStep === 8 && (
 
 
             <button
@@ -6073,10 +6921,13 @@ const data = await res.json().catch(() => ({}));
               onClick={submitApplication}
 
 
+              aria-disabled={!declarationAccepted || submitting}
+
+
               disabled={submitting || (fee?.paymentMethod === "razorpay" && fee?.enabled !== false && paymentStatus !== "SUCCESS")}
 
 
-              className="btn-gold disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-gold disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 
 
             >

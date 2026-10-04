@@ -6,6 +6,7 @@ import crypto from "crypto";
 import prisma from "../utils/db";
 import { notifyNewApplication } from "../admin/applications";
 import { getApplicationDeadlineConfig, deadlineClosedMessage } from "../utils/applicationDeadline";
+import { evaluateEditability, editRejectedResponse } from "../utils/editWindow";
 
 const router = express.Router();
 
@@ -58,6 +59,22 @@ function numOr(value: unknown, fallback = 0): number {
   if (value == null || value === "") return fallback;
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+// The two recommenders, flattened into the single RecommenderDetails row. Values
+// are trimmed so a stray space never blocks the "required" check, and mobile
+// numbers keep any leading zero the applicant typed (never coerced to a number).
+function recommenderFields(input: unknown) {
+  const r = (input ?? {}) as Record<string, unknown>;
+  const pick = (key: string) => String(r[key] ?? "").trim();
+  return {
+    recommender1Name: pick("recommender1Name"),
+    recommender1Roll: pick("recommender1Roll"),
+    recommender1Mobile: pick("recommender1Mobile"),
+    recommender2Name: pick("recommender2Name"),
+    recommender2Roll: pick("recommender2Roll"),
+    recommender2Mobile: pick("recommender2Mobile"),
+  };
 }
 
 // Create a new application (or draft)
@@ -223,6 +240,13 @@ router.post("/", async (req: Request, res: Response) => {
       }
     }
 
+    // Recommenders follow the same 1:1 nested-create pattern as bank details, so
+    // a draft created with recommender data is written atomically.
+    const recommenderInput = req.body.recommenderDetails;
+    if (recommenderInput) {
+      applicationData.recommenderDetails = { create: recommenderFields(recommenderInput) };
+    }
+
     // Create application with draft status
     const application = await prisma.application.create({
       data: applicationData,
@@ -233,6 +257,7 @@ router.post("/", async (req: Request, res: Response) => {
         academicDetails: true,
         financialDetails: true,
         bankDetails: true,
+        recommenderDetails: true,
       },
     });
 
@@ -270,6 +295,7 @@ router.get("/me", async (req: Request, res: Response) => {
         academicDetails: true,
         financialDetails: true,
         bankDetails: true,
+        recommenderDetails: true,
         scholarshipProgram: true,
         applicationDocuments: true,
         payments: { orderBy: { createdAt: "desc" } },
@@ -301,10 +327,15 @@ router.get("/me", async (req: Request, res: Response) => {
 
     const { applicationDocuments, payments, ...safeApplication } = application;
 
+    // Evaluated on the server so the browser never has to decide the window. The
+    // frontend renders these fields verbatim.
+    const editability = evaluateEditability(application, new Date());
+
     return res.json({
       application: {
         ...safeApplication,
         submissionStatus: application.status,
+        editability,
         paymentStatus,
         payment: latestPayment
           ? {
@@ -370,6 +401,7 @@ router.get("/:id", async (req: Request, res: Response) => {
         academicDetails: true,
         financialDetails: true,
         bankDetails: true,
+        recommenderDetails: true,
         scholarshipProgram: true,
       },
     });
@@ -415,13 +447,16 @@ router.patch("/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Application not found or access denied" });
     }
 
-    // Prevent modification of submitted applications. CORRECTION_REQUESTED is
-    // the admin's explicit "fix and resubmit" signal (the applicant dashboard
-    // shows an "Edit and Resubmit" button), so the applicant must be able to
-    // reopen the form until they resubmit.
-    const editable = application.status === "DRAFT" || application.status === "CORRECTION_REQUESTED";
-    if (!editable) {
-      return res.status(403).json({ error: "Cannot modify submitted applications" });
+    // Ownership was already proven above (id + studentId in one query). Now the
+    // candidate edit window decides whether this application may still change:
+    // drafts and CORRECTION_REQUESTED always, a submitted/reviewing application
+    // for 7 days after `submittedAt`, and never once APPROVED/ACCEPTED. The
+    // clock is the server's, and it is read from the stored row, so nothing the
+    // client sends or changes can extend it.
+    const editability = evaluateEditability(application, new Date());
+    if (!editability.editable) {
+      const rejected = editRejectedResponse(editability);
+      return res.status(rejected.status).json(rejected.body);
     }
 
     const {
@@ -431,6 +466,8 @@ router.patch("/:id", async (req: Request, res: Response) => {
       academicDetails,
       financialDetails,
       bankDetails,
+      recommenderDetails,
+      declarationAccepted,
     } = req.body;
 
     // Update personal details if provided.
@@ -582,8 +619,8 @@ router.patch("/:id", async (req: Request, res: Response) => {
     }
 
     // Update financial details if provided.
-    // When financialDetails is absent/null (e.g. "No Parents" family status),
-    // any previously stored income data is cleared so nothing stale is shown.
+    // `null` is the explicit "No Parents" signal and clears any stored income.
+    // An absent key means this is a partial update, so income is left alone.
     if (financialDetails) {
       const incomeValue = (financialDetails as any).familyIncome;
       const incomeSourceValue = (financialDetails as any).incomeSource;
@@ -608,7 +645,10 @@ router.patch("/:id", async (req: Request, res: Response) => {
             : {}),
         },
       });
-    } else {
+    } else if (financialDetails === null) {
+      // Only an explicit null clears income. A payload that simply omits
+      // `financialDetails` is a partial update (e.g. persisting the applicant
+      // declaration) and must leave the stored income untouched.
       await prisma.financialDetails.updateMany({
         where: { applicationId: id },
         data: { familyIncome: 0, incomeSource: "" },
@@ -639,6 +679,36 @@ router.patch("/:id", async (req: Request, res: Response) => {
       }
     }
 
+    // Recommender details are a 1:1 row like BankDetails, so upsert keeps
+    // exactly one row per application. The step always sends all six fields, so
+    // a recommender the applicant clears is cleared in the database too.
+    if (recommenderDetails) {
+      const recFields = recommenderFields(recommenderDetails);
+      const hasAnyRecommenderValue = Object.values(recFields).some((v) => v.length > 0);
+      if (hasAnyRecommenderValue) {
+        await prisma.recommenderDetails.upsert({
+          where: { applicationId: id },
+          update: recFields,
+          create: { applicationId: id, ...recFields },
+        });
+      }
+    }
+
+    // Applicant Declaration acceptance is stored on the application itself so
+    // the state survives a reload and can be enforced at submission time.
+    // Only an explicit boolean is honoured; an absent key leaves the existing
+    // value untouched so unrelated saves cannot clear the agreement.
+    if (declarationAccepted !== undefined) {
+      const accepted = declarationAccepted === true;
+      await prisma.application.update({
+        where: { id },
+        data: {
+          declarationAccepted: accepted,
+          declarationAcceptedAt: accepted ? new Date() : null,
+        },
+      });
+    }
+
     // Fetch updated application
     const updatedApplication = await prisma.application.findFirst({
       where: { id },
@@ -649,6 +719,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
         academicDetails: true,
         financialDetails: true,
         bankDetails: true,
+        recommenderDetails: true,
         scholarshipProgram: true,
       },
     });
@@ -693,6 +764,7 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
         academicDetails: true,
         financialDetails: true,
         bankDetails: true,
+        recommenderDetails: true,
       },
     });
 
@@ -715,6 +787,15 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       if (!resubmittingRejectedPayment) {
         return res.status(400).json({ error: "Application has already been submitted or is not in draft status" });
       }
+    }
+
+    // The Applicant Declaration is mandatory. This is enforced here, not only in
+    // the browser, so a crafted request cannot submit without agreeing.
+    if (!application.declarationAccepted) {
+      return res.status(400).json({
+        error: "Please agree to the applicant declaration before submitting your application.",
+        code: "DECLARATION_REQUIRED",
+      });
     }
 
     // Check scholarship is active (only when a scholarship program is associated)
@@ -841,6 +922,23 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       return res.status(400).json({
         error: "Please complete your bank details before submitting.",
         code: "BANK_DETAILS_REQUIRED",
+      });
+    }
+
+    // Both recommenders (name, roll number and mobile each) are required. The
+    // same check the browser runs on the step, repeated here so a crafted
+    // request cannot submit a draft that skipped the Recommended By step.
+    const rec = application.recommenderDetails;
+    const recComplete =
+      !!rec &&
+      ["recommender1Name", "recommender1Roll", "recommender1Mobile",
+        "recommender2Name", "recommender2Roll", "recommender2Mobile"].every(
+        (key) => !!(rec[key as keyof typeof rec] || "").toString().trim()
+      );
+    if (!recComplete) {
+      return res.status(400).json({
+        error: "Please complete both recommender details before submitting.",
+        code: "RECOMMENDER_DETAILS_REQUIRED",
       });
     }
 
