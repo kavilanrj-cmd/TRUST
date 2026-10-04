@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -355,25 +354,6 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
-        </motion.div>
-
-        {/* ===== Quick Links (retained from existing page) ===== */}
-        <motion.div
-          className="pt-12 mt-14 border-t border-border"
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-        >
-          <h3 className="text-xl font-medium mb-4 text-navy dark:text-white">Quick Links</h3>
-          <ul className="grid grid-cols-2 gap-4 text-sm text-muted-foreground md:grid-cols-3">
-            <li><Link href="/" className="underline underline-offset-2 hover:text-gold-600">Home</Link></li>
-            <li><Link href="/about" className="underline underline-offset-2 hover:text-gold-600">About</Link></li>
-            <li><Link href="/vision-mission" className="underline underline-offset-2 hover:text-gold-600">Vision & Mission</Link></li>
-            <li><Link href="/scholarship" className="underline underline-offset-2 hover:text-gold-600">Scholarship</Link></li>
-            <li><Link href="/announcements" className="underline underline-offset-2 hover:text-gold-600">Announcements</Link></li>
-            <li><Link href="/contact" className="underline underline-offset-2 hover:text-gold-600">Contact</Link></li>
-          </ul>
         </motion.div>
       </div>
     </motion.div>
