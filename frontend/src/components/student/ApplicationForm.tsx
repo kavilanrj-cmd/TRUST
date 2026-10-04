@@ -1220,13 +1220,23 @@ export function ApplicationForm() {
       .then((r) => r.json())
 
 
-      .then((data: { application?: LoadedApplication | null }) => {
+      .then((data: { application?: LoadedApplication | null; editability?: Editability | null }) => {
 
 
         const app = data.application;
 
 
-        if (!app) return;
+        if (!app) {
+
+          // No application row yet. /me still carries the server's verdict for the
+          // draft the first save creates, so a brand-new applicant starts editable
+          // instead of looking locked. Only a verdict the server actually sent is
+          // applied; a failed request still leaves it unknown, and unknown stays
+          // read-only so a locked application is never briefly editable.
+          if (data.editability) setEditability(data.editability);
+
+          return;
+        }
 
 
         // The backend owns this decision. A submitted application inside its

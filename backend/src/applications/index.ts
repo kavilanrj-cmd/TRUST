@@ -303,7 +303,15 @@ router.get("/me", async (req: Request, res: Response) => {
     });
 
     if (!application) {
-      return res.status(404).json({ error: "No application found. Start an application first." });
+      // No row to evaluate, but the wizard still needs a verdict: the first save
+      // creates a DRAFT, and DRAFT is unconditionally candidate-editable. Same
+      // helper, same server clock, no new rule and nothing decided in the browser,
+      // so "has not started yet" is no longer read as "locked".
+      return res.status(404).json({
+        error: "No application found. Start an application first.",
+        application: null,
+        editability: evaluateEditability({ status: "DRAFT", submittedAt: null }, new Date()),
+      });
     }
 
     // Compute payment status from the most recent payment.
