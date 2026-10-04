@@ -3189,20 +3189,20 @@ const data = await res.json().catch(() => ({}));
           the existing draft are left untouched. */}
 
       <nav className="card-trust px-5 py-4 sm:px-6" aria-label="Application progress">
-        <ol className="flex items-center gap-0 overflow-x-auto pb-1 sm:gap-2 sm:overflow-x-visible sm:pb-0">
+        <ol className="flex items-center gap-0 overflow-x-auto pb-1 sm:gap-1 sm:pb-0">
           {STEPS.map((step, i) => {
             const status = classifyStep(i, currentStep, reachedStep);
             const isCurrent = status === "current";
 
             return (
-              <li key={step.id} className="flex shrink-0 items-center sm:min-w-0 sm:flex-1">
+              <li key={step.id} className="flex shrink-0 items-center">
                 <button
                   type="button"
                   onClick={() => goToStep(i)}
                   title={isCurrent ? step.label : `Go to ${step.label}`}
                   aria-current={isCurrent ? "step" : undefined}
                   aria-label={`Step ${i + 1} of ${STEPS.length}: ${step.label}`}
-                  className="group flex w-11 shrink-0 cursor-pointer flex-col items-center gap-1 rounded-lg px-1 py-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 focus-visible:ring-offset-card active:scale-[0.97] dark:focus-visible:ring-gold sm:w-full"
+                  className="group flex w-11 shrink-0 cursor-pointer flex-col items-center gap-1 whitespace-nowrap rounded-lg px-0.5 py-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 focus-visible:ring-offset-card active:scale-[0.97] dark:focus-visible:ring-gold sm:w-auto"
                 >
                   <span
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition group-hover:scale-105 ${
@@ -3237,7 +3237,7 @@ const data = await res.json().catch(() => ({}));
 
                 {i < STEPS.length - 1 && (
                   <span
-                    className={`mx-0.5 h-px w-2.5 shrink-0 rounded sm:mx-2 sm:w-auto sm:min-w-0 sm:flex-1 ${i < reachedStep ? "bg-success" : "bg-border"}`}
+                    className={`mx-0.5 h-px w-2.5 shrink-0 rounded sm:mx-1 sm:min-w-2 sm:flex-1 ${i < reachedStep ? "bg-success" : "bg-border"}`}
                     aria-hidden="true"
                   />
                 )}
