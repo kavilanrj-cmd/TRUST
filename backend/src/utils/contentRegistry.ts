@@ -173,7 +173,6 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("home.footer.contactTitle", "home", "footer", "text", "Footer · Contact Title", "Contact", { maxLength: 60 }),
   def("home.footer.address", "home", "footer", "textarea", "Footer · Address", "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India", { maxLength: 300 }),
   def("home.footer.email", "home", "footer", "text", "Footer · Email", "neelakannueducationaltrust@gmail.com", { maxLength: 120 }),
-  def("home.footer.phone", "home", "footer", "text", "Footer · Phone", "94443 27336", { maxLength: 40 }),
   def("home.footer.copyright", "home", "footer", "text", "Footer · Copyright", "All rights reserved.", { maxLength: 80 }),
 
   // ---- Brand / Images ----
@@ -221,6 +220,11 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("about.founderTitle", "about", "about", "text", "About Page · Founder Title", "Founder", { maxLength: 60 }),
   def("about.founder", "about", "about", "textarea", "About Page · Founder", "Prof. Dr. K. Chidambaram\nME., Ph. D.\nFounder and Settlor\nNEELAKANNU EDUCATIONAL TRUST was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.\nDriven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.", { maxLength: 3000 }),
 
+  // ---- Trust Certificates ----
+  def("about.certificatesTitle", "about", "about", "text", "About Page · Trust Certificates Title", "Trust Certificates", { maxLength: 120 }),
+  def("about.certificatesIntro", "about", "about", "textarea", "About Page · Trust Certificates Intro", "The Trust's legal certificates — 12A Registration, Registration Certificate, 80G Certificate and PAN Details of the Organization — are published for public verification.", { maxLength: 600 }),
+  def("about.certificatesCta", "about", "about", "text", "About Page · Trust Certificates Button", "View Trust Certificates", { maxLength: 60 }),
+
   // ---- Core Objectives and Areas of Work ----
   def("about.coreObjectivesTitle", "about", "about", "text", "About Page · Core Objectives Title", "Core Objectives and Areas of Work", { maxLength: 120 }),
   def("about.coreObjectives", "about", "about", "textarea", "About Page · Core Objectives Content", "Promotion of Education\n• Promote education for all children without discrimination\n• Establish, manage, and support schools, colleges, technical institutions, vocational institutions, and non-formal educational centers\n• Provide scholarships, grants, books, uniforms, and educational materials to deserving students\n• Support rural and tribal education initiatives\n• Conduct evening classes, literacy programs, and correspondence courses\n• Establish libraries, reading rooms, and knowledge centers\n• Publish educational books, periodicals, and literature\n• Conduct seminars, lectures, conferences, debates, and academic programs\n• Encourage academic excellence through awards, endowments, and scholarships\n\nSpecial Education and Support for Persons with Disabilities\n• Provide education for children who are mentally challenged, hearing impaired, visually impaired, or physically disabled\n• Provide assistive devices and rehabilitation support\n• Promote vocational skills and livelihood opportunities for persons with disabilities\n• Extend financial or material assistance to differently-abled individuals.", { maxLength: 3000 }),
@@ -263,6 +267,7 @@ export const CONTENT_REGISTRY: ContentFieldDef[] = [
   def("contact.email", "contact", "contact", "text", "Contact Page · Email", "neelakannueducationaltrust@gmail.com", { maxLength: 120 }),
   def("contact.phoneLabel", "contact", "contact", "text", "Contact Page · Phone Label", "Phone", { maxLength: 40 }),
   def("contact.phone", "contact", "contact", "text", "Contact Page · Phone", "94443 27336", { maxLength: 40 }),
+  def("contact.phone2", "contact", "contact", "text", "Contact Page · Phone 2", "9790930494", { maxLength: 40 }),
   def("contact.messageTitle", "contact", "contact", "text", "Contact Page · Message Title", "Send Us a Message", { maxLength: 80 }),
 ];
 

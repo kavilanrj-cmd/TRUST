@@ -133,7 +133,6 @@ export const CMS_DEFAULTS: Record<string, string> = {
   "home.footer.address":
     "No. 1/82, Ayyanar Street, Shakthi Ayyanar Nagar, Thiruvanchery, Chennai - 600 126, Tamil Nadu, India",
   "home.footer.email": "neelakannueducationaltrust@gmail.com",
-  "home.footer.phone": "94443 27336",
   "home.footer.copyright": "All rights reserved.",
   // Brand / Images
   "home.brand.logo": "/assets/neelakannu-trust-logo.png",
@@ -183,6 +182,11 @@ export const CMS_DEFAULTS: Record<string, string> = {
     "NEELAKANNU EDUCATIONAL TRUST was established under the visionary leadership of Prof. Dr. K. Chidambaram, an eminent educationist who served as a Principal of many leading engineering colleges for over three decades, besides serving as a Dean of an University. He is on the board as an advisor of many engineering colleges and Technical Institutions. With more than 40 years of experience in academic administration and student development, he has made significant contributions to higher education and institutional growth.",
   "about.founder.para2":
     "Driven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.",
+  // Trust Certificates
+  "about.certificatesTitle": "Trust Certificates",
+  "about.certificatesIntro":
+    "The Trust's legal certificates — 12A Registration, Registration Certificate, 80G Certificate and PAN Details of the Organization — are published for public verification.",
+  "about.certificatesCta": "View Trust Certificates",
   // Core Objectives and Areas of Work
   "about.coreObjectivesTitle": "Core Objectives and Areas of Work",
   "about.coreObjectives":

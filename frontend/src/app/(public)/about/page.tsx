@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useHomeContent } from "@/lib/home-content";
 
 export default function AboutPage() {
@@ -39,6 +40,20 @@ export default function AboutPage() {
           <p className="text-muted-foreground leading-relaxed mt-4" style={{ textAlign: 'justify' }}>
             {t("about.founder.para2", "Driven by a lifelong commitment to education, discipline, and social responsibility, Prof. Dr. Chidambaram founded the Trust to extend educational opportunities and welfare support to underserved sections of society. The Trust embodies his vision of empowering individuals through knowledge, values, and inclusive development.")}
           </p>
+        </div>
+
+        {/* Trust Certificates — the Trust's published legal documents */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold mb-4 dark:text-white">{t("about.certificatesTitle", "Trust Certificates")}</h2>
+          <p className="text-muted-foreground leading-relaxed">
+            {t(
+              "about.certificatesIntro",
+              "The Trust's legal certificates — 12A Registration, Registration Certificate, 80G Certificate and PAN Details of the Organization — are published for public verification."
+            )}
+          </p>
+          <Link href="/certificates" className="btn-outline mt-5">
+            {t("about.certificatesCta", "View Trust Certificates")}
+          </Link>
         </div>
 
         {/* Core Objectives and Areas of Work - added immediately after Founder per requirements */}

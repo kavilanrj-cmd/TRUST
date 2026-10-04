@@ -20,6 +20,11 @@ import {
 import { API_BASE_URL } from "@/lib/api";
 import { useAuth, AuthUser } from "@/lib/auth";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import {
+  type Editability,
+  editWindowNotice,
+  readEditability,
+} from "@/lib/application-editability";
 
 function StudentDashboardInner() {
   const { user } = useAuth();
@@ -55,6 +60,7 @@ function StudentDashboardInner() {
     scholarshipProgram?: { name: string } | null;
     createdAt: string;
     submittedAt: string | null;
+    editability?: Editability | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -202,6 +208,8 @@ function renderDashboard(
     scholarshipProgram?: { name: string } | null;
     createdAt: string;
     submittedAt: string | null;
+    // Decided by the backend using its own clock; the dashboard never recomputes.
+    editability?: Editability | null;
   } | null
 ) {
   if (!application) {
@@ -231,6 +239,10 @@ function renderDashboard(
 
   const scholarshipProgramName = scholarshipProgram?.name ?? null;
   const studentName = user.name || user.email.split("@")[0];
+
+  const editability = readEditability(application);
+  const applicationEditable = editability.editable;
+  const editNotice = editWindowNotice(editability);
 
   // Applicant-entered scholarship amount. This is a distinct value from the
   // admin-configured application fee charged at payment time.
@@ -647,6 +659,27 @@ const started = !!applicationId;
 
           {/* Action buttons based on status */}
           <div className="mt-4">
+
+            {/* Edit window, as decided by the backend. While it is open the
+                candidate gets an "Edit Application" action and a plain statement
+                of what is left; once it closes the action disappears and the
+                reason is shown instead. */}
+            {applicationEditable && (
+              <div>
+                <Link
+                  href="/student/application"
+                  className="inline-block py-2 px-4 rounded bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+                  Edit Application
+                </Link>
+                {editNotice && (
+                  <p className="text-muted-foreground text-sm mt-2">{editNotice}</p>
+                )}
+              </div>
+            )}
+            {!applicationEditable && editNotice && (
+              <p className="text-muted-foreground text-sm">{editNotice}</p>
+            )}
+
             {status === "DRAFT" && (
               <Link
                 href="/student/application"
@@ -738,11 +771,13 @@ const started = !!applicationId;
               <a href="/contact" className="group py-2 flex items-center justify-center rounded-lg border border-border hover:bg-primary/5 transition-colors">
                 <span className="group-hover text-primary">Contact</span>
               </a>
-              {status !== "SUBMITTED" && status !== "APPROVED" && status !== "ACCEPTED" && (
+              {/* Follows the edit window rather than a status list, so a closed window no
+                  longer offers a "continue" link to a read-only form. */}
+              {applicationEditable && (
                 <a
                   href="/student/application"
                   className="group py-2 flex items-center justify-center rounded-lg border border-border hover:bg-primary/5 transition-colors">
-                  <span className="group-hover text-primary">Continue Application</span>
+                  <span className="group-hover text-primary">Edit Application</span>
                 </a>
               )}
               {(status === "SUBMITTED" || status === "APPROVED" || status === "ACCEPTED") && (

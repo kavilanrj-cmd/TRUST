@@ -7,6 +7,16 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Resend } from "resend";
 import { STUDENT_COOKIE, cookieOptions, loadUser } from "../utils/auth";
+import {
+  INVALID_IDENTIFIER_MESSAGE,
+  type LoginUser,
+  classifyIdentifier,
+  findLoginUsers,
+  isEmailIdentifier,
+  readLoginIdentifier,
+  readLoginPassword,
+  verifyLoginPassword,
+} from "../utils/loginIdentity";
 
 let _resend: Resend | null = null;
 function getResend(): Resend | null {
@@ -117,12 +127,23 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // Login user
+//
+// The identifier is an email address OR an Indian mobile number — there is no
+// username, and no code path accepts one. `email` remains accepted as the wire
+// field name for older clients but is interpreted by exactly the same rules.
 router.post("/login", async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const identifier = readLoginIdentifier(req.body);
+    const password = readLoginPassword(req.body);
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+    if (!identifier || !password) {
+      return res.status(400).json({ error: "Email or mobile number and password are required" });
+    }
+
+    // Malformed identifier is rejected before any lookup. This is a purely
+    // syntactic check and says nothing about which accounts exist.
+    if (!classifyIdentifier(identifier)) {
+      return res.status(400).json({ error: INVALID_IDENTIFIER_MESSAGE });
     }
 
     // TEST MODE flag (defaults to disabled). Only an explicit "true" value
@@ -131,42 +152,41 @@ router.post("/login", async (req: Request, res: Response) => {
     // password" behavior.
     const testApplicantLoginEnabled = process.env.ALLOW_TEST_APPLICANT_LOGIN === "true";
 
-    // Find user
-    let user = await prisma.user.findUnique({
-      where: { email }
-    });
+    // Find the account by email or registered mobile number, then check the
+    // password. Both failures return the same generic message so neither the
+    // response body nor its timing reveals whether the account exists.
+    const candidates = await findLoginUsers(identifier);
+    let user = await verifyLoginPassword(candidates, password);
 
     let testAccountCreated = false;
 
     if (!user) {
-      // TEST MODE (disabled by default): a login with a NON-EXISTENT email
+      // TEST MODE (disabled by default): a login with a NON-EXISTENT account
       // only auto-creates an isolated STUDENT test account when
       // ALLOW_TEST_APPLICANT_LOGIN is exactly "true". This is purely for QA
-      // testing. Existing accounts always fall through to the normal password
-      // check below, and privileged roles can never be created through this
-      // path (new accounts are always role=STUDENT).
-      if (!testApplicantLoginEnabled) {
+      // testing. An account that does exist always falls through to the normal
+      // password check above, and privileged roles can never be created through
+      // this path (new accounts are always role=STUDENT). It needs a real email
+      // column to write to, so it never runs for a mobile identifier.
+      if (
+        !testApplicantLoginEnabled ||
+        candidates.length > 0 ||
+        !isEmailIdentifier(identifier)
+      ) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
 
       const testPasswordHash = await bcrypt.hash(password, 10);
-      user = await prisma.user.create({
+      user = (await prisma.user.create({
         data: {
-          email,
+          email: identifier,
           name: "Test Applicant",
           password: testPasswordHash,
           role: "STUDENT",
         },
-      });
+      })) as LoginUser;
       testAccountCreated = true;
-      console.log(`TEST MODE: created test applicant account for ${email}`);
-    }
-
-    // Check if password is correct
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      console.log(`TEST MODE: created test applicant account for ${identifier}`);
     }
 
     // Generate JWT token

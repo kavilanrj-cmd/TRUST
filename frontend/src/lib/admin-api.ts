@@ -58,8 +58,11 @@ const adminJSON = <T,>(url: string, method = "GET", body?: unknown): Promise<T> 
 export const adminApi = {
   base: ADMIN_BASE,
 
-  login: (email: string, password: string) =>
-    adminJSON<{ user: AdminUser }>(`${ADMIN_BASE}/login`, "POST", { email, password }),
+  login: (identifier: string, password: string) =>
+    adminJSON<{ user: AdminUser }>(`${ADMIN_BASE}/login`, "POST", {
+      identifier: identifier.trim(),
+      password,
+    }),
 
   logout: () => adminJSON(`${ADMIN_BASE}/logout`, "POST"),
 

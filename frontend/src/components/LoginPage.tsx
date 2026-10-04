@@ -17,6 +17,13 @@ import {
 } from "lucide-react";
 import DarkModeToggle from "./DarkModeToggle";
 import { useAuth } from "@/lib/auth";
+import {
+  IDENTIFIER_LABEL,
+  IDENTIFIER_PLACEHOLDER,
+  IDENTIFIER_REQUIRED_MESSAGE,
+  INVALID_IDENTIFIER_MESSAGE,
+  isValidLoginIdentifier,
+} from "@/lib/login-identity";
 
 interface FormState {
   identifier: string;
@@ -66,9 +73,9 @@ export default function LoginPage() {
     const password = form.password;
 
     if (!identifier) {
-      errors.identifier = "Email or username is required.";
-    } else if (identifier.includes("@") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
-      errors.identifier = "Please enter a valid email address.";
+      errors.identifier = IDENTIFIER_REQUIRED_MESSAGE;
+    } else if (!isValidLoginIdentifier(identifier)) {
+      errors.identifier = INVALID_IDENTIFIER_MESSAGE;
     }
 
     if (!password) {
@@ -263,21 +270,25 @@ export default function LoginPage() {
           </motion.header>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
-            {/* Email / Username */}
+            {/* Email or mobile number. The only identifiers this platform accepts —
+                there is no username field and no username login. */}
             <motion.div variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}>
-              <label className="mb-2 block text-sm font-medium text-[#0A1F44] dark:text-white">Email / Username</label>
+              <label htmlFor="identifier" className="mb-2 block text-sm font-medium text-[#0A1F44] dark:text-white">
+                {IDENTIFIER_LABEL}
+              </label>
               <div className="relative">
                 <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 dark:text-white/40">
                   <User className="h-5 w-5" />
                 </div>
                 <input
                   id="identifier"
+                  name="identifier"
                   type="text"
                   value={form.identifier}
                   onChange={(e) => handleChange("identifier", e.target.value)}
                   aria-invalid={!!form.errors.identifier}
                   aria-describedby={form.errors.identifier ? "identifier-error" : undefined}
-                  placeholder="Enter your email or username"
+                  placeholder={IDENTIFIER_PLACEHOLDER}
                   className={`w-full rounded-lg border bg-white py-3 pl-12 pr-4 text-[#0A1F44] shadow-sm outline-none transition-all duration-300 placeholder:text-muted-foreground/50 dark:bg-[#131a2e] dark:text-white dark:placeholder:text-white/40 ${
                     form.errors.identifier
                       ? "border-red-400 focus:border-red-400 focus:ring-4 focus:ring-red-100"

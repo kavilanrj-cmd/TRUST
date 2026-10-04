@@ -5,9 +5,15 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { adminApi } from "@/lib/admin-api";
+import {
+  IDENTIFIER_LABEL,
+  IDENTIFIER_PLACEHOLDER,
+  INVALID_IDENTIFIER_MESSAGE,
+  isValidLoginIdentifier,
+} from "@/lib/login-identity";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -15,10 +21,16 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    // Same rule as the applicant login: an email address or an Indian mobile
+    // number, never a username.
+    if (!identifier.trim() || !isValidLoginIdentifier(identifier)) {
+      setError(INVALID_IDENTIFIER_MESSAGE);
+      return;
+    }
+    setLoading(true);
     try {
-      await adminApi.login(email, password);
+      await adminApi.login(identifier, password);
       router.push("/admin");
     } catch (err: unknown) {
       const message =
@@ -47,14 +59,18 @@ export default function AdminLoginPage() {
         <div className="card-trust bg-white p-8 dark:bg-[#131a2e]">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="field-label">Email address</label>
+              <label htmlFor="identifier" className="field-label">
+                {IDENTIFIER_LABEL}
+              </label>
               <input
-                type="email"
+                id="identifier"
+                name="identifier"
+                type="text"
                 autoComplete="username"
                 className="field-input"
-                placeholder="you@neelakannu-trust.edu"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder={IDENTIFIER_PLACEHOLDER}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
               />
             </div>

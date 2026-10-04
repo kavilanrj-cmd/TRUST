@@ -8,6 +8,14 @@ import {
 } from "../utils/auth";
 import { auditContextFromRequest, logAudit } from "../utils/audit";
 import { getPermissions } from "../utils/roles";
+import {
+  INVALID_IDENTIFIER_MESSAGE,
+  classifyIdentifier,
+  findLoginUsers,
+  readLoginIdentifier,
+  readLoginPassword,
+  verifyLoginPassword,
+} from "../utils/loginIdentity";
 
 import dashboardRouter from "./dashboard";
 import applicationsRouter from "./applications";
@@ -69,17 +77,29 @@ export async function bootstrapFounder(): Promise<void> {
 }
 
 // POST /api/admin/login
+//
+// The identifier is an email address OR an Indian mobile number, resolved by the
+// same shared helper the student login uses. There is no username. The role,
+// activation, founder-protection and audit rules below are untouched.
 router.post("/login", async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    console.log("🔐 Login attempt:", email);
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+    const identifier = readLoginIdentifier(req.body);
+    const password = readLoginPassword(req.body);
+    console.log("🔐 Login attempt:", identifier);
+    if (!identifier || !password) {
+      return res.status(400).json({ error: "Email or mobile number and password are required" });
     }
-    const user = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
+    // Purely syntactic, decided before the lookup, so it leaks nothing.
+    if (!classifyIdentifier(identifier)) {
+      return res.status(400).json({ error: INVALID_IDENTIFIER_MESSAGE });
+    }
+    // Emails are matched case-insensitively inside the helper, replacing the
+    // lowercasing this route used to do by hand.
+    const candidates = await findLoginUsers(identifier);
+    const user = candidates[0] ?? null;
     console.log("🔐 User found:", user ? { id: user.id, email: user.email, role: user.role, isActive: user.isActive } : null);
     if (!user) {
-      logAudit(auditContextFromRequest(req), "admin.login.failed", "User", undefined, { email });
+      logAudit(auditContextFromRequest(req), "admin.login.failed", "User", undefined, { identifier });
       return res.status(401).json({ error: "Invalid email or password" });
     }
     if (!staffRoles.includes(user.role)) {
@@ -90,7 +110,9 @@ router.post("/login", async (req: Request, res: Response) => {
       logAudit(auditContextFromRequest(req), "admin.login.denied_inactive", "User", user.id);
       return res.status(403).json({ error: "Your account is deactivated" });
     }
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    // A number can be shared by more than one application, so every account the
+    // identifier resolved to is tried before the login is refused.
+    const passwordMatch = !!(await verifyLoginPassword(candidates, password));
     console.log("🔐 Password match:", passwordMatch);
     if (!passwordMatch) {
       logAudit(auditContextFromRequest(req), "admin.login.failed", "User", user.id);
