@@ -5,7 +5,6 @@ import { WhatWeDo } from "@/components/home/WhatWeDo";
 import { Scholarships } from "@/components/home/Scholarships";
 import { Notes } from "@/components/home/Notes";
 import { DocumentsRequired } from "@/components/home/DocumentsRequired";
-import { HowToApply } from "@/components/home/HowToApply";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { SuccessStories } from "@/components/home/SuccessStories";
 import { NewsEvents } from "@/components/home/NewsEvents";
@@ -26,7 +25,8 @@ export default function HomePage() {
       <Scholarships />
       <Notes />
       <DocumentsRequired />
-      <HowToApply />
+      {/* The "Application Process" strip that used to sit here now lives only on the
+          dedicated How to Apply page (/how-to-apply), which has its own content. */}
       <WhyChooseUs />
       <SuccessStories />
       <NewsEvents />
