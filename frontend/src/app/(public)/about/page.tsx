@@ -23,13 +23,28 @@ export default function AboutPage() {
 
         <div className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 dark:text-white">{t("about.founderTitle", "Founder")}</h2>
-          <div className="text-muted-foreground mb-4">
-            <p className="font-serif text-xl font-bold leading-tight">
-              {t("about.founder", "Prof. Dr. K. Chidambaram M.E., Ph.D.")}
-            </p>
-            <p className="text-sm font-medium tracking-wider dark:text-gold">
-              {t("about.founder.subheading", "Founder and Settlor")}
-            </p>
+          {/* Founder photo on the left, the existing founder details on the right.
+              Stacks photo-above-content on narrow screens. */}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+            <img
+              src="/assets/founder-photo.jpg"
+              alt={t(
+                "about.founderPhotoAlt",
+                "Prof. Dr. K. Chidambaram, Founder and Settlor of NEELAKKANNU EDUCATIONAL TRUST"
+              )}
+              width={480}
+              height={600}
+              loading="lazy"
+              className="h-64 w-full max-w-xs shrink-0 rounded-lg border border-border object-cover shadow-sm sm:h-72"
+            />
+            <div className="text-muted-foreground mb-4">
+              <p className="font-serif text-xl font-bold leading-tight">
+                {t("about.founder", "Prof. Dr. K. Chidambaram M.E., Ph.D.")}
+              </p>
+              <p className="text-sm font-medium tracking-wider dark:text-gold">
+                {t("about.founder.subheading", "Founder and Settlor")}
+              </p>
+            </div>
           </div>
         </div>
 
