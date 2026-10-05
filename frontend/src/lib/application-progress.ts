@@ -154,17 +154,22 @@ export function evaluateApplicationProgress(
   const bank = app?.bankDetails ?? null;
   const recommender = app?.recommenderDetails ?? null;
 
-  // Family covers the parent/guardian block and, for everyone except "No Parents"
-  // applicants, the declared income. Mirrors validateStep(3) exactly.
-  const guardianBaseComplete =
-    !!guardian && filled(guardian.guardianName) && filled(guardian.relationship);
+  // Family covers the fields each family status actually collects: the named
+  // parents/guardian plus, for everyone except "No Parents" applicants, the
+  // declared income. Mirrors validateStep(3) exactly.
+  const fatherComplete = !!guardian && filled(guardian.guardianName);
   const incomeComplete =
     !!financial && positiveNumber(financial.familyIncome) && filled(financial.incomeSource);
-  const familyComplete = guardianBaseComplete &&
-    // "No Parents" declares no income and instead names both parents.
-    (isNoParents(guardian)
-      ? filled(guardian?.parent2Relationship)
-      : incomeComplete);
+  // "Parents" names the mother instead of a relationship; "Single Parent" names a
+  // relationship instead of a mother; "No Parents" declares no income and names a
+  // guardian plus a mobile number.
+  const familyComplete = !fatherComplete
+    ? false
+    : isNoParents(guardian)
+      ? filled(guardian?.parent2Name) && filled(guardian?.contactNumber)
+      : guardian?.isSingleParent
+        ? filled(guardian?.relationship) && incomeComplete
+        : filled(guardian?.motherName) && incomeComplete;
 
   // Mirrors validateStep(0): the step has no opinion on age ranges beyond parsing
   // the date, so only a stored, parseable date of birth is required here.

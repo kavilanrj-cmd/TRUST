@@ -447,6 +447,16 @@ export default function ApplicationDetailPage() {
                 <FieldRow label="Parent 2 Name" value={pg?.parent2Name} />
                 <FieldRow label="Parent 2 Relationship" value={pg?.parent2Relationship} />
               </>
+            ) : !isNoParentsApp(app) && !pg?.isSingleParent ? (
+              <>
+                <FieldRow label="Family Status" value="Parents" />
+                <FieldRow label="Father Name" value={pg?.guardianName} />
+                <FieldRow label="Mother Name" value={pg?.motherName} />
+                {/* Family Annual Income and Income Source are printed by the
+                    Financial Details section below, so they are not repeated here. */}
+                <FieldRow label="Phone" value={pg?.contactNumber} />
+                <FieldRow label="Occupation" value={pg?.occupation} />
+              </>
             ) : (
               <>
                 <FieldRow label="Name" value={pg?.guardianName} />

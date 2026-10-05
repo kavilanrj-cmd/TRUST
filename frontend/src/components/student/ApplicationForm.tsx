@@ -555,6 +555,11 @@ type FormData = {
   parent2Relationship: string;
 
 
+  // Mother's name. Only collected for the "Parents" status, which is why it is
+  // persisted separately from parent2Name (the "No Parents" second-person slot).
+  motherName: string;
+
+
   isSingleParent: boolean;
 
 
@@ -695,6 +700,9 @@ const EMPTY_FORM: FormData = {
 
 
   parent2Relationship: "",
+
+
+  motherName: "",
 
 
   isSingleParent: false,
@@ -879,6 +887,8 @@ type LoadedApplication = {
 
 
     parent2Relationship?: string | null;
+
+    motherName?: string | null;
 
 
   } | null;
@@ -1385,6 +1395,9 @@ export function ApplicationForm() {
             parent2Relationship: (pg as any).parent2Relationship || "",
 
 
+            motherName: pg.motherName || "",
+
+
             collegeName: ac.collegeName || legacySchoolCollege,
 
 
@@ -1769,28 +1782,11 @@ export function ApplicationForm() {
     if (step === 3) {
 
 
-      if (data.familyStatus === "NO_PARENTS") {
+      // Each family status validates only the fields it renders, so a field that
+      // is hidden for the current selection can never block the applicant.
 
 
-        if (!data.guardianName.trim()) e.guardianName = "Please enter parent 1 name.";
-
-
-        if (!data.relationship) e.relationship = "Please select parent 1 relationship.";
-
-
-        if (!data.parent2Name.trim()) e.parent2Name = "Please enter parent 2 name.";
-
-
-        if (!data.parent2Relationship) e.parent2Relationship = "Please select parent 2 relationship.";
-
-
-      } else {
-
-
-        if (!data.guardianName.trim()) e.guardianName = "Please enter your parent/guardian name.";
-
-
-        if (!data.relationship) e.relationship = "Please select the relationship.";
+      const validateIncome = () => {
 
 
         if (!data.familyIncome.trim()) e.familyIncome = "Please enter the family annual income.";
@@ -1800,6 +1796,45 @@ export function ApplicationForm() {
 
 
         if (!data.incomeSource) e.incomeSource = "Please select the income source.";
+
+
+      };
+
+
+      if (data.familyStatus === "PARENTS") {
+
+
+        if (!data.guardianName.trim()) e.guardianName = "Please enter the father's name.";
+
+
+        if (!data.motherName.trim()) e.motherName = "Please enter the mother's name.";
+
+
+        validateIncome();
+
+
+      } else if (data.familyStatus === "SINGLE_PARENT") {
+
+
+        if (!data.guardianName.trim()) e.guardianName = "Please enter the parent's name.";
+
+
+        if (!data.relationship) e.relationship = "Please select the relationship.";
+
+
+        validateIncome();
+
+
+      } else {
+
+
+        if (!data.guardianName.trim()) e.guardianName = "Please enter the father's name.";
+
+
+        if (!data.parent2Name.trim()) e.parent2Name = "Please enter the guardian's name.";
+
+
+        if (!data.contactNumber.trim()) e.contactNumber = "Please enter the mobile number.";
 
 
       }
@@ -2133,7 +2168,13 @@ export function ApplicationForm() {
           parent2Name: form.familyStatus === "NO_PARENTS" ? form.parent2Name : "",
 
 
-          parent2Relationship: form.familyStatus === "NO_PARENTS" ? form.parent2Relationship : "",
+          parent2Relationship: "",
+
+
+          // Only "Parents" declares a mother, so the column stays NULL for the
+          // other statuses and the existing "No Parents" detection
+          // (parent2Name set, not a single parent) is unaffected.
+          motherName: form.familyStatus === "PARENTS" ? form.motherName : "",
 
 
         },
@@ -4553,7 +4594,7 @@ const data = await res.json().catch(() => ({}));
               <div>
 
 
-                <label htmlFor="guardianName" className="field-label">{form.familyStatus === "NO_PARENTS" ? "Parent 1 Name *" : "Parent/Guardian Name *"}</label>
+                <label htmlFor="guardianName" className="field-label">{form.familyStatus === "SINGLE_PARENT" ? "Parent Name *" : "Father Name *"}</label>
 
 
                 <input
@@ -4568,7 +4609,7 @@ const data = await res.json().catch(() => ({}));
                   className="field-input"
 
 
-                  placeholder="Enter parent/guardian name"
+                  placeholder={form.familyStatus === "SINGLE_PARENT" ? "Enter parent name" : "Enter father's name"}
 
 
                   value={form.guardianName}
@@ -4586,37 +4627,89 @@ const data = await res.json().catch(() => ({}));
               </div>
 
 
-              <div>
+{/* Relationship is only meaningful for a single parent: "Parents" names the
+                  father and mother instead, and "No Parents" names the guardian. */}
 
 
-                <label htmlFor="relationship" className="field-label">{form.familyStatus === "NO_PARENTS" ? "Parent 1 Relationship *" : "Relationship *"}</label>
+              {form.familyStatus === "SINGLE_PARENT" && (
 
 
-                <select id="relationship" className="field-input" value={form.relationship} onChange={(e) => set("relationship", e.target.value)}>
+                <div>
 
 
-                  <option value="">Select relationship</option>
+                  <label htmlFor="relationship" className="field-label">Relationship *</label>
 
 
-                  <option>Father</option>
+                  <select id="relationship" className="field-input" value={form.relationship} onChange={(e) => set("relationship", e.target.value)}>
 
 
-                  <option>Mother</option>
+                    <option value="">Select relationship</option>
 
 
-                  <option>Guardian</option>
+                    <option>Father</option>
 
 
-                </select>
+                    <option>Mother</option>
 
 
-                {errors.relationship && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.relationship}</p>}
+                    <option>Guardian</option>
 
 
-              </div>
+                  </select>
+
+
+                  {errors.relationship && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.relationship}</p>}
+
+
+                </div>
+
+
+              )}
 
 
 
+
+
+              {form.familyStatus === "PARENTS" && (
+
+
+                <div>
+
+
+                  <label htmlFor="motherName" className="field-label">Mother Name *</label>
+
+
+                  <input
+
+
+                    id="motherName"
+
+
+                    type="text"
+
+
+                    className="field-input"
+
+
+                    placeholder="Enter mother's name"
+
+
+                    value={form.motherName}
+
+
+                    onChange={(e) => set("motherName", e.target.value)}
+
+
+                  />
+
+
+                  {errors.motherName && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.motherName}</p>}
+
+
+                </div>
+
+
+              )}
 
 
               {form.familyStatus === "NO_PARENTS" && (
@@ -4625,25 +4718,10 @@ const data = await res.json().catch(() => ({}));
                 <>
 
 
-                  <div className="md:col-span-2 border-b border-border pb-1 text-sm font-semibold uppercase tracking-wide text-navy-700 dark:text-slate-300">
-
-
-                    Parent 2
-
-
-                  </div>
-
-
-
-
-
-
-
-
                   <div>
 
 
-                    <label htmlFor="parent2Name" className="field-label">Parent 2 Name *</label>
+                    <label htmlFor="parent2Name" className="field-label">Guardian Name *</label>
 
 
                     <input
@@ -4658,7 +4736,7 @@ const data = await res.json().catch(() => ({}));
                       className="field-input"
 
 
-                      placeholder="Enter parent 2 name"
+                      placeholder="Enter guardian's name"
 
 
                       value={form.parent2Name}
@@ -4685,28 +4763,37 @@ const data = await res.json().catch(() => ({}));
                   <div>
 
 
-                    <label htmlFor="parent2Relationship" className="field-label">Parent 2 Relationship *</label>
+                    <label htmlFor="contactNumber" className="field-label">Mobile Number *</label>
 
 
-                    <select id="parent2Relationship" className="field-input" value={form.parent2Relationship} onChange={(e) => set("parent2Relationship", e.target.value)}>
+                    <input
 
 
-                      <option value="">Select relationship</option>
+                      id="contactNumber"
 
 
-                      <option>Father</option>
+                      type="tel"
 
 
-                      <option>Mother</option>
+                      className="field-input"
 
 
-                      <option>Guardian</option>
+                      placeholder="Enter mobile number"
 
 
-                    </select>
+                      inputMode="numeric"
 
 
-                    {errors.parent2Relationship && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.parent2Relationship}</p>}
+                      value={form.contactNumber}
+
+
+                      onChange={(e) => set("contactNumber", e.target.value)}
+
+
+                    />
+
+
+                    {errors.contactNumber && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.contactNumber}</p>}
 
 
                   </div>
@@ -6409,37 +6496,37 @@ Recommender 2 <span className="font-normal normal-case tracking-normal text-mute
                 </ReviewBlock>
 
 
-                {form.familyStatus === "NO_PARENTS" ? (
-
-
-                  <ReviewBlock title="Family & Parent Information">
-
-
-                    <ReviewRow label="Family Status" value="No Parents" />
-
-
-                    <ReviewRow label="Parent 1 Name" value={form.guardianName} />
-
-
-                    <ReviewRow label="Parent 1 Relationship" value={form.relationship} />
-
-
-                    <ReviewRow label="Parent 2 Name" value={form.parent2Name} />
-
-
-                    <ReviewRow label="Parent 2 Relationship" value={form.parent2Relationship} />
-
-
-                  </ReviewBlock>
-
-
-                ) : (
+                {form.familyStatus === "PARENTS" ? (
 
 
                   <ReviewBlock title="Family & Financial Information">
 
 
-                    <ReviewRow label="Family Status" value={form.familyStatus === "SINGLE_PARENT" ? "Single Parent" : "Parents"} />
+                    <ReviewRow label="Family Status" value="Parents" />
+
+
+                    <ReviewRow label="Father Name" value={form.guardianName} />
+
+
+                    <ReviewRow label="Mother Name" value={form.motherName} />
+
+
+                    <ReviewRow label="Family Annual Income" value={form.familyIncome ? `₹${Number(form.familyIncome).toLocaleString("en-IN")}` : ""} />
+
+
+                    <ReviewRow label="Income Source" value={form.incomeSource} />
+
+
+                  </ReviewBlock>
+
+
+                ) : form.familyStatus === "SINGLE_PARENT" ? (
+
+
+                  <ReviewBlock title="Family & Financial Information">
+
+
+                    <ReviewRow label="Family Status" value="Single Parent" />
 
 
                     <ReviewRow label="Parent/Guardian" value={form.guardianName} />
@@ -6450,8 +6537,28 @@ Recommender 2 <span className="font-normal normal-case tracking-normal text-mute
 
                     <ReviewRow label="Family Annual Income" value={form.familyIncome ? `₹${Number(form.familyIncome).toLocaleString("en-IN")}` : ""} />
 
+<ReviewRow label="Income Source" value={form.incomeSource} />
 
-                    <ReviewRow label="Income Source" value={form.incomeSource} />
+
+                  </ReviewBlock>
+
+
+                ) : (
+
+
+                  <ReviewBlock title="Family & Parent Information">
+
+
+                    <ReviewRow label="Family Status" value="No Parents" />
+
+
+                    <ReviewRow label="Father Name" value={form.guardianName} />
+
+
+                    <ReviewRow label="Guardian Name" value={form.parent2Name} />
+
+
+                    <ReviewRow label="Mobile Number" value={form.contactNumber} />
 
 
                   </ReviewBlock>

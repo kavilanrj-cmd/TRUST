@@ -219,6 +219,7 @@ router.post("/", async (req: Request, res: Response) => {
           income: (parentGuardian as any).income != null ? numOr((parentGuardian as any).income) : undefined,
           parent2Name: (parentGuardian as any).parent2Name || null,
           parent2Relationship: (parentGuardian as any).parent2Relationship || null,
+          motherName: (parentGuardian as any).motherName || null,
         }
       } : undefined,
       academicDetails: academicDetails ? {
@@ -586,6 +587,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
           income: (parentGuardian as any).income != null ? numOr((parentGuardian as any).income) : undefined,
           parent2Name: (parentGuardian as any).parent2Name || null,
           parent2Relationship: (parentGuardian as any).parent2Relationship || null,
+          motherName: (parentGuardian as any).motherName || null,
         },
         create: {
           applicationId: id,
@@ -600,6 +602,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
             : {}),
           parent2Name: (parentGuardian as any).parent2Name || null,
           parent2Relationship: (parentGuardian as any).parent2Relationship || null,
+          motherName: (parentGuardian as any).motherName || null,
         },
       });
     }

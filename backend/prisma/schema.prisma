@@ -182,6 +182,10 @@ model ParentGuardian {
   income          Decimal?
   parent2Name     String?
   parent2Relationship String?
+  // Mother's name for "Parents" applicants. Kept separate from parent2Name so the
+  // existing "No Parents" detection (parent2Name set, not a single parent) keeps
+  // working unchanged.
+  motherName      String?
 }
 
 model AcademicDetails {
