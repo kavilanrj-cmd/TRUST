@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useHomeContent } from "@/lib/home-content";
 import { useAuth } from "@/lib/auth";
 import DarkModeToggle from "@/components/DarkModeToggle";
@@ -19,13 +20,29 @@ const NAV_LINKS = [
   { key: "nav.contact", href: "/contact", label: "Contact" },
 ];
 
+// Is this nav item the section the visitor is currently in?
+//
+// The active state is read from the URL rather than remembered from a click, so it
+// survives a refresh, a bookmark, a new tab, Back and Forward. Matching is done on
+// whole path segments: a nav item owns its own route plus anything nested beneath
+// it, so `/certificates` and `/certificates/2024` both highlight Trust
+// Certificates, while a sibling such as `/certificates-archive` does not. Home is
+// `"/"`, which only ever matches the site root, so it is never left highlighted on
+// another page.
+function isActiveRoute(pathname: string, href: string): boolean {
+  if (!pathname) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function SiteHeader() {
   const { t } = useHomeContent();
   const { user, isLoading, logout } = useAuth();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  const isActive = (href: string) => isActiveRoute(pathname, href);
   const isStaff = !!user && STAFF_ROLES.includes(user.role);
 
   useEffect(() => {
@@ -85,15 +102,27 @@ export function SiteHeader() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-[15px] font-medium text-navy/80 transition hover:text-gold-600 dark:text-white/80 dark:hover:text-gold"
-            >
-              {t(link.key, link.label)}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`text-[15px] transition ${
+                  active
+                    ? // Existing brand accent only: gold text, a little heavier and a
+                      // 2px inset underline. The underline is drawn with a shadow so
+                      // the navbar height, spacing and hover behaviour stay exactly
+                      // as they were.
+                      "font-semibold text-gold-600 shadow-[inset_0_-2px_0_0_var(--gold-600)] dark:text-gold dark:shadow-[inset_0_-2px_0_0_var(--gold)]"
+                    : "font-medium text-navy/80 hover:text-gold-600 dark:text-white/80 dark:hover:text-gold"
+                }`}
+              >
+                {t(link.key, link.label)}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -101,12 +130,18 @@ export function SiteHeader() {
             <>
               <Link
                 href="/login"
-                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-navy-700 transition hover:text-navy dark:text-white/80 dark:hover:text-white"
+                aria-current={isActive("/login") ? "page" : undefined}
+                className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
+                  isActive("/login")
+                    ? "text-gold-600 dark:text-gold"
+                    : "text-navy-700 hover:text-navy dark:text-white/80 dark:hover:text-white"
+                }`}
               >
                 Login
               </Link>
               <Link
                 href="/register"
+                aria-current={isActive("/register") ? "page" : undefined}
                 className="rounded-lg border border-navy/15 px-4 py-2.5 text-sm font-semibold text-navy transition hover:border-gold hover:bg-gold-soft dark:border-white/15 dark:text-white/90 dark:hover:bg-white/10"
               >
                 Sign Up
@@ -216,22 +251,31 @@ export function SiteHeader() {
       {open && (
         <div className="fixed inset-0 top-[76px] z-40 overflow-y-auto bg-white lg:hidden dark:bg-[#0b1020]">
           <nav className="container-trust flex flex-col gap-1 py-6" aria-label="Mobile">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-3 text-base font-medium text-navy transition hover:bg-muted dark:text-white dark:hover:bg-white/10"
-              >
-                {t(link.key, link.label)}
-              </Link>
-            ))}
+            {NAV_LINKS.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={`rounded-lg px-3 py-3 text-base transition ${
+                    active
+                      ? "bg-gold-soft font-semibold text-gold-600 dark:bg-white/10 dark:text-gold"
+                      : "font-medium text-navy hover:bg-muted dark:text-white dark:hover:bg-white/10"
+                  }`}
+                >
+                  {t(link.key, link.label)}
+                </Link>
+              );
+            })}
             <div className="mt-4 flex flex-col gap-3 border-t border-border pt-5 dark:border-white/15">
               {!isLoading && !user && (
                 <>
                   <Link
                     href="/login"
                     onClick={() => setOpen(false)}
+                    aria-current={isActive("/login") ? "page" : undefined}
                     className="btn-outline dark:border-white/20 dark:bg-transparent dark:text-white"
                   >
                     Login
@@ -239,6 +283,7 @@ export function SiteHeader() {
                   <Link
                     href="/register"
                     onClick={() => setOpen(false)}
+                    aria-current={isActive("/register") ? "page" : undefined}
                     className="btn-gold"
                   >
                     Sign Up
