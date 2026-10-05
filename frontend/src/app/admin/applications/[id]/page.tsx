@@ -346,6 +346,12 @@ export default function ApplicationDetailPage() {
   const fin = app.financialDetails;
   const bank = app.bankDetails;
   const rec = app.recommenderDetails;
+  // Recommender 2 is optional, so its rows are hidden when nothing was supplied.
+  const hasRecommender2 = !!(
+    (rec?.recommender2Name || "").trim() ||
+    (rec?.recommender2Designation || rec?.recommender2Roll || "").trim() ||
+    (rec?.recommender2Mobile || "").trim()
+  );
   const docs = app.applicationDocuments || [];
   const notes = app.notes || [];
   const payments = app.payments || [];
@@ -512,17 +518,29 @@ export default function ApplicationDetailPage() {
             </Section>
           )}
 
-          {/* Recommenders are applicant-supplied contact references, shown here
+{/* Recommenders are applicant-supplied contact references, shown here
               so an admin can verify them while reviewing the application. Older
-              applications have no recommender row, so the section is skipped. */}
+              applications have no recommender row, so the section is skipped.
+              Recommender 1 is required; the optional second recommender only
+              appears when the applicant actually supplied one. */}
           {rec && (
             <Section title="Recommended By">
-              <FieldRow label="Recommender 1 Name" value={rec.recommender1Name} />
-              <FieldRow label="Recommender 1 Roll Number" value={rec.recommender1Roll} />
-              <FieldRow label="Recommender 1 Mobile Number" value={rec.recommender1Mobile} />
-              <FieldRow label="Recommender 2 Name" value={rec.recommender2Name} />
-              <FieldRow label="Recommender 2 Roll Number" value={rec.recommender2Roll} />
-              <FieldRow label="Recommender 2 Mobile Number" value={rec.recommender2Mobile} />
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-navy dark:text-white">
+                Recommender 1
+              </p>
+              <FieldRow label="Name" value={rec.recommender1Name} />
+              <FieldRow label="What is he/she?" value={rec.recommender1Designation || rec.recommender1Roll} />
+              <FieldRow label="Mobile Number" value={rec.recommender1Mobile} />
+              {hasRecommender2 && (
+                <>
+                  <p className="mb-3 mt-5 text-xs font-semibold uppercase tracking-wide text-navy dark:text-white">
+                    Recommender 2 (optional)
+                  </p>
+                  <FieldRow label="Name" value={rec.recommender2Name} />
+                  <FieldRow label="What is he/she?" value={rec.recommender2Designation || rec.recommender2Roll} />
+                  <FieldRow label="Mobile Number" value={rec.recommender2Mobile} />
+                </>
+              )}
             </Section>
           )}
 

@@ -37,6 +37,11 @@ import {
 } from "@/lib/application-editability";
 
 
+// Real per-step completeness of the stored draft, shared with the dashboard so the
+// "Continue Application" link and the dashboard indicator can never disagree.
+import { evaluateApplicationProgress, resolveAcademicType as resolveAcademicBranch } from "@/lib/application-progress";
+
+
 import { DocumentUpload } from "./DocumentUpload";
 
 
@@ -89,6 +94,20 @@ const STEPS = [
 // document, so the applicant is stopped on the step itself instead of at submit.
 const DOCUMENTS_REQUIRED_NOTICE =
   "Please upload at least one supporting document before continuing to Review.";
+
+
+// Zero-based step requested by the dashboard link /student/application?step=N.
+// Read from window.location rather than useSearchParams so this client-only page
+// keeps its current static rendering and needs no Suspense boundary. Anything
+// missing, non-numeric or out of range falls back to the first step.
+function readRequestedStep(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = new URLSearchParams(window.location.search).get("step");
+  if (raw == null) return 0;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed)) return 0;
+  return Math.min(Math.max(parsed, 0), STEPS.length - 1);
+}
 
 
 const INDIAN_STATES = [
@@ -596,11 +615,12 @@ type FormData = {
   ifscCode: string;
 
 
-  // Recommended By: two referees, each with a name, roll number and mobile number.
+  // Recommended By. Recommender 1 is required; recommender 2 is optional, so all
+  // three of its values may be left empty.
   recommender1Name: string;
 
 
-  recommender1Roll: string;
+  recommender1Designation: string;
 
 
   recommender1Mobile: string;
@@ -609,7 +629,7 @@ type FormData = {
   recommender2Name: string;
 
 
-  recommender2Roll: string;
+  recommender2Designation: string;
 
 
   recommender2Mobile: string;
@@ -740,7 +760,7 @@ const EMPTY_FORM: FormData = {
   recommender1Name: "",
 
 
-  recommender1Roll: "",
+  recommender1Designation: "",
 
 
   recommender1Mobile: "",
@@ -749,7 +769,7 @@ const EMPTY_FORM: FormData = {
   recommender2Name: "",
 
 
-  recommender2Roll: "",
+  recommender2Designation: "",
 
 
   recommender2Mobile: "",
@@ -946,19 +966,25 @@ type LoadedApplication = {
 
 
   // Absent on applications created before the Recommended By step existed.
+  // The legacy `*Roll` keys are only read so a value stored under the old name by
+  // an already deployed backend still loads; the API now returns `*Designation`.
   recommenderDetails?: {
 
     recommender1Name?: string | null;
 
-    recommender1Roll?: string | null;
+    recommender1Designation?: string | null;
 
     recommender1Mobile?: string | null;
 
     recommender2Name?: string | null;
 
-    recommender2Roll?: string | null;
+    recommender2Designation?: string | null;
 
     recommender2Mobile?: string | null;
+
+    recommender1Roll?: string | null;
+
+    recommender2Roll?: string | null;
 
   } | null;
 
@@ -999,7 +1025,9 @@ const MAX_SCHOLARSHIP_AMOUNT = 10000000;
 // Determine which branch of the Academic step an existing application belongs
 // to. Applications created before `academicType` was reliably stored only have
 // the legacy `schoolCollege` value, so infer the branch from the surrounding
-// data instead of leaving the applicant on an unselected choice.
+// data instead of leaving the applicant on an unselected choice. The rule lives
+// in `application-progress.ts` so the dashboard indicator and this step can never
+// disagree about which branch a stored application is on.
 function resolveAcademicType(ac: {
   academicType?: string | null;
   schoolName?: string | null;
@@ -1009,14 +1037,7 @@ function resolveAcademicType(ac: {
   semester?: string | null;
   schoolCollege?: string | null;
 }): AcademicType {
-  const explicit = (ac.academicType || "").toLowerCase();
-  if (explicit === "school" || explicit === "college") return explicit;
-  if (ac.className) return "school";
-  if (ac.course || ac.semester) return "college";
-  if (ac.schoolName) return "school";
-  if (ac.collegeName) return "college";
-  if (ac.schoolCollege) return "school";
-  return "";
+  return resolveAcademicBranch(ac);
 }
 
 
@@ -1424,7 +1445,7 @@ export function ApplicationForm() {
             recommender1Name: rec.recommender1Name || "",
 
 
-            recommender1Roll: rec.recommender1Roll || "",
+            recommender1Designation: rec.recommender1Designation || rec.recommender1Roll || "",
 
 
             recommender1Mobile: rec.recommender1Mobile || "",
@@ -1433,12 +1454,28 @@ export function ApplicationForm() {
             recommender2Name: rec.recommender2Name || "",
 
 
-            recommender2Roll: rec.recommender2Roll || "",
+            recommender2Designation: rec.recommender2Designation || rec.recommender2Roll || "",
 
 
             recommender2Mobile: rec.recommender2Mobile || "",
 
           }));
+
+
+          // Dashboard deep link: /student/application?step=N opens the wizard on the
+          // next step that still needs attention rather than always restarting at
+          // step 1. The request is clamped to the first incomplete step in the stored
+          // record, so a hand-written link can never skip a step, and the wizard
+          // still opens on step 1 when everything is already complete.
+          const requestedStep = readRequestedStep();
+          const nextIncompleteStep = evaluateApplicationProgress(app).nextIncompleteStep;
+          const targetStep =
+            nextIncompleteStep == null ? requestedStep : Math.min(requestedStep, nextIncompleteStep);
+
+          if (targetStep > 0) {
+            setReachedStep((r) => Math.max(r, targetStep));
+            setCurrentStep(targetStep);
+          }
 
 
       })
@@ -1810,28 +1847,48 @@ export function ApplicationForm() {
     if (step === 5) {
 
 
-      // Both recommenders are required: the trust verifies the applicant's
-      // reference, so name, roll number and mobile number must all be present
-      // for each of the two referees before the applicant can continue.
+      // The trust verifies the applicant's reference, so recommender 1 needs a
+      // name, a designation/relationship ("What is he/she?") and a mobile number
+      // before the applicant can continue.
+      //
+      // Recommender 2 is optional and may be left completely empty, so it is not
+      // validated at all in that case. Once any one of its three values is
+      // entered the rest become required, so a half-filled recommender can never
+      // be saved.
 
       const recommenders = [
-        { label: "Recommender 1", name: data.recommender1Name, roll: data.recommender1Roll, mobile: data.recommender1Mobile, keys: { name: "recommender1Name" as const, roll: "recommender1Roll" as const, mobile: "recommender1Mobile" as const } },
-        { label: "Recommender 2", name: data.recommender2Name, roll: data.recommender2Roll, mobile: data.recommender2Mobile, keys: { name: "recommender2Name" as const, roll: "recommender2Roll" as const, mobile: "recommender2Mobile" as const } },
+        { label: "Recommender 1", name: data.recommender1Name, designation: data.recommender1Designation, mobile: data.recommender1Mobile, keys: { name: "recommender1Name" as const, designation: "recommender1Designation" as const, mobile: "recommender1Mobile" as const } },
+        { label: "Recommender 2", name: data.recommender2Name, designation: data.recommender2Designation, mobile: data.recommender2Mobile, keys: { name: "recommender2Name" as const, designation: "recommender2Designation" as const, mobile: "recommender2Mobile" as const } },
       ];
 
 
-      for (const r of recommenders) {
+      const validateRecommender = (recommender: (typeof recommenders)[number]) => {
+        const name = recommender.name.trim();
+        const designation = recommender.designation.trim();
+        const mobile = recommender.mobile.trim();
 
-        if (!r.name.trim()) e[r.keys.name] = `Please enter ${r.label.toLowerCase()}'s name.`;
+        if (!name) e[recommender.keys.name] = `Please enter ${recommender.label.toLowerCase()}'s name.`;
 
-        if (!r.roll.trim()) e[r.keys.roll] = `Please enter ${r.label.toLowerCase()}'s roll number.`;
+        if (!designation) {
+          e[recommender.keys.designation] = `Please enter what ${recommender.label.toLowerCase()} is, for example a professor or employer.`;
+        }
 
-        const mobile = r.mobile.trim();
+        if (!mobile) e[recommender.keys.mobile] = `Please enter ${recommender.label.toLowerCase()}'s mobile number.`;
+        else if (!PHONE_RX.test(mobile)) e[recommender.keys.mobile] = "Enter a valid 10-digit mobile number.";
+      };
 
-        if (!mobile) e[r.keys.mobile] = `Please enter ${r.label.toLowerCase()}'s mobile number.`;
 
-        else if (!PHONE_RX.test(mobile)) e[r.keys.mobile] = "Enter a valid 10-digit mobile number.";
+      validateRecommender(recommenders[0]);
 
+
+      // Optional, but all three values are required once any one of them is used.
+      const optional = recommenders[1];
+      const optionalName = optional.name.trim();
+      const optionalDesignation = optional.designation.trim();
+      const optionalMobile = optional.mobile.trim();
+
+      if (optionalName || optionalDesignation || optionalMobile) {
+        validateRecommender(optional);
       }
 
 
@@ -2117,10 +2174,10 @@ export function ApplicationForm() {
         // refresh or a fresh login.
         recommenderDetails: {
           recommender1Name: form.recommender1Name.trim(),
-          recommender1Roll: form.recommender1Roll.trim(),
+          recommender1Designation: form.recommender1Designation.trim(),
           recommender1Mobile: form.recommender1Mobile.trim(),
           recommender2Name: form.recommender2Name.trim(),
-          recommender2Roll: form.recommender2Roll.trim(),
+          recommender2Designation: form.recommender2Designation.trim(),
           recommender2Mobile: form.recommender2Mobile.trim(),
         },
 
@@ -3182,6 +3239,15 @@ const data = await res.json().catch(() => ({}));
   const isCollege = form.academicType === "college";
 
 
+  // A second recommender is optional, so the Review step only shows it when the
+  // applicant has actually supplied something for it.
+  const hasRecommender2 = !!(
+    form.recommender2Name.trim() ||
+    form.recommender2Designation.trim() ||
+    form.recommender2Mobile.trim()
+  );
+
+
 
 
 
@@ -3392,7 +3458,7 @@ const data = await res.json().catch(() => ({}));
               : currentStep === 5
 
 
-              ? "Give the name, roll number and mobile number of two people who can recommend you."
+              ? "Give the name, what he/she is, and the mobile number of someone who can recommend you. A second recommender is optional."
 
 
               : currentStep === 6
@@ -4985,7 +5051,7 @@ const data = await res.json().catch(() => ({}));
               <p className="text-sm text-muted-foreground">
 
 
-                Please give two people who can recommend you, for example a teacher, principal or employer. We may contact them to verify your application.
+                Recommender 1 is required. Recommender 2 is optional and can be left blank, but if you add a second recommender then all three of their details are needed. We may contact either person to verify your application.
 
 
               </p>
@@ -5048,13 +5114,13 @@ const data = await res.json().catch(() => ({}));
                     <div>
 
 
-                      <label htmlFor="recommender1Roll" className="field-label">Roll Number *</label>
+                      <label htmlFor="recommender1Designation" className="field-label">What is he/she? *</label>
 
 
                       <input
 
 
-                        id="recommender1Roll"
+                        id="recommender1Designation"
 
 
                         type="text"
@@ -5063,19 +5129,19 @@ const data = await res.json().catch(() => ({}));
                         className="field-input"
 
 
-                        placeholder="Enter roll number"
+                        placeholder="e.g. Professor, Teacher, Lecturer"
 
 
-                        value={form.recommender1Roll}
+                        value={form.recommender1Designation}
 
 
-                        onChange={(e) => set("recommender1Roll", e.target.value)}
+                        onChange={(e) => set("recommender1Designation", e.target.value)}
 
 
                       />
 
 
-                      {errors.recommender1Roll && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender1Roll}</p>}
+                      {errors.recommender1Designation && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender1Designation}</p>}
 
 
                     </div>
@@ -5135,7 +5201,7 @@ const data = await res.json().catch(() => ({}));
                   <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-navy-700 dark:text-slate-300">
 
 
-                    Recommender 2
+Recommender 2 <span className="font-normal normal-case tracking-normal text-muted-foreground">(optional)</span>
 
 
                   </h3>
@@ -5147,7 +5213,7 @@ const data = await res.json().catch(() => ({}));
                     <div className="sm:col-span-2">
 
 
-                      <label htmlFor="recommender2Name" className="field-label">Name *</label>
+                      <label htmlFor="recommender2Name" className="field-label">Name</label>
 
 
                       <input
@@ -5183,13 +5249,13 @@ const data = await res.json().catch(() => ({}));
                     <div>
 
 
-                      <label htmlFor="recommender2Roll" className="field-label">Roll Number *</label>
+                      <label htmlFor="recommender2Designation" className="field-label">What is he/she?</label>
 
 
                       <input
 
 
-                        id="recommender2Roll"
+                        id="recommender2Designation"
 
 
                         type="text"
@@ -5198,19 +5264,19 @@ const data = await res.json().catch(() => ({}));
                         className="field-input"
 
 
-                        placeholder="Enter roll number"
+                        placeholder="e.g. Professor, Teacher, Lecturer"
 
 
-                        value={form.recommender2Roll}
+                        value={form.recommender2Designation}
 
 
-                        onChange={(e) => set("recommender2Roll", e.target.value)}
+                        onChange={(e) => set("recommender2Designation", e.target.value)}
 
 
                       />
 
 
-                      {errors.recommender2Roll && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender2Roll}</p>}
+                      {errors.recommender2Designation && <p className="mt-1.5 text-sm text-destructive" role="alert">{errors.recommender2Designation}</p>}
 
 
                     </div>
@@ -5219,7 +5285,7 @@ const data = await res.json().catch(() => ({}));
                     <div>
 
 
-                      <label htmlFor="recommender2Mobile" className="field-label">Mobile Number *</label>
+                      <label htmlFor="recommender2Mobile" className="field-label">Mobile Number</label>
 
 
                       <input
@@ -6418,25 +6484,44 @@ const data = await res.json().catch(() => ({}));
                 </ReviewBlock>
 
 
-                <ReviewBlock title="Recommended By">
+                  <ReviewBlock title="Recommended By">
 
 
                   <ReviewRow label="Recommender 1 Name" value={form.recommender1Name} />
 
 
-                  <ReviewRow label="Recommender 1 Roll Number" value={form.recommender1Roll} />
+                  <ReviewRow label="Recommender 1 What is he/she?" value={form.recommender1Designation} />
 
 
                   <ReviewRow label="Recommender 1 Mobile Number" value={form.recommender1Mobile} />
 
 
-                  <ReviewRow label="Recommender 2 Name" value={form.recommender2Name} />
+                  {hasRecommender2 && (
+                    <>
 
 
-                  <ReviewRow label="Recommender 2 Roll Number" value={form.recommender2Roll} />
+                      <div className="sm:col-span-2">
 
 
-                  <ReviewRow label="Recommender 2 Mobile Number" value={form.recommender2Mobile} />
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-navy-700 dark:text-slate-300">
+                          Recommender 2 (optional)
+                        </dt>
+
+
+                      </div>
+
+
+                      <ReviewRow label="Recommender 2 Name" value={form.recommender2Name} />
+
+
+                      <ReviewRow label="Recommender 2 What is he/she?" value={form.recommender2Designation} />
+
+
+                      <ReviewRow label="Recommender 2 Mobile Number" value={form.recommender2Mobile} />
+
+
+                    </>
+                  )}
 
 
                 </ReviewBlock>

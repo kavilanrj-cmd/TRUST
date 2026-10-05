@@ -20,6 +20,11 @@ import {
 import { API_BASE_URL } from "@/lib/api";
 import { useAuth, AuthUser } from "@/lib/auth";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { ApplicationProgressIndicator } from "@/components/student/ApplicationProgressIndicator";
+import {
+  evaluateApplicationProgress,
+  type ProgressApplication,
+} from "@/lib/application-progress";
 import {
   type Editability,
   editWindowNotice,
@@ -28,7 +33,7 @@ import {
 
 function StudentDashboardInner() {
   const { user } = useAuth();
-  const [application, setApplication] = useState<{
+  const [application, setApplication] = useState<(ProgressApplication & {
     applicationId: string;
     status: string;
     paymentStatus?: string;
@@ -61,7 +66,7 @@ function StudentDashboardInner() {
     createdAt: string;
     submittedAt: string | null;
     editability?: Editability | null;
-  } | null>(null);
+  }) | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -176,7 +181,7 @@ function StageText({ stage }: { stage: TimelineStage }) {
 
 function renderDashboard(
   user: AuthUser,
-  application: {
+  application: (ProgressApplication & {
     applicationId: string;
     status: string;
     paymentStatus?: string;
@@ -210,17 +215,43 @@ function renderDashboard(
     submittedAt: string | null;
     // Decided by the backend using its own clock; the dashboard never recomputes.
     editability?: Editability | null;
-  } | null
+  }) | null
 ) {
+  // The nine-step application process, derived from the stored record only. It is
+  // evaluated before the "no application yet" branch so a brand-new applicant also
+  // sees the process as not started instead of an empty dashboard.
+  const progress = evaluateApplicationProgress(application);
+  const continueStep = progress.nextIncompleteStep;
+
   if (!application) {
     return (
-      <section className="min-h-screen bg-surface-muted flex items-center justify-center py-12">
-        <p className="text-lg text-muted-foreground">
-          <Link href="/student/application" className="text-primary underline underline-offset-2 hover:text-primary/90">
-            Start your application
-          </Link>{" "}
-          to view your dashboard.
-        </p>
+      <section className="min-h-screen bg-background">
+        <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 bg-surface-muted">
+          <div className="w-full max-w-5xl space-y-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-center mb-4">Welcome, {user.name || user.email.split("@")[0]}</h2>
+              <p className="text-muted-foreground text-center">
+                NEELAKKANNU EDUCATIONAL TRUST Scholarship Portal
+              </p>
+            </div>
+
+            <ApplicationProgressIndicator progress={progress} />
+
+            <div className="p-6 rounded-lg border border-border bg-card">
+              <h3 className="text-xl font-medium mb-2">Start your application</h3>
+              <p className="text-muted-foreground">
+                You have not started an application yet. The nine steps below are the
+                application process; you can begin with Personal details and come back
+                to finish the rest at any time.
+              </p>
+              <Link
+                href="/student/application"
+                className="mt-4 inline-block py-2 px-4 rounded bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+                Start Your Application
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
     );
   }
@@ -485,6 +516,10 @@ const started = !!applicationId;
             </div>
           </div>
 
+          {/* Nine-step application process. Same order as the wizard, and every
+              state comes from the stored record via evaluateApplicationProgress. */}
+          <ApplicationProgressIndicator progress={progress} />
+
           {/* Payment card - deliberately separate from Application Status so a
               verified payment can never be read as an approved application. */}
           <div className="p-6 rounded-lg border border-border bg-card">
@@ -680,12 +715,25 @@ const started = !!applicationId;
               <p className="text-muted-foreground text-sm">{editNotice}</p>
             )}
 
-            {status === "DRAFT" && (
-              <Link
-                href="/student/application"
-                className="inline-block py-2 px-4 rounded bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-                Continue Application
-              </Link>
+            {/* "Continue Application" opens the next step that still needs
+                attention instead of always restarting at step 1. Gated on the
+                backend's editability so a locked or accepted application never
+                offers an edit path, and hidden once the application is submitted:
+                from that point the process is waiting on the Trust, not on the
+                applicant, so there is no next step for them to continue to. The
+                separate "Edit Application" link still lets them correct details
+                inside the edit window. */}
+            {applicationEditable && !progress.submitted && continueStep != null && (
+              <div className={status === "DRAFT" ? "mt-4" : ""}>
+                <Link
+                  href={`/student/application?step=${continueStep}`}
+                  className="inline-block py-2 px-4 rounded bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+                  Continue Application
+                </Link>
+                <p className="text-muted-foreground text-sm mt-2">
+                  Next: {progress.steps[continueStep].label}
+                </p>
+              </div>
             )}
             {status === "SUBMITTED" && (
               <p className="text-muted-foreground text-sm">

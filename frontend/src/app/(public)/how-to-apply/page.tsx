@@ -8,7 +8,6 @@ import {
   FileUp,
   SearchCheck,
   Wallet,
-  UserCheck,
   Send,
   LayoutDashboard,
   ChevronDown,
@@ -86,14 +85,6 @@ export default function HowToApplyPage() {
     },
     {
       n: "06",
-      title: "Recommendation Details",
-      description:
-        "Provide the name, roll number and mobile number of two people who can recommend you for the scholarship.",
-      Icon: UserCheck,
-      detail: { label: "Recommended By", fields: ["Name", "Roll Number", "Mobile Number"] },
-    },
-    {
-      n: "07",
       title: t("home.howToApply.step4.title", "Submit Application"),
       description: t(
         "home.howToApply.step4.description",
@@ -102,7 +93,7 @@ export default function HowToApplyPage() {
       Icon: Send,
     },
     {
-      n: "08",
+      n: "07",
       title: "Track Application",
       description: "Track the status of your application from your dashboard.",
       Icon: LayoutDashboard,

@@ -227,20 +227,30 @@ model BankDetails {
   updatedAt DateTime @updatedAt
 }
 
-// Who recommended the applicant. Two recommenders are collected, each with a
-// name, roll number and mobile number so the trust can verify the reference.
+// Who recommended the applicant. Recommender 1 is required and collects a name,
+// designation/relationship and mobile number so the trust can verify the
+// reference. Recommender 2 is optional and collects the same three values, so all
+// three of its columns are NOT NULL and an unused second recommender is stored as
+// empty strings.
+//
 // Stored as one 1:1 row per application, exactly like BankDetails. The row is
 // optional on Application, so applications created before this step existed
 // still load with no recommender details.
+//
+// The two "designation" columns are mapped onto the original "recommender1Roll" /
+// "recommender2Roll" database columns. The applicant-facing field is a
+// designation/relationship ("What is he/she?"), not a roll number, but renaming a
+// live production column would be a destructive schema change, so the mapping keeps
+// the existing data untouched and only fixes the name used in code.
 model RecommenderDetails {
   id              String   @default(uuid()) @id
   application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   applicationId   String  @unique
   recommender1Name String
-  recommender1Roll String
+  recommender1Designation String @map("recommender1Roll")
   recommender1Mobile String
   recommender2Name String
-  recommender2Roll String
+  recommender2Designation String @map("recommender2Roll")
   recommender2Mobile String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

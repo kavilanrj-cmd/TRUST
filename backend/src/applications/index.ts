@@ -64,17 +64,62 @@ function numOr(value: unknown, fallback = 0): number {
 // The two recommenders, flattened into the single RecommenderDetails row. Values
 // are trimmed so a stray space never blocks the "required" check, and mobile
 // numbers keep any leading zero the applicant typed (never coerced to a number).
+//
+// Recommender 1 is required (name, designation/relationship, mobile); recommender 2
+// is optional, so its three columns are stored as empty strings when unused.
+//
+// The designation values arrive as `recommender1Designation` / `recommender2Designation`
+// to match the applicant-facing field ("What is he/she?"). The legacy
+// `recommender1Roll` / `recommender2Roll` keys are still accepted so an already
+// deployed frontend cannot silently drop the value during a rollout.
 function recommenderFields(input: unknown) {
   const r = (input ?? {}) as Record<string, unknown>;
-  const pick = (key: string) => String(r[key] ?? "").trim();
+  const pick = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = String(r[key] ?? "").trim();
+      if (value) return value;
+    }
+    return "";
+  };
   return {
     recommender1Name: pick("recommender1Name"),
-    recommender1Roll: pick("recommender1Roll"),
+    recommender1Designation: pick("recommender1Designation", "recommender1Roll"),
     recommender1Mobile: pick("recommender1Mobile"),
     recommender2Name: pick("recommender2Name"),
-    recommender2Roll: pick("recommender2Roll"),
+    recommender2Designation: pick("recommender2Designation", "recommender2Roll"),
     recommender2Mobile: pick("recommender2Mobile"),
   };
+}
+
+// Recommender 1 must be complete; recommender 2 may be entirely absent but must not
+// be left half-entered, so a stored record is always internally consistent.
+function recommenderCompleteness(rec: {
+  recommender1Name?: string | null;
+  recommender1Designation?: string | null;
+  recommender1Mobile?: string | null;
+  recommender2Name?: string | null;
+  recommender2Designation?: string | null;
+  recommender2Mobile?: string | null;
+} | null) {
+  const filled = (value: string | null | undefined) => !!(value || "").toString().trim();
+
+  const recommender1Complete =
+    !!rec &&
+    filled(rec.recommender1Name) &&
+    filled(rec.recommender1Designation) &&
+    filled(rec.recommender1Mobile);
+
+  const recommender2Any =
+    filled(rec?.recommender2Name) ||
+    filled(rec?.recommender2Designation) ||
+    filled(rec?.recommender2Mobile);
+  const recommender2Complete =
+    !recommender2Any ||
+    (filled(rec?.recommender2Name) &&
+      filled(rec?.recommender2Designation) &&
+      filled(rec?.recommender2Mobile));
+
+  return { recommender1Complete, recommender2Complete };
 }
 
 // Create a new application (or draft)
@@ -933,20 +978,24 @@ router.post("/:id/submit", async (req: Request, res: Response) => {
       });
     }
 
-    // Both recommenders (name, roll number and mobile each) are required. The
-    // same check the browser runs on the step, repeated here so a crafted
-    // request cannot submit a draft that skipped the Recommended By step.
-    const rec = application.recommenderDetails;
-    const recComplete =
-      !!rec &&
-      ["recommender1Name", "recommender1Roll", "recommender1Mobile",
-        "recommender2Name", "recommender2Roll", "recommender2Mobile"].every(
-        (key) => !!(rec[key as keyof typeof rec] || "").toString().trim()
-      );
-    if (!recComplete) {
+    // Recommender 1 (name, designation/relationship, mobile) is required.
+    // Recommender 2 is optional: it may be left completely empty, but a partially
+    // entered second recommender must be finished so no invalid record is stored.
+    const { recommender1Complete, recommender2Complete } = recommenderCompleteness(
+      application.recommenderDetails
+    );
+    if (!recommender1Complete) {
       return res.status(400).json({
-        error: "Please complete both recommender details before submitting.",
+        error:
+          "Please enter your first recommender's name, what he/she is and mobile number before submitting.",
         code: "RECOMMENDER_DETAILS_REQUIRED",
+      });
+    }
+    if (!recommender2Complete) {
+      return res.status(400).json({
+        error:
+          "Your second recommender is incomplete. Please fill in all three fields or leave them empty.",
+        code: "RECOMMENDER_DETAILS_INCOMPLETE",
       });
     }
 
