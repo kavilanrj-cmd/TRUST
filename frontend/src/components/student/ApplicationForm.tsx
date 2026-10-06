@@ -6418,24 +6418,6 @@ Recommender 2 <span className="font-normal normal-case tracking-normal text-mute
                 </ReviewBlock>
 
 
-                {isSchool && (
-
-
-                  <ReviewBlock title="School Information">
-
-
-                    <ReviewRow label="School Name" value={form.schoolName} />
-
-
-                    <ReviewRow label="School Address" value={form.schoolAddress} />
-
-
-                  </ReviewBlock>
-
-
-                )}
-
-
                 <ReviewBlock title="Academic Details">
 
 
@@ -6446,6 +6428,12 @@ Recommender 2 <span className="font-normal normal-case tracking-normal text-mute
 
 
                     <>
+
+
+                      <ReviewRow label="School Name" value={form.schoolName} />
+
+
+                      <ReviewRow label="School Address" value={form.schoolAddress} />
 
 
                       <ReviewRow label="Class" value={form.className} />
