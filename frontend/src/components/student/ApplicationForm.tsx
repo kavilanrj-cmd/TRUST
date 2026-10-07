@@ -1883,7 +1883,7 @@ export function ApplicationForm() {
 
 
       // The trust verifies the applicant's reference, so recommender 1 needs a
-      // name, a designation/relationship ("What is he/she?") and a mobile number
+      // name, a designation/relationship ("Occupation ") and a mobile number
       // before the applicant can continue.
       //
       // Recommender 2 is optional and may be left completely empty, so it is not
@@ -5201,7 +5201,7 @@ const data = await res.json().catch(() => ({}));
                     <div>
 
 
-                      <label htmlFor="recommender1Designation" className="field-label">What is he/she? *</label>
+                      <label htmlFor="recommender1Designation" className="field-label">Occupation  *</label>
 
 
                       <input
@@ -5336,7 +5336,7 @@ Recommender 2 <span className="font-normal normal-case tracking-normal text-mute
                     <div>
 
 
-                      <label htmlFor="recommender2Designation" className="field-label">What is he/she?</label>
+                      <label htmlFor="recommender2Designation" className="field-label">Occupation </label>
 
 
                       <input
@@ -6585,7 +6585,7 @@ Recommender 2 <span className="font-normal normal-case tracking-normal text-mute
                   <ReviewRow label="Recommender 1 Name" value={form.recommender1Name} />
 
 
-                  <ReviewRow label="Recommender 1 What is he/she?" value={form.recommender1Designation} />
+                  <ReviewRow label="Recommender 1 Occupation " value={form.recommender1Designation} />
 
 
                   <ReviewRow label="Recommender 1 Mobile Number" value={form.recommender1Mobile} />
@@ -6609,7 +6609,7 @@ Recommender 2 <span className="font-normal normal-case tracking-normal text-mute
                       <ReviewRow label="Recommender 2 Name" value={form.recommender2Name} />
 
 
-                      <ReviewRow label="Recommender 2 What is he/she?" value={form.recommender2Designation} />
+                      <ReviewRow label="Recommender 2 Occupation " value={form.recommender2Designation} />
 
 
                       <ReviewRow label="Recommender 2 Mobile Number" value={form.recommender2Mobile} />

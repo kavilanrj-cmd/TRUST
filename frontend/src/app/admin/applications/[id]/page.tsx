@@ -539,7 +539,7 @@ export default function ApplicationDetailPage() {
                 Recommender 1
               </p>
               <FieldRow label="Name" value={rec.recommender1Name} />
-              <FieldRow label="What is he/she?" value={rec.recommender1Designation || rec.recommender1Roll} />
+              <FieldRow label="Occupation " value={rec.recommender1Designation || rec.recommender1Roll} />
               <FieldRow label="Mobile Number" value={rec.recommender1Mobile} />
               {hasRecommender2 && (
                 <>
@@ -547,7 +547,7 @@ export default function ApplicationDetailPage() {
                     Recommender 2 (optional)
                   </p>
                   <FieldRow label="Name" value={rec.recommender2Name} />
-                  <FieldRow label="What is he/she?" value={rec.recommender2Designation || rec.recommender2Roll} />
+                  <FieldRow label="Occupation " value={rec.recommender2Designation || rec.recommender2Roll} />
                   <FieldRow label="Mobile Number" value={rec.recommender2Mobile} />
                 </>
               )}

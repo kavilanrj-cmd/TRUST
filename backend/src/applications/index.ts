@@ -69,7 +69,7 @@ function numOr(value: unknown, fallback = 0): number {
 // is optional, so its three columns are stored as empty strings when unused.
 //
 // The designation values arrive as `recommender1Designation` / `recommender2Designation`
-// to match the applicant-facing field ("What is he/she?"). The legacy
+// to match the applicant-facing field ("Occupation "). The legacy
 // `recommender1Roll` / `recommender2Roll` keys are still accepted so an already
 // deployed frontend cannot silently drop the value during a rollout.
 function recommenderFields(input: unknown) {

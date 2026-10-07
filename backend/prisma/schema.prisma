@@ -243,7 +243,7 @@ model BankDetails {
 //
 // The two "designation" columns are mapped onto the original "recommender1Roll" /
 // "recommender2Roll" database columns. The applicant-facing field is a
-// designation/relationship ("What is he/she?"), not a roll number, but renaming a
+// designation/relationship ("Occupation "), not a roll number, but renaming a
 // live production column would be a destructive schema change, so the mapping keeps
 // the existing data untouched and only fixes the name used in code.
 model RecommenderDetails {
