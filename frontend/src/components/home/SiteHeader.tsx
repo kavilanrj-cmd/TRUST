@@ -80,8 +80,8 @@ export function SiteHeader() {
           : "border-transparent"
       }`}
     >
-      <div className="container-trust flex h-[76px] items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3" aria-label="NEELAKANNU EDUCATIONAL TRUST">
+      <div className="container-trust flex h-[76px] items-center justify-between gap-3">
+        <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="NEELAKANNU EDUCATIONAL TRUST">
           <Image
             src="/assets/neelakannu-trust-logo.png"
             alt="NEELAKANNU EDUCATIONAL TRUST logo"
@@ -101,7 +101,7 @@ export function SiteHeader() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden flex-1 items-center justify-between gap-2 lg:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-3 lg:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => {
             const active = isActive(link.href);
             return (
@@ -125,7 +125,7 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex xl:gap-3">
+        <div className="hidden shrink-0 items-center gap-2 lg:flex">
           {!isLoading && !user && (
             <>
               <Link
